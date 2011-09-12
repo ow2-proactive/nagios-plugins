@@ -135,10 +135,22 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 	public void jobStateUpdatedEvent(NotificationData<JobInfo> info) {
 		System.out.println(">>Event " + info.getData() +  " " + info.getEventType().toString());
 		if (info.getEventType().equals(SchedulerEvent.JOB_RUNNING_TO_FINISHED)){
-			//notifyFinishedJob(info.getData().getJobId());
-			//if (threadToInterrupt != null){
-			//	threadToInterrupt.interrupt();
-			//}
+			JobId jobId = info.getData().getJobId();
+			System.out.println("Gettign job's result: " + jobId);
+			JobResult jr = null;
+			try {
+				jr = this.getJobResult(jobId);
+			} catch (NotConnectedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (PermissionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnknownJobException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			System.out.println("Job Result: \n" + jr.toString());
 		} 
 	}
 
@@ -163,9 +175,6 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 	
 
 	public static void main(String[] args) throws LoginException, SchedulerException, InterruptedException, ProActiveTimeoutException, IllegalArgumentException, KeyException, ActiveObjectCreationException, NodeException{
-		
-		System.setProperty("java.security.policy","java.policy");
-		
 		/* All this information should come from a configuration file. */
 		String url = "rmi://shainese.inria.fr:1099/";
 		String user = "demo";
@@ -173,45 +182,27 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 		String jobDescPath = "/user/mjost/home/Download/jobs/Job_2_tasks.xml";
 		String protocol = "JAVAPA";
 		
+		System.setProperty("java.security.policy","java.policy");
+		
 		SchedulerStubProber schedulerstub = PAActiveObject.newActive(SchedulerStubProber.class, new Object[]{});
 		
 		System.out.println("Connecting...");
 		schedulerstub.init(protocol, url, user, pass);
-		//schedulerproxy = PAActiveObject.turnActive(schedulerproxy);
 		
-		System.out.println("Creating job...");
-		Job job = null;
-		try {
-			job = JobFactory.getFactory().createJob(jobDescPath);
-		} catch (JobCreationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		System.out.println("Creating jobs...");
+		Job job = JobFactory.getFactory().createJob(jobDescPath);
 		
-		System.out.println("Submitting job...");
+		
+		System.out.println("Submitting jobs...");
 		JobId jobId = schedulerstub.submitJob(job);
 		
-
-		int waiting = 15;
-		System.out.println("Waiting for job " + jobId + " a time of " + waiting + " seconds");
-		//schedulerstub.setThreadToInterrupt(Thread.currentThread());
+		int waiting = 10;
+		System.out.println("Waiting for jobs a time of " + waiting + " seconds...");
 		try{
-			//schedulerstub.waitForEventJobFinished(jobId, waiting);
-			Thread.sleep(1000 * 10);
-		}catch(InterruptedException e){//ProActiveTimeoutException e){
-			System.out.println("Timedout job " + jobId);
-			e.printStackTrace();
-		}
+			Thread.sleep(1000 * waiting);
+		}catch(InterruptedException e){e.printStackTrace();}
 		
 		schedulerstub.tellTimeout();
-		
-		//y despues ver por que no importa el timeout que pongas siempre despues del timeout vienen los eventos de job finalizado
-		//proba tocar periodicamente el scheduler para ver si ahi te responde
-		
-		System.out.println("Gettign job's result: " + jobId);
-		JobResult jr = schedulerstub.getJobResult(jobId);
-		
-		System.out.println("Job Result: \n" + jr.toString());
 		
 		schedulerstub.disconnect();
 		
