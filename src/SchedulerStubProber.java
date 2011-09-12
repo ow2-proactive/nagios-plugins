@@ -1,10 +1,5 @@
-import java.io.FileWriter;
 import java.io.Serializable;
-import java.util.ArrayList;
-
 import javax.security.auth.login.LoginException;
-
-
 import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.api.PAActiveObject;
 import org.objectweb.proactive.core.ProActiveTimeoutException;
@@ -30,106 +25,68 @@ import org.ow2.proactive.scheduler.common.SchedulerAuthenticationInterface;
 import java.security.KeyException;
 import org.ow2.proactive.authentication.crypto.Credentials;
 
+import com.google.gson.Gson;
+
 
 public class SchedulerStubProber implements SchedulerEventListener, Serializable{
-
-	private Scheduler scheduler;
 	
+	private static final long serialVersionUID = 1L;
+	private Scheduler schedulerStub;
 	private ProActiveProxyProtocol protocol = ProActiveProxyProtocol.UNKNOWN;
-	private ArrayList<JobWaiter> pendingJobWaiters;
-	//private static Thread threadToInterrupt;
+	public SchedulerStubProber(){}
 	
-	public SchedulerStubProber(){
-		
-	}
-	
-	public void init(String protocolStr, String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException{
+	public void init(String protocolStr, String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, InvalidProtocolException{
 		protocol = ProActiveProxyProtocol.parseProtocol(protocolStr);
-		System.out.println("Initializing...");
-		
-        SchedulerAuthenticationInterface auth = SchedulerConnection.waitAndJoin(url);
-        //2. get the user interface using the retrieved SchedulerAuthenticationInterface
-        Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
-        scheduler = auth.login(cred);
-
-        //let the client be notified of its own 'job termination' -> job running to finished event
-        scheduler.addEventListener((SchedulerStubProber) PAActiveObject.getStubOnThis(), true);
-        //scheduler.addEventListener(this, true, SchedulerEvent.JOB_RUNNING_TO_FINISHED);
-        System.out.println("Done initializing...");
-		
-        pendingJobWaiters = new ArrayList<JobWaiter>();
-        		
+		if (protocol == ProActiveProxyProtocol.JAVAPA){ 
+	        SchedulerAuthenticationInterface auth = SchedulerConnection.waitAndJoin(url);
+	        Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
+	        schedulerStub = auth.login(cred);
+	        schedulerStub.addEventListener((SchedulerStubProber) PAActiveObject.getStubOnThis(), true);
+		}else if (protocol == ProActiveProxyProtocol.REST){
+			
+		}else{
+			throw new InvalidProtocolException("Protocol " + protocolStr + " not supported.");
+		}
 	}
 	
-	public Scheduler getScheduler(){
-		return scheduler;
+	public JobId submitJob(Job job) throws NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException, InvalidProtocolException{
+		if (protocol == ProActiveProxyProtocol.JAVAPA){
+			return schedulerStub.submit(job);
+		}else if (protocol == ProActiveProxyProtocol.REST){
+			return null;
+		}else{
+			throw new InvalidProtocolException("Invalid protocol selected.");
+		}
 	}
 	
-	public JobId submitJob(Job job) throws NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException{
-		return scheduler.submit(job);
+	public JobResult getJobResult(JobId jobId) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException{
+		if (protocol == ProActiveProxyProtocol.JAVAPA){
+			return schedulerStub.getJobResult(jobId);
+		}else if (protocol == ProActiveProxyProtocol.REST){
+			return null;
+		}else{
+			throw new InvalidProtocolException("Invalid protocol selected.");
+		}
 	}
 	
-	public JobResult getJobResult(JobId jobId) throws NotConnectedException, PermissionException, UnknownJobException{
-		return scheduler.getJobResult(jobId);
+	public void tellTimeout(){
+		System.out.println("Timeout reached...");	
 	}
 	
-	public void disconnect() throws NotConnectedException, PermissionException{	
+	public void disconnect() throws NotConnectedException, PermissionException, InvalidProtocolException{	
 		System.out.println("Disconnecting...");
-		scheduler.disconnect();
-		// PAActiveObject.terminateActiveObject(true); Given by a technician
-	}
-		
-	public void waitForEventJobFinished(JobId jobId, long timeoutsec) throws ProActiveTimeoutException{
-		
-		//JobWaiter fjw = new JobWaiter(jobId, timeoutms);
-		
-		//this.notifyStartedJob(fjw);
-		
-		//fjw.start();
-		
-		boolean beforedeadline = false;
-		System.out.println("\tSleeping...");
-		try {
-			for(int i=0;i<timeoutsec;i++){
-				Thread.sleep(1000);
-			}
-			System.out.println("\tFinished sleeping...");
-			beforedeadline = false;
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			System.out.println("\tInterrupted before sleeping deadline...");
-			e.printStackTrace();
-			beforedeadline = true;
+		if (protocol == ProActiveProxyProtocol.JAVAPA){	
+			schedulerStub.disconnect();
+		}else if (protocol == ProActiveProxyProtocol.REST){
+			
+		}else{
+			throw new InvalidProtocolException("Invalid protocol selected.");
 		}
-		
-		
-		
-		//System.out.println("\tStarted the waiter. Waiting for the waiter...");
-		//try {
-			//fjw.join();
-		//} catch (InterruptedException e) {
-			/* Job finished before deadline. */
-			/* This notification comes from jobStateUpdatedEvent */
-			//System.out.println("\t Interrupted the Waiter. We assume job finished correctly.");
-			//beforedeadline = true;
-		//}
-		
-		if (beforedeadline == true){
-			System.out.println("[DD]Job " + jobId + " finished OK!!!!!!!");
-			return;
-		}else{	
-			System.out.println("[DD]Job " + jobId + " deadlined.");
-			//this.notifyTimedoutJob(jobId);
-			//throw new ProActiveTimeoutException("Timeout for job: " + jobId);
-		}
-		
 	}
-	
 	
 	/************************************/
 	/* Interface SchedulerEventListener */
 	/************************************/
-
 
 	@Override
 	public void jobStateUpdatedEvent(NotificationData<JobInfo> info) {
@@ -138,8 +95,11 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 			JobId jobId = info.getData().getJobId();
 			System.out.println("Gettign job's result: " + jobId);
 			JobResult jr = null;
-			try {
+			try {			
 				jr = this.getJobResult(jobId);
+			} catch (InvalidProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			} catch (NotConnectedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -150,7 +110,7 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			System.out.println("Job Result: \n" + jr.toString());
+			System.out.println("Job " + jobId + " Result: \n" + jr.toString());
 		} 
 	}
 
@@ -164,23 +124,25 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 	public void usersUpdatedEvent(NotificationData<UserIdentification> arg0) {}
 	
 	
-	public void tellTimeout(){
-		System.out.println("Timeout...");
-		
-	}
 	
-	//public void setThreadToInterrupt(Thread t){
-	//	this.threadToInterrupt = t;
-	//}
+	/************************************/
+	/*           Main method            */
+	/**
+	 * @throws InvalidProtocolException **********************************/
 	
-
-	public static void main(String[] args) throws LoginException, SchedulerException, InterruptedException, ProActiveTimeoutException, IllegalArgumentException, KeyException, ActiveObjectCreationException, NodeException{
+	public static void main(String[] args) throws LoginException, SchedulerException, InterruptedException, ProActiveTimeoutException, IllegalArgumentException, KeyException, ActiveObjectCreationException, NodeException, InvalidProtocolException{
 		/* All this information should come from a configuration file. */
 		String url = "rmi://shainese.inria.fr:1099/";
 		String user = "demo";
 		String pass = "demo";
 		String jobDescPath = "/user/mjost/home/Download/jobs/Job_2_tasks.xml";
 		String protocol = "JAVAPA";
+		int timeoutsec = 10;
+		
+
+		SchedulerStubProber obj = new SchedulerStubProber();
+		Gson gson = new Gson();
+		String json = gson.toJson(obj); 
 		
 		System.setProperty("java.security.policy","java.policy");
 		
@@ -196,10 +158,9 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 		System.out.println("Submitting jobs...");
 		JobId jobId = schedulerstub.submitJob(job);
 		
-		int waiting = 10;
-		System.out.println("Waiting for jobs a time of " + waiting + " seconds...");
+		System.out.println("Waiting for jobs a time of " + timeoutsec + " seconds...");
 		try{
-			Thread.sleep(1000 * waiting);
+			Thread.sleep(1000 * timeoutsec);
 		}catch(InterruptedException e){e.printStackTrace();}
 		
 		schedulerstub.tellTimeout();
