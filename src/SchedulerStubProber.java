@@ -37,7 +37,7 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 	
 	private ProActiveProxyProtocol protocol = ProActiveProxyProtocol.UNKNOWN;
 	private ArrayList<JobWaiter> pendingJobWaiters;
-	
+	//private static Thread threadToInterrupt;
 	
 	public SchedulerStubProber(){
 		
@@ -79,78 +79,52 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 		// PAActiveObject.terminateActiveObject(true); Given by a technician
 	}
 		
-	public void waitForEventJobFinished(JobId jobId, long timeoutms) throws ProActiveTimeoutException{
+	public void waitForEventJobFinished(JobId jobId, long timeoutsec) throws ProActiveTimeoutException{
 		
-		JobWaiter fjw = new JobWaiter(jobId, timeoutms);
+		//JobWaiter fjw = new JobWaiter(jobId, timeoutms);
 		
-		this.notifyStartedJob(fjw);
+		//this.notifyStartedJob(fjw);
 		
-		fjw.start();
+		//fjw.start();
 		
-		boolean beforedeadline = false ;
-		
-		//System.out.println("\tStarted the waiter. Waiting for the waiter...");
+		boolean beforedeadline = false;
+		System.out.println("\tSleeping...");
 		try {
-			fjw.join();
+			for(int i=0;i<timeoutsec;i++){
+				Thread.sleep(1000);
+			}
+			System.out.println("\tFinished sleeping...");
+			beforedeadline = false;
 		} catch (InterruptedException e) {
-			/* Job finished before deadline. */
-			/* This notification comes from jobStateUpdatedEvent */
-			//System.out.println("\t Interrupted the Waiter. We assume job finished correctly.");
+			// TODO Auto-generated catch block
+			System.out.println("\tInterrupted before sleeping deadline...");
+			e.printStackTrace();
 			beforedeadline = true;
 		}
 		
+		
+		
+		//System.out.println("\tStarted the waiter. Waiting for the waiter...");
+		//try {
+			//fjw.join();
+		//} catch (InterruptedException e) {
+			/* Job finished before deadline. */
+			/* This notification comes from jobStateUpdatedEvent */
+			//System.out.println("\t Interrupted the Waiter. We assume job finished correctly.");
+			//beforedeadline = true;
+		//}
+		
 		if (beforedeadline == true){
-			//System.out.println("[DD]Job " + jobId + " finished OK!!!!!!!");
+			System.out.println("[DD]Job " + jobId + " finished OK!!!!!!!");
 			return;
 		}else{	
-			//System.out.println("[DD]Job " + jobId + " deadlined.");
-			this.notifyTimedoutJob(jobId);
-			throw new ProActiveTimeoutException("Timeout for job: " + jobId);
+			System.out.println("[DD]Job " + jobId + " deadlined.");
+			//this.notifyTimedoutJob(jobId);
+			//throw new ProActiveTimeoutException("Timeout for job: " + jobId);
 		}
 		
 	}
 	
-	public synchronized void notifyStartedJob(JobWaiter jobWaiter){
-		//System.out.println(pendingJobWaiters.hashCode() + "   [DD] STARTa Job waiters size: " + pendingJobWaiters.size());
-		pendingJobWaiters.add(jobWaiter);
-		 
-	}
-	
-	public synchronized void notifyFinishedJob(JobId jobId){
-		/* Interrupt all the threads with the given jobId. */
-		
-		System.out.println("   [DD]Job finished: " + jobId);
-		//System.out.println(pendingJobWaiters.hashCode() + "   [DD] FINISHEDa Job waiters size: " + pendingJobWaiters.size());
-		ArrayList<JobWaiter> toRemove = new ArrayList<JobWaiter>();
-		for (JobWaiter jw: pendingJobWaiters){
-			System.out.println("     Comparing " + jw.getJobId() + " " + jobId);
-			if (jw.getJobId().equals(jobId)){
-				System.out.println("Waiter " + jw.getJobId() + " interrupted.");
-				jw.interrupt();
-				toRemove.add(jw);
-			}else{
-				System.out.println("     FALSE Comparing " + jw.getJobId() + " " + jobId);
-			}
-		}
-		pendingJobWaiters.removeAll(toRemove);
-		
-	}
-	
-	public synchronized void notifyTimedoutJob(JobId jobId){
-		/* Interrupt all the threads with the given jobId. */
-		System.out.println("   [DD]Job deadlined: " + jobId);
-		//System.out.println(pendingJobWaiters.hashCode() + "   [DD] TIMEDOUTa Job waiters size: " + pendingJobWaiters.size());
-		ArrayList<JobWaiter> toRemove = new ArrayList<JobWaiter>();
-		for (JobWaiter jw: pendingJobWaiters){ 
-			if (jw.getJobId().equals(jobId)){
-				//jw.interrupt(); They finished.
-				Assert.isTrue(!jw.isAlive());
-				toRemove.add(jw);
-			}
-		}
-		pendingJobWaiters.removeAll(toRemove);
-		
-	}
 	
 	/************************************/
 	/* Interface SchedulerEventListener */
@@ -161,7 +135,10 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 	public void jobStateUpdatedEvent(NotificationData<JobInfo> info) {
 		System.out.println(">>Event " + info.getData() +  " " + info.getEventType().toString());
 		if (info.getEventType().equals(SchedulerEvent.JOB_RUNNING_TO_FINISHED)){
-			notifyFinishedJob(info.getData().getJobId());
+			//notifyFinishedJob(info.getData().getJobId());
+			//if (threadToInterrupt != null){
+			//	threadToInterrupt.interrupt();
+			//}
 		} 
 	}
 
@@ -175,9 +152,14 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 	public void usersUpdatedEvent(NotificationData<UserIdentification> arg0) {}
 	
 	
+	public void tellTimeout(){
+		System.out.println("Timeout...");
+		
+	}
 	
-	
-	
+	//public void setThreadToInterrupt(Thread t){
+	//	this.threadToInterrupt = t;
+	//}
 	
 
 	public static void main(String[] args) throws LoginException, SchedulerException, InterruptedException, ProActiveTimeoutException, IllegalArgumentException, KeyException, ActiveObjectCreationException, NodeException{
@@ -212,21 +194,24 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 
 		int waiting = 15;
 		System.out.println("Waiting for job " + jobId + " a time of " + waiting + " seconds");
-
+		//schedulerstub.setThreadToInterrupt(Thread.currentThread());
 		try{
-			schedulerstub.waitForEventJobFinished(jobId, waiting * 1000);
-		}catch(ProActiveTimeoutException e){
+			//schedulerstub.waitForEventJobFinished(jobId, waiting);
+			Thread.sleep(1000 * 10);
+		}catch(InterruptedException e){//ProActiveTimeoutException e){
 			System.out.println("Timedout job " + jobId);
 			e.printStackTrace();
 		}
 		
+		schedulerstub.tellTimeout();
+		
 		//y despues ver por que no importa el timeout que pongas siempre despues del timeout vienen los eventos de job finalizado
 		//proba tocar periodicamente el scheduler para ver si ahi te responde
 		
-		//System.out.println("Gettign job's result: " + jobId);
-		//JobResult jr = schedulerproxy.getJobResult(jobId);
+		System.out.println("Gettign job's result: " + jobId);
+		JobResult jr = schedulerstub.getJobResult(jobId);
 		
-		//System.out.println("Job Result: \n" + jr.toString());
+		System.out.println("Job Result: \n" + jr.toString());
 		
 		schedulerstub.disconnect();
 		
