@@ -1,4 +1,4 @@
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
 
@@ -12,6 +12,7 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.api.PAActiveObject;
 import org.objectweb.proactive.core.ProActiveTimeoutException;
+import org.objectweb.proactive.core.config.ProActiveConfiguration;
 import org.objectweb.proactive.core.node.NodeException;
 import org.ow2.proactive.scheduler.common.NotificationData;
 import org.ow2.proactive.scheduler.common.SchedulerConnection;
@@ -26,24 +27,14 @@ import org.ow2.proactive.scheduler.common.exception.UnknownJobException;
 import org.ow2.proactive.scheduler.common.task.TaskInfo;
 import org.ow2.proactive.scheduler.common.job.*;
 import org.ow2.proactive.scheduler.common.job.factories.JobFactory;
-import org.springframework.util.Assert;
 import org.ow2.proactive.scheduler.common.Scheduler;
 import org.ow2.proactive.authentication.crypto.CredData;
 import org.ow2.proactive.scheduler.common.SchedulerAuthenticationInterface;
 import java.io.IOException;
-import java.net.URI;
-import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
 import java.security.KeyException;
 import java.util.ArrayList;
-
 import org.ow2.proactive.authentication.crypto.Credentials;
-
-import com.google.gson.Gson;
-import com.sun.xml.fastinfoset.Encoder;
 
 
 public class SchedulerStubProber implements SchedulerEventListener, Serializable{
@@ -127,6 +118,25 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 		}
 	}
 	
+	
+	public JobState getJobState(JobId jobId) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
+		if (protocol == ProActiveProxyProtocol.JAVAPA){
+			return schedulerStub.getJobState(jobId);
+		}else if (protocol == ProActiveProxyProtocol.REST){
+			
+		    GetMethod method = new GetMethod(uri.toString()+ "/jobs/" + jobId);
+		    method.addRequestHeader("sessionid", sessionId);
+		    HttpClient client = new HttpClient();
+		    client.executeMethod(method);
+		    System.out.println(method.getResponseBodyAsString());
+			
+			return null;
+		}else{
+			throw new InvalidProtocolException("Invalid protocol selected.");
+		}
+	}
+
+	
 	public void disconnect() throws NotConnectedException, PermissionException, InvalidProtocolException, HttpException, IOException{	
 		System.out.println("Disconnecting...");
 		if (protocol == ProActiveProxyProtocol.JAVAPA){	
@@ -191,64 +201,5 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 	public void usersUpdatedEvent(NotificationData<UserIdentification> arg0) {}
 	
 	
-	
-	/************************************/
-	/*           Main method            */
-	/**
-	 * @throws InvalidProtocolException 
-	 * @throws IOException 
-	 * @throws HttpException 
-	 * @throws ElementNotFoundException **********************************/
-	
-	public static void main(String[] args) throws LoginException, SchedulerException, InterruptedException, ProActiveTimeoutException, IllegalArgumentException, KeyException, ActiveObjectCreationException, NodeException, InvalidProtocolException, HttpException, IOException, ElementNotFoundException{
-		/* All this information should come from a configuration file. */
 		
-		
-		
-		String conffile = Misc.readAllFile("conf.conf");
-		ArrayList<String> confparts = Misc.filterEmptyLines(Misc.getLines(conffile));
-		
-		
-		boolean debug = Boolean.parseBoolean(Misc.getValueUsingKey("debug", confparts));
-		
-		Misc.redirectStdOut(debug);
-		
-		String url = Misc.getValueUsingKey("url", confparts);
-		String user = Misc.getValueUsingKey("user", confparts);
-		String pass = Misc.getValueUsingKey("pass", confparts);
-		String[] jobdescpaths = Misc.getValueUsingKey("jobdescpaths", confparts).split(";");
-		String protocol = Misc.getValueUsingKey("protocol", confparts);
-		int timeoutsec = Integer.parseInt(Misc.getValueUsingKey("timeoutsec", confparts));
-		
-		System.setProperty("java.security.policy","java.policy");
-		
-		SchedulerStubProber schedulerstub = PAActiveObject.newActive(SchedulerStubProber.class, new Object[]{});
-		
-		System.out.println("Connecting...");
-		schedulerstub.init(protocol, url, user, pass);
-		
-		
-		
-		for(String jobpath: jobdescpaths){
-			//System.out.println("Submitting job...");
-			JobId jobId = schedulerstub.submitJob(jobpath);
-		
-			//System.out.println("Waiting for job " + jobId + " a time of " + timeoutsec + " seconds...");
-			try{
-				Thread.sleep(1000 * timeoutsec);
-			}catch(InterruptedException e){e.printStackTrace();}
-		
-			JobResult jr = schedulerstub.getJobResult(jobId);
-			//System.out.println("Finished period for job  " + jobId + ". Result: " + jr.toString());
-		}
-	
-		
-		schedulerstub.disconnect();
-		
-		Misc.log("Done1.");
-		Misc.print("Done.");
-		
-		System.exit(0);
-	}
-	
 }

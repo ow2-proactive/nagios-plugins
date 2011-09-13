@@ -13,7 +13,7 @@ import java.util.ArrayList;
 /** This class is supposed to have multiple minor functionalities. */
 public class Misc {
 
-	private static boolean debug = false;
+	private static boolean alltostdout = false;
 	private static PrintStream stdout;
 	private static PrintStream stdlog;
 	
@@ -228,29 +228,40 @@ public class Misc {
     }
     
     
-    public static void redirectStdOut(boolean debug) throws FileNotFoundException{
-    	Misc.debug = debug;
+    public static void redirectStdOut(boolean alltostdoutt) throws FileNotFoundException{
+    	alltostdout = alltostdoutt;
+	
     	if (stdout == null){
     		stdout = System.out;
     		stdlog = new PrintStream(new FileOutputStream("output.log"));
     	}
-    	System.setOut(stdlog);
+    	if (alltostdout==true){
+    		System.setOut(stdout);
+    	}else{
+	    	System.setOut(stdlog);
+    	}
+    	
     }
     
     public static void print(String str){
-    	System.setOut(stdout);
-        System.out.println(str);
-        System.setOut(stdlog);
-        if (debug)
+    	PrintStream previous = System.out;
+    	if (alltostdout==true){
     		System.setOut(stdout);
+    	}else{
+	    	System.setOut(stdout);
+    	}
+        System.out.println(str);
+        System.setOut(previous);
         
     }
     public static void log(String str){
-    	System.setOut(stdlog);
-    	if (debug)
+    	PrintStream previous = System.out;
+    	if (alltostdout==true){
     		System.setOut(stdout);
+    	}else{
+    		System.setOut(stdlog);
+    	}
     	System.out.println(str);
-    	
-    	
+    	System.setOut(previous);
     }
 }
