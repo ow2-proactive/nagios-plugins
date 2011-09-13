@@ -8,7 +8,7 @@
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/jruby-engine.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/jython-engine.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_ResourceManager.jar"/>
-	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_Scheduler-core.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_Scheduler-core.jar" sourcepath="/Scheduler"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_Scheduler-mapreduce.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_Scheduler-matsci.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_SRM-common.jar"/>
@@ -192,5 +192,6 @@
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/xmlsec-1.4.0.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/xsdlib.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/yajsw-os.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/thirds/google-gson-1.7.1/gson-1.7.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
