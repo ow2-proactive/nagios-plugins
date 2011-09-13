@@ -4,6 +4,8 @@ import java.net.URI;
 
 import javax.security.auth.login.LoginException;
 
+import misc.Misc;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -36,8 +38,10 @@ import java.security.KeyException;
 import java.util.ArrayList;
 import org.ow2.proactive.authentication.crypto.Credentials;
 
+import exceptions.InvalidProtocolException;
 
-public class SchedulerStubProber implements SchedulerEventListener, Serializable{
+
+public class SchedulerStubProber{
 	
 	private static final long serialVersionUID = 1L;
 	private Scheduler schedulerStub;
@@ -53,12 +57,10 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 	        SchedulerAuthenticationInterface auth = SchedulerConnection.waitAndJoin(url);
 	        Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
 	        schedulerStub = auth.login(cred);
-	        schedulerStub.addEventListener((SchedulerStubProber) PAActiveObject.getStubOnThis(), true);
+	        SchedulerEventsListener aa = PAActiveObject.newActive(SchedulerEventsListener.class, new Object[]{}); 
+	        schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
 		}else if (protocol == ProActiveProxyProtocol.REST){
 		    uri = URI.create(url);
-		    long result;
-		    
-		    // login
 
 		    PostMethod methodLogin = new PostMethod(uri.toString() + "/login");
 		    methodLogin.addParameter("username", user);
@@ -96,7 +98,7 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 			return null;
 		}else{
 			throw new InvalidProtocolException("Invalid protocol selected.");
-		}
+		} 
 	}
 	
 	public JobResult getJobResult(JobId jobId) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
@@ -118,6 +120,34 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 		}
 	}
 	
+
+
+	public void waitUntilJobFinishes(JobId jobId) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
+		//jobWaited = jobId;
+		//System.out.println ("We will wait for job: " + jobWaited); 
+		if (protocol == ProActiveProxyProtocol.JAVAPA){
+			
+			do{
+				synchronized(SchedulerStubProber.class){
+					System.out.println("WAIT");
+					try {
+						SchedulerStubProber.class.wait();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					System.out.println("NOTIFIED");
+				}
+				
+			}while(SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId)==false);
+
+		}else if (protocol == ProActiveProxyProtocol.REST){
+			
+		}else{
+			throw new InvalidProtocolException("Invalid protocol selected.");
+		}
+	}
+
 	
 	public JobState getJobState(JobId jobId) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
 		if (protocol == ProActiveProxyProtocol.JAVAPA){
@@ -138,7 +168,6 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 
 	
 	public void disconnect() throws NotConnectedException, PermissionException, InvalidProtocolException, HttpException, IOException{	
-		System.out.println("Disconnecting...");
 		if (protocol == ProActiveProxyProtocol.JAVAPA){	
 			schedulerStub.disconnect();
 		}else if (protocol == ProActiveProxyProtocol.REST){
@@ -152,54 +181,5 @@ public class SchedulerStubProber implements SchedulerEventListener, Serializable
 			throw new InvalidProtocolException("Invalid protocol selected.");
 		}
 	}
-	
-	/************************************/
-	/* Interface SchedulerEventListener */
-	/************************************/
-
-	@Override
-	public void jobStateUpdatedEvent(NotificationData<JobInfo> info) {
-		//System.out.println(">>Event " + info.getData() +  " " + info.getEventType().toString());
-		if (info.getEventType().equals(SchedulerEvent.JOB_RUNNING_TO_FINISHED)){
-			JobId jobId = info.getData().getJobId();
-			//System.out.println("Gettign job's result: " + jobId);
-			JobResult jr = null;
-			try {			
-				try {
-					jr = this.getJobResult(jobId);
-				} catch (HttpException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			} catch (InvalidProtocolException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NotConnectedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (PermissionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (UnknownJobException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			//System.out.println("Job " + jobId + " Result: \n" + jr.toString());
-		} 
-	}
-
-	@Override
-	public void jobSubmittedEvent(JobState arg0) {}
-	@Override
-	public void schedulerStateUpdatedEvent(SchedulerEvent arg0) {}
-	@Override
-	public void taskStateUpdatedEvent(NotificationData<TaskInfo> arg0) {}
-	@Override
-	public void usersUpdatedEvent(NotificationData<UserIdentification> arg0) {}
-	
-	
 		
 }
