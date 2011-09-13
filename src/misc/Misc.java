@@ -1,3 +1,4 @@
+package misc;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,6 +9,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+
+import exceptions.ElementNotFoundException;
 
 
 /** This class is supposed to have multiple minor functionalities. */
