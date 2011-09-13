@@ -1,0 +1,11 @@
+983@shainese.inria.fr - [INFO oactive.remoteobject] Remote Object Factory provider <pamr, class org.objectweb.proactive.extensions.pamr.remoteobject.PAMRRemoteObjectFactory> found
+983@shainese.inria.fr - [INFO oactive.remoteobject] Remote Object Factory provider <pnp, class org.objectweb.proactive.extensions.pnp.PNPRemoteObjectFactory> found
+983@shainese.inria.fr - [INFO oactive.remoteobject] Remote Object Factory provider <pnps, class org.objectweb.proactive.extensions.pnpssl.PNPSslRemoteObjectFactory> found
+983@shainese.inria.fr - [INFO oactive.remoteobject] Remote Object Factory provider <pamrd, class org.objectweb.proactive.extensions.pamrd.PAMRDRemoteObjectFactorySPI$PAMRDRemoteObjectFactory> found
+983@shainese.inria.fr - [INFO oactive.remoteobject] Remote Object Factory provider <rmissl, class org.objectweb.proactive.extra.rmissl.RmiSslRemoteObjectFactory> found
+983@shainese.inria.fr - [INFO    communication.rmi] Detected an existing RMI Registry on port 1099
+Connecting...
+983@shainese.inria.fr - [INFO        admin.factory] Job successfully created !
+983@shainese.inria.fr - [INFO        admin.factory] Job successfully created !
+Disconnecting...
+Done1.
