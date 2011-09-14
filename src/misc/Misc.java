@@ -22,13 +22,24 @@ public class Misc {
 	
     private Misc(){}
 
-    public static String printSpecified(Object o){
+    public static String getDescriptiveString(Object o){
         String output = "";
         if (o instanceof ArrayList){
             ArrayList a = (ArrayList) o;
             for(Object i:a){
-                output = output + i + " ";
+                output = output + i.toString() + " ";
             }
+        }else if(o instanceof Object[]){
+            Object[] a = (Object[]) o;
+            output = "[";
+            for(Object i:a){
+            	if (i==null){
+            		//output = output + "null" + " ";
+            	}else{
+            		output = output + i.toString() + " ";
+            	}
+            }
+            output = output + "]";
         }else if(o instanceof int[]){
             int[] a = (int[]) o;
             for (int i=0;i<a.length;i++){
@@ -39,6 +50,8 @@ public class Misc {
             for (int i=0;i<a.length;i++){
                 output = output + a[i] + " ";
             }
+        }else{
+        	output = "<UNKNOWN FORMAT>";
         }
 
         return output;

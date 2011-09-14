@@ -1,6 +1,8 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import misc.Misc;
+
 import org.ow2.proactive.scheduler.common.NotificationData;
 import org.ow2.proactive.scheduler.common.SchedulerEvent;
 import org.ow2.proactive.scheduler.common.SchedulerEventListener;
@@ -14,7 +16,9 @@ import org.ow2.proactive.scheduler.common.task.TaskInfo;
 public class SchedulerEventsListener implements SchedulerEventListener, Serializable{
 
 	private static final long serialVersionUID = 1L;
-	public static ArrayList<JobId> lastFinishedJobs = new ArrayList<JobId>(100);
+	
+	private static final int lastFinishedJobsBufferSize = 100;
+	public static JobId[] lastFinishedJobs = new JobId[lastFinishedJobsBufferSize];
 	public static int currentCounter = 0;
 	
 	/************************************/
@@ -42,19 +46,27 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 	public void usersUpdatedEvent(NotificationData<UserIdentification> arg0) {}
 	
 	public static synchronized boolean checkIfJobIdHasJustFinished(JobId jobId){
+		System.out.println("Checking if " + jobId + " has already finished...");
+		printList();
 		for (JobId j:lastFinishedJobs){
-			System.out.println("\t" + j + "==" + jobId);
-			if (j.equals(jobId)){
-				System.out.println("\t" + j + "==" + jobId + " YESS");
+			//System.out.println("\t" + j + "==" + jobId + "?");
+			if (j!=null && j.equals(jobId)){
+				System.out.println("\t" + "yes");
 				return true;
 			}
 		}
+		System.out.println("\t" + "no");
 		return false;
 	}
 	
 	public static synchronized void addFinishedJobId(JobId jobId){
-		lastFinishedJobs.add(currentCounter, jobId);
-		currentCounter = (currentCounter + 1) % lastFinishedJobs.size(); 
+		lastFinishedJobs[currentCounter] = jobId;
+		currentCounter = (currentCounter + 1) % lastFinishedJobsBufferSize;
+		printList();
+	}
+	private static synchronized void printList(){
+		System.out.print("Last finished jobs: ");
+		System.out.println(Misc.getDescriptiveString((Object)lastFinishedJobs));
 	}
 	
 }

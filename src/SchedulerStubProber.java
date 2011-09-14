@@ -36,6 +36,8 @@ import java.io.IOException;
 import org.apache.commons.httpclient.HttpException;
 import java.security.KeyException;
 import java.util.ArrayList;
+import java.util.Date;
+
 import org.ow2.proactive.authentication.crypto.Credentials;
 
 import exceptions.InvalidProtocolException;
@@ -105,44 +107,48 @@ public class SchedulerStubProber{
 		if (protocol == ProActiveProxyProtocol.JAVAPA){
 			return schedulerStub.getJobResult(jobId);
 		}else if (protocol == ProActiveProxyProtocol.REST){
-			
-
 		    GetMethod method = new GetMethod(uri.toString()+ "/jobs/" + jobId + "/result");
 		    method.addRequestHeader("sessionid", sessionId);
 		    HttpClient client = new HttpClient();
 		    client.executeMethod(method);
 		    //result = method.getResponseBodyAsString().length();
 		    System.out.println(method.getResponseBodyAsString());
-			
 			return null;
 		}else{
 			throw new InvalidProtocolException("Invalid protocol selected.");
 		}
 	}
 	
-
-
-	public void waitUntilJobFinishes(JobId jobId) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
+	public void waitUntilJobFinishes(JobId jobId, int timeoutms) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
 		//jobWaited = jobId;
 		//System.out.println ("We will wait for job: " + jobWaited); 
 		if (protocol == ProActiveProxyProtocol.JAVAPA){
-			
+			long start = (new Date()).getTime();
+			long end;
+			boolean timeout;
 			do{
 				synchronized(SchedulerStubProber.class){
-					System.out.println("WAIT");
+					//System.out.println("WAIT");
 					try {
-						SchedulerStubProber.class.wait();
+						SchedulerStubProber.class.wait(timeoutms);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					System.out.println("NOTIFIED");
+					end = (new Date()).getTime();
+					timeout = (end-start>=timeoutms);
+					//if (timeout){
+						//System.out.println("TIMEOUT");
+					//}else{
+						//System.out.println("NOTIFIED");
+					//}
+					
 				}
 				
-			}while(SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId)==false);
+			}while(SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId)==false && timeout==false);
 
 		}else if (protocol == ProActiveProxyProtocol.REST){
-			
+			// polling mechanism
 		}else{
 			throw new InvalidProtocolException("Invalid protocol selected.");
 		}
