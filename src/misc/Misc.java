@@ -178,7 +178,7 @@ public class Misc {
             i.write(content.getBytes());
             i.close();
         }catch (Exception e){
-            throw new Exception("Error writing file: " + filename);
+            throw new Exception("Error writing file: '" + filename + "'.");
         }
     }
 
@@ -240,7 +240,7 @@ public class Misc {
     			return s.substring(key.length()).trim();
     		}
     	}
-    	throw new ElementNotFoundException("The key " + key + " was not found.");
+    	throw new ElementNotFoundException("The key '" + key + "' was not found.");
     }
     
     
