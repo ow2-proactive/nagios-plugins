@@ -56,8 +56,12 @@ public class SchedulerStubProber{
 	public void init(String protocolStr, String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, InvalidProtocolException, HttpException, IOException{
 		protocol = ProActiveProxyProtocol.parseProtocol(protocolStr);
 		if (protocol == ProActiveProxyProtocol.JAVAPA){ 
+			
+			System.out.println("Joining to the scheduler...");
 	        SchedulerAuthenticationInterface auth = SchedulerConnection.waitAndJoin(url);
+	        System.out.println("Creating credentials...");
 	        Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
+	        System.out.println("Logging in...");
 	        schedulerStub = auth.login(cred);
 	        SchedulerEventsListener aa = PAActiveObject.newActive(SchedulerEventsListener.class, new Object[]{}); 
 	        schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
