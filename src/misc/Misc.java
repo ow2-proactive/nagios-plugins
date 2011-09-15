@@ -8,6 +8,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringReader;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 
 import exceptions.ElementNotFoundException;
@@ -279,5 +281,20 @@ public class Misc {
     	}
     	System.out.println(str);
     	System.setOut(previous);
+    }
+    
+    public static void printClasspath() {
+
+        //Get the System Classloader
+        ClassLoader sysClassLoader = ClassLoader.getSystemClassLoader();
+
+        //Get the URLs
+        URL[] urls = ((URLClassLoader)sysClassLoader).getURLs();
+
+        for(int i=0; i< urls.length; i++)
+        {
+            System.out.println(urls[i].getFile());
+        }       
+
     }
 }
