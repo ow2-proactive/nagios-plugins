@@ -59,6 +59,7 @@ public class SchedulerStubProber{
 			
 			System.out.println("Joining to the scheduler...");
 	        SchedulerAuthenticationInterface auth = SchedulerConnection.waitAndJoin(url);
+	        //SchedulerAuthenticationInterface auth = SchedulerConnection.join(url);
 	        System.out.println("Creating credentials...");
 	        Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
 	        System.out.println("Logging in...");
@@ -177,9 +178,22 @@ public class SchedulerStubProber{
 	}
 
 	
+	public void removeJob(JobId jobId) throws NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
+		if (protocol == ProActiveProxyProtocol.JAVAPA){	
+			schedulerStub.removeJob(jobId);
+		}else if (protocol == ProActiveProxyProtocol.REST){
+			System.out.println("Not implemented");
+			//throw new Exception("Not implemented.");
+		}else{
+			throw new InvalidProtocolException("Invalid protocol selected.");
+		}
+		
+	}
+	
 	public void disconnect() throws NotConnectedException, PermissionException, InvalidProtocolException, HttpException, IOException{	
 		if (protocol == ProActiveProxyProtocol.JAVAPA){	
 			schedulerStub.disconnect();
+			
 		}else if (protocol == ProActiveProxyProtocol.REST){
 			
 		    PutMethod dismethod = new PutMethod(uri.toString() + "/disconnect");
