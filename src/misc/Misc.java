@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.URL;
@@ -65,7 +66,7 @@ public class Misc {
     public static void deleteFile(String filename) throws Exception{
         File file = new File(filename);
         if(file.delete()){
-            System.out.println("File '" + filename + "' deleted.");
+            //System.out.println("File '" + filename + "' deleted.");
         }else{
             System.out.println("Error deleting file '" + filename + "'...");
         }
@@ -246,12 +247,23 @@ public class Misc {
     }
     
     
-    public static void redirectStdOut(boolean alltostdoutt) throws FileNotFoundException{
+    public static void redirectStdOut(boolean alltostdoutt, String filename) throws FileNotFoundException{
     	alltostdout = alltostdoutt;
 	
     	if (stdout == null){
     		stdout = System.out;
-    		stdlog = new PrintStream(new FileOutputStream("output.log"));
+    		if (filename!=null){
+    			stdlog = new PrintStream(new FileOutputStream(filename));
+    		}else{
+    			stdlog = new PrintStream(
+    						new OutputStream() {
+    							public void write(int b) {
+    								//DO NOTHING
+    							}
+    						}
+    						);
+    				
+    		}
     	}
     	if (alltostdout==true){
     		System.setOut(stdout);
