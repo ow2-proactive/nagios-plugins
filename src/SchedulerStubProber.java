@@ -11,6 +11,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.httpclient.HttpException;
 import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.api.PAActiveObject;
 import org.objectweb.proactive.core.ProActiveTimeoutException;
@@ -33,7 +34,7 @@ import org.ow2.proactive.scheduler.common.Scheduler;
 import org.ow2.proactive.authentication.crypto.CredData;
 import org.ow2.proactive.scheduler.common.SchedulerAuthenticationInterface;
 import java.io.IOException;
-import org.apache.commons.httpclient.HttpException;
+
 import java.security.KeyException;
 import java.util.ArrayList;
 import java.util.Date;

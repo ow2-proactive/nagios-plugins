@@ -272,6 +272,12 @@ public class Misc {
         System.setOut(previous);
         
     }
+    
+    public synchronized static void printAndExit(Integer ret, String str){
+    	Misc.print(str);
+    	System.exit(ret);
+    }
+    
     public static void log(String str){
     	PrintStream previous = System.out;
     	if (alltostdout==true){
@@ -287,14 +293,14 @@ public class Misc {
 
         //Get the System Classloader
         ClassLoader sysClassLoader = ClassLoader.getSystemClassLoader();
-
+        System.out.println("Classpath [");
         //Get the URLs
         URL[] urls = ((URLClassLoader)sysClassLoader).getURLs();
 
         for(int i=0; i< urls.length; i++)
         {
-            System.out.println(urls[i].getFile());
+            System.out.println("\t-" + urls[i].getFile());
         }       
-
+        System.out.println("]");
     }
 }
