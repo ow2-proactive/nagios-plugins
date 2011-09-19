@@ -1,3 +1,4 @@
+package main;
 import misc.Misc;
 
 
@@ -11,6 +12,7 @@ public class TimeouterThread extends Thread{
 		this.errorcode = errorcode;
 		this.message = message;
 	}
+	
 	public void run(){
 		try {
 			Thread.sleep(timeoutsec * 1000);
