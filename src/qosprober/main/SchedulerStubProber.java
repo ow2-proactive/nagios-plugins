@@ -37,7 +37,7 @@ import org.ow2.proactive.authentication.crypto.Credentials;
 
 import qosprober.exceptions.InvalidProtocolException;
 
-/* Class to work as a Stub or point of access to the Scheduler. 
+/** Class to work as a Stub or point of access to the Scheduler. 
  * This is our interface to the remote Scheduler.
  * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST.  
  * */
