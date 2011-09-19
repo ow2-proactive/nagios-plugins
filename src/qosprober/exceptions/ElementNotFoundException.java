@@ -1,4 +1,4 @@
-package exceptions;
+package qosprober.exceptions;
 
 public class ElementNotFoundException extends Exception{
 	private static final long serialVersionUID = 1L;

@@ -1,23 +1,15 @@
-package main;
-import jargs.gnu.CmdLineParser;
+package qosprober.main;
 
-import java.io.BufferedReader;
+import jargs.gnu.CmdLineParser;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.security.KeyException;
 import java.util.Date;
-import java.util.Random;
-
 import javax.security.auth.login.LoginException;
-
-import misc.Misc;
-
+import qosprober.misc.Misc;
 import org.apache.commons.httpclient.HttpException;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.objectweb.proactive.ActiveObjectCreationException;
@@ -26,9 +18,8 @@ import org.objectweb.proactive.core.node.NodeException;
 import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import org.ow2.proactive.scheduler.common.job.JobId;
 import org.ow2.proactive.scheduler.common.job.JobResult;
-
-import exceptions.ElementNotFoundException;
-import exceptions.InvalidProtocolException;
+import qosprober.exceptions.ElementNotFoundException;
+import qosprober.exceptions.InvalidProtocolException;
 
 public class Main {
 
@@ -39,10 +30,10 @@ public class Main {
 	private static final int RESULT_CRITICAL = 2;
 	private static final int RESULT_UNKNOWN = 3;
 	
+	public static Logger logger = Logger.getLogger(Main.class.getName());
+	
 	public static void main(String[] args) throws Exception{
-	            
-        
-        
+		
 		/* Parsing of arguments. */
 		CmdLineParser parser = new CmdLineParser();
 		
@@ -82,7 +73,6 @@ public class Main {
 		Double warning = (Double)parser.getOptionValue(warningO, new Double(100)); /* Warning level. Ignored. */
 		Double critical = (Double)parser.getOptionValue(criticalO, new Double(100)); /* Critical level. Ignored. */ 
 		
-		
 		PropertyConfigurator.configure("log4j.properties");
 		
 		/* If debug is true then we let print log4j messages in the stdout. */
@@ -92,7 +82,7 @@ public class Main {
 		//Misc.redirectStdOut(debug, logfile);
 		
 		/* Show all the arguments considered. */
-		Logger.getRootLogger().info(
+		logger.info(
 				"Configuration: \n" +
 				"\t debug   : " + debug + "\n" +
 				"\t user    : " + user + "\n" +
@@ -109,9 +99,9 @@ public class Main {
 				);
 		
 		/* Security policy procedure. */
-		Logger.getRootLogger().info("Setting security policies... ");
+		logger.info("Setting security policies... ");
 		Main.createPolicyAndLoadIt();
-		Logger.getRootLogger().info("Done.");
+		logger.info("Done.");
 		
 		
 		Boolean usepaconffile = false;
@@ -160,12 +150,12 @@ public class Main {
 		
 		SchedulerStubProber schedulerstub = new SchedulerStubProber();
 		
-		Logger.getRootLogger().info("Connecting... ");
+		logger.info("Connecting... ");
 		schedulerstub.init(protocol, url, user, pass);
 		if (usepaconffile==true){
 			ProActiveConfiguration.load();
 		}
-		Logger.getRootLogger().info("Done.");
+		logger.info("Done.");
 		
 		int output_to_return = Main.RESULT_CRITICAL;
 		String output_to_print = "NO TEST PERFORMED";
@@ -175,13 +165,13 @@ public class Main {
 		
 		long start = (new Date()).getTime();
 		
-		Logger.getRootLogger().info("Submitting '" + jobname + "' job...");
+		logger.info("Submitting '" + jobname + "' job...");
 		JobId jobId = schedulerstub.submitJob(jobpath);
-		Logger.getRootLogger().info("Done.");
+		logger.info("Done.");
 		
-		Logger.getRootLogger().info("Waiting for " + jobname + ":" + jobId + " job...");
+		logger.info("Waiting for " + jobname + ":" + jobId + " job...");
 		schedulerstub.waitUntilJobFinishes(jobId, timeoutsec * 1000);
-		Logger.getRootLogger().info("Done.");
+		logger.info("Done.");
 		
 		long stop = (new Date()).getTime();
 		
@@ -189,14 +179,14 @@ public class Main {
 		
 		float durationsec = ((float)(stop-start)/1000); 
 		
-		Logger.getRootLogger().info("Duration of submission+execution+retrieval: " + durationsec + " seconds.");
+		logger.info("Duration of submission+execution+retrieval: " + durationsec + " seconds.");
 		
 		if (jr==null){
-			Logger.getRootLogger().info("Finished period for job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
+			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
 			output_to_return = Main.RESULT_WARNING;
 			output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - TIMEDOUT"; 
 		}else{
-			Logger.getRootLogger().info("Finished period for job  " + jobname + ":" + jobId + ". Result: " + jr.toString());
+			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: " + jr.toString());
 			
 			try {
 				Misc.writeAllFile(jobpath + ".out.tmp", jr.toString());
@@ -220,14 +210,14 @@ public class Main {
 			}
 		}
 		
-		Logger.getRootLogger().info("Removing job "+ jobname + ":" + jobId + "...");
+		logger.info("Removing job "+ jobname + ":" + jobId + "...");
 		schedulerstub.removeJob(jobId);
-		Logger.getRootLogger().info("Done.");
+		logger.info("Done.");
 		
 		
-		Logger.getRootLogger().info("Disconnecting...");
+		logger.info("Disconnecting...");
 		schedulerstub.disconnect();
-		Logger.getRootLogger().info("Done.");
+		logger.info("Done.");
 		
 		Object [] ret = new Object[2];
 		ret[0] = new Integer(output_to_return);

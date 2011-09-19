@@ -1,16 +1,12 @@
-package misc;
+package qosprober.misc;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.io.StringReader;
 import java.net.URL;
@@ -19,22 +15,22 @@ import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
 
-import exceptions.ElementNotFoundException;
+import qosprober.exceptions.ElementNotFoundException;
+import qosprober.main.SchedulerStubProber;
 
 
 /** This class is supposed to have multiple minor functionalities. */
 public class Misc {
 
-	private static boolean alltostdout = false;
-	private static PrintStream stdout;
-	private static PrintStream stdlog;
+	private static Logger logger = Logger.getLogger(Misc.class.getName());
 	private static final long MAX_BUFFER = 1024 * 1024 * 2; // 2 MiB the maximum size of a file to get loaded completely. 
+	
 	
     private Misc(){}
 
     /* Get a descriptive string from the given object. 
      * Particularly useful if the argument is an ArrayList, or just an array. */
-    public static String getDescriptiveString(Object o){
+	public static String getDescriptiveString(Object o){
         String output = "";
         if (o instanceof ArrayList){
             ArrayList a = (ArrayList) o;
@@ -73,9 +69,9 @@ public class Misc {
     public static void deleteFile(String filename) throws Exception{
         File file = new File(filename);
         if(file.delete()){
-            //Logger.getRootLogger().info("File '" + filename + "' deleted.");
+            //logger.info("File '" + filename + "' deleted.");
         }else{
-        	Logger.getRootLogger().info("Error deleting file '" + filename + "'...");
+        	logger.info("Error deleting file '" + filename + "'...");
         }
 
     }
@@ -85,9 +81,9 @@ public class Misc {
         ArrayList<File> files = Misc.getListOfFiles(extension, tool_path);
         for (File f: files){
             if(f.delete()){
-            	Logger.getRootLogger().info("File '" + f.getPath() + "' deleted.");
+            	logger.info("File '" + f.getPath() + "' deleted.");
             }else{
-            	Logger.getRootLogger().info("Error deleting file '" + f.getPath() + "'...");
+            	logger.info("Error deleting file '" + f.getPath() + "'...");
             }
         }
     }
@@ -256,59 +252,7 @@ public class Misc {
     	}
     	throw new ElementNotFoundException("The key '" + key + "' was not found.");
     }
-//    
-//    /* */
-//    public static void redirectStdOut(boolean alltostdoutt, String filename) throws FileNotFoundException{
-//    	alltostdout = alltostdoutt;
-//	
-//    	if (stdout == null){
-//    		stdout = System.out;
-//    		if (filename!=null){
-//    			stdlog = new PrintStream(new FileOutputStream(filename));
-//    		}else{
-//    			stdlog = new PrintStream(
-//    						new OutputStream() {
-//    							public void write(int b) {
-//    								//DO NOTHING
-//    							}
-//    						}
-//    					);
-//    
-//    		}
-//    	}
-//    	if (alltostdout==true){
-//    		System.setOut(stdout);
-//    	}else{
-//	    	System.setOut(stdlog);
-//    	}
-//    	
-//    }
-//    
-//    /* Print the given string in the std out (it depends on the 'debug' flag). */
-//    public static void print(String str){
-//    	PrintStream previous = System.out;
-//    	if (alltostdout==true){
-//    		System.setOut(stdout);
-//    	}else{
-//	    	System.setOut(stdout);
-//    	}
-//        System.out.println(str);
-//        System.setOut(previous);
-//        
-//    }
-//    
-//    /* Print the given string in the log out (it depends on the 'debug' flag). */
-//    public static void log(String str){
-//    	PrintStream previous = System.out;
-//    	if (alltostdout==true){
-//    		System.setOut(stdout);
-//    	}else{
-//    		System.setOut(stdlog);
-//    	}
-//    	System.out.println(str);
-//    	System.setOut(previous);
-//    }
-//    
+
     /* Print the classpath (used for debug only). */
     public static String getClasspath() {
         //Get the System Classloader

@@ -1,8 +1,7 @@
-package main;
+package qosprober.main;
 import java.io.Serializable;
-import java.util.ArrayList;
 
-import misc.Misc;
+import qosprober.misc.Misc;
 
 import org.apache.log4j.Logger;
 import org.ow2.proactive.scheduler.common.NotificationData;
@@ -16,8 +15,7 @@ import org.ow2.proactive.scheduler.common.task.TaskInfo;
 
 
 public class SchedulerEventsListener implements SchedulerEventListener, Serializable{
-
-	private static final long serialVersionUID = 1L;
+	private static Logger logger = Logger.getLogger(SchedulerEventsListener.class.getName());
 	
 	private static final int lastFinishedJobsBufferSize = 100;
 	public static String[] lastFinishedJobs = new String[lastFinishedJobsBufferSize];
@@ -29,7 +27,7 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 
 	@Override
 	public void jobStateUpdatedEvent(NotificationData<JobInfo> info) {
-		Logger.getRootLogger().info(">>Event " + info.getData() +  " " + info.getEventType().toString());
+		logger.info(">>Event " + info.getData() +  " " + info.getEventType().toString());
 		if (info.getEventType().equals(SchedulerEvent.JOB_RUNNING_TO_FINISHED)){
 			addFinishedJobId(info.getData().getJobId().value());
 			synchronized(SchedulerStubProber.class){
@@ -48,15 +46,15 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 	public void usersUpdatedEvent(NotificationData<UserIdentification> arg0) {}
 	
 	public static synchronized boolean checkIfJobIdHasJustFinished(JobId jobId){
-		Logger.getRootLogger().info("Checking if " + jobId.value() + " has already finished...");
+		logger.info("Checking if " + jobId.value() + " has already finished...");
 		printList();
 		for (String j:lastFinishedJobs){
 			if (j!=null && j.equals(jobId.value())){
-				Logger.getRootLogger().info("\t" + "yes");
+				logger.info("\t" + "yes");
 				return true;
 			}
 		}
-		Logger.getRootLogger().info("\t" + "no");
+		logger.info("\t" + "no");
 		return false;
 	}
 	
@@ -66,8 +64,8 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 		printList();
 	}
 	private static synchronized void printList(){
-		Logger.getRootLogger().info("Last finished jobs: ");
-		Logger.getRootLogger().info(Misc.getDescriptiveString((Object)lastFinishedJobs));
+		logger.info("Last finished jobs: ");
+		logger.info(Misc.getDescriptiveString((Object)lastFinishedJobs));
 	}
 	
 }

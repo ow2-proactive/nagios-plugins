@@ -1,4 +1,4 @@
-package main;
+package qosprober.main;
 public enum ProActiveProxyProtocol  
 {
 	UNKNOWN,

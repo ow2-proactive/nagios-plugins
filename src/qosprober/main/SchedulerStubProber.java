@@ -1,12 +1,10 @@
-package main;
+package qosprober.main;
 
-import java.io.File;
-import java.io.Serializable;
 import java.net.URI;
 
 import javax.security.auth.login.LoginException;
 
-import misc.Misc;
+import qosprober.misc.Misc;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -17,20 +15,14 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.api.PAActiveObject;
-import org.objectweb.proactive.core.ProActiveTimeoutException;
-import org.objectweb.proactive.core.config.ProActiveConfiguration;
 import org.objectweb.proactive.core.node.NodeException;
-import org.ow2.proactive.scheduler.common.NotificationData;
 import org.ow2.proactive.scheduler.common.SchedulerConnection;
-import org.ow2.proactive.scheduler.common.SchedulerEvent;
-import org.ow2.proactive.scheduler.common.SchedulerEventListener;
 import org.ow2.proactive.scheduler.common.exception.JobCreationException;
 import org.ow2.proactive.scheduler.common.exception.NotConnectedException;
 import org.ow2.proactive.scheduler.common.exception.PermissionException;
 import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import org.ow2.proactive.scheduler.common.exception.SubmissionClosedException;
 import org.ow2.proactive.scheduler.common.exception.UnknownJobException;
-import org.ow2.proactive.scheduler.common.task.TaskInfo;
 import org.ow2.proactive.scheduler.common.job.*;
 import org.ow2.proactive.scheduler.common.job.factories.JobFactory;
 import org.ow2.proactive.scheduler.common.Scheduler;
@@ -39,17 +31,16 @@ import org.ow2.proactive.scheduler.common.SchedulerAuthenticationInterface;
 import java.io.IOException;
 
 import java.security.KeyException;
-import java.util.ArrayList;
 import java.util.Date;
 
 import org.ow2.proactive.authentication.crypto.Credentials;
 
-import exceptions.InvalidProtocolException;
+import qosprober.exceptions.InvalidProtocolException;
 
 
 public class SchedulerStubProber{
 	
-	private static final long serialVersionUID = 1L;
+	private static Logger logger = Logger.getLogger(SchedulerStubProber.class.getName());	
 	private Scheduler schedulerStub;
 	private ProActiveProxyProtocol protocol = ProActiveProxyProtocol.UNKNOWN;
 	private String sessionId = null;
@@ -61,12 +52,11 @@ public class SchedulerStubProber{
 		protocol = ProActiveProxyProtocol.parseProtocol(protocolStr);
 		if (protocol == ProActiveProxyProtocol.JAVAPA){ 
 			
-			Logger.getRootLogger().info("Joining to the scheduler...");
+			logger .info("Joining to the scheduler...");
 	        SchedulerAuthenticationInterface auth = SchedulerConnection.waitAndJoin(url);
-	        //SchedulerAuthenticationInterface auth = SchedulerConnection.join(url);
-	        Logger.getRootLogger().info("Creating credentials...");
+	        logger .info("Creating credentials...");
 	        Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
-	        Logger.getRootLogger().info("Logging in...");
+	        logger .info("Logging in...");
 	        schedulerStub = auth.login(cred);
 	        SchedulerEventsListener aa = PAActiveObject.newActive(SchedulerEventsListener.class, new Object[]{}); 
 	        schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
@@ -80,7 +70,7 @@ public class SchedulerStubProber{
 		    client.executeMethod(methodLogin);
 		    
 		    sessionId = methodLogin.getResponseBodyAsString();
-		    Logger.getRootLogger().info("Logged in with sessionId " + sessionId);
+		    logger.info("Logged in with sessionId " + sessionId);
 
 		}else{
 			throw new InvalidProtocolException("Protocol " + protocolStr + " not supported.");
@@ -102,7 +92,7 @@ public class SchedulerStubProber{
 		   
 		    client.executeMethod(method);
 		    String response = method.getResponseBodyAsString();
-		    Logger.getRootLogger().info("Submitting job response: " + response);
+		    logger.info("Submitting job response: " + response);
 
 			return null;
 		}else{
@@ -172,7 +162,7 @@ public class SchedulerStubProber{
 		if (protocol == ProActiveProxyProtocol.JAVAPA){	
 			schedulerStub.removeJob(jobId);
 		}else if (protocol == ProActiveProxyProtocol.REST){
-			Logger.getRootLogger().error("Not implemented");
+			logger.error("Not implemented");
 			//throw new Exception("Not implemented.");
 		}else{
 			throw new InvalidProtocolException("Invalid protocol selected.");

@@ -1,6 +1,4 @@
-package main;
-import misc.Misc;
-
+package qosprober.main;
 
 public class TimeouterThread extends Thread{
 	private int timeoutsec;
