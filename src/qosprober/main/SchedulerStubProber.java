@@ -37,21 +37,26 @@ import org.ow2.proactive.authentication.crypto.Credentials;
 
 import qosprober.exceptions.InvalidProtocolException;
 
-
+/* Class to work as a Stub or point of access to the Scheduler. 
+ * This is our interface to the remote Scheduler.
+ * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST.  
+ * */
 public class SchedulerStubProber{
 	
-	private static Logger logger = Logger.getLogger(SchedulerStubProber.class.getName());	
-	private Scheduler schedulerStub;
-	private ProActiveProxyProtocol protocol = ProActiveProxyProtocol.UNKNOWN;
-	private String sessionId = null;
-	private URI uri;
+	private static Logger logger = Logger.getLogger(SchedulerStubProber.class.getName()); // Logger.
+	private Scheduler schedulerStub; // Stub to the scheduler.
+	private ProActiveProxyProtocol protocol = ProActiveProxyProtocol.UNKNOWN; // Protocol to get connected with the Scheduler.
+	
+	/* REST attributes. */
+	private String sessionId = null; // For the REST protocol, it defines the ID of the session.
+	private URI uri; // It defines the URI used as a suffix to get the final URL for the REST server.
 	
 	public SchedulerStubProber(){}
 	
+	/* Initialize the connection/session. */
 	public void init(String protocolStr, String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, InvalidProtocolException, HttpException, IOException{
 		protocol = ProActiveProxyProtocol.parseProtocol(protocolStr);
-		if (protocol == ProActiveProxyProtocol.JAVAPA){ 
-			
+		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol. 
 			logger .info("Joining to the scheduler...");
 	        SchedulerAuthenticationInterface auth = SchedulerConnection.waitAndJoin(url);
 	        logger .info("Creating credentials...");
@@ -62,7 +67,6 @@ public class SchedulerStubProber{
 	        schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
 		}else if (protocol == ProActiveProxyProtocol.REST){
 		    uri = URI.create(url);
-
 		    PostMethod methodLogin = new PostMethod(uri.toString() + "/login");
 		    methodLogin.addParameter("username", user);
 		    methodLogin.addParameter("password", pass);
@@ -77,9 +81,10 @@ public class SchedulerStubProber{
 		}
 	}
 	
+	/* Submit a job. */
 	public JobId submitJob(String jobpath) throws IOException, NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException, InvalidProtocolException{
 		Job job = JobFactory.getFactory().createJob(jobpath);
-		if (protocol == ProActiveProxyProtocol.JAVAPA){
+		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.
 			return schedulerStub.submit(job);
 		}else if (protocol == ProActiveProxyProtocol.REST){
 			PostMethod method = new PostMethod(uri.toString() + "/submit");
@@ -100,8 +105,9 @@ public class SchedulerStubProber{
 		} 
 	}
 	
+	/* Get the result of the job. */
 	public JobResult getJobResult(JobId jobId) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
-		if (protocol == ProActiveProxyProtocol.JAVAPA){
+		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.
 			return schedulerStub.getJobResult(jobId);
 		}else if (protocol == ProActiveProxyProtocol.REST){
 		    GetMethod method = new GetMethod(uri.toString()+ "/jobs/" + jobId + "/result");
@@ -114,9 +120,10 @@ public class SchedulerStubProber{
 		}
 	}
 	
+	/* Wait for a job to finish. */
 	public void waitUntilJobFinishes(JobId jobId, int timeoutms) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
 
-		if (protocol == ProActiveProxyProtocol.JAVAPA){
+		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.
 			long start = (new Date()).getTime();
 			long end;
 			boolean timeout;
@@ -124,7 +131,7 @@ public class SchedulerStubProber{
 				synchronized(SchedulerStubProber.class){
 					
 					try {
-						SchedulerStubProber.class.wait(timeoutms);
+						SchedulerStubProber.class.wait(timeoutms); // This thread is blocked until the SchedulerEventsListener notifies of a new finished job.
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -141,9 +148,9 @@ public class SchedulerStubProber{
 		}
 	}
 
-	
+	/* Return the state of the job in the current Scheduler */
 	public JobState getJobState(JobId jobId) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
-		if (protocol == ProActiveProxyProtocol.JAVAPA){
+		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.
 			return schedulerStub.getJobState(jobId);
 		}else if (protocol == ProActiveProxyProtocol.REST){
 			
@@ -157,9 +164,9 @@ public class SchedulerStubProber{
 		}
 	}
 
-	
+	/* Remove the job from the Scheduler. */
 	public void removeJob(JobId jobId) throws NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
-		if (protocol == ProActiveProxyProtocol.JAVAPA){	
+		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.	
 			schedulerStub.removeJob(jobId);
 		}else if (protocol == ProActiveProxyProtocol.REST){
 			logger.error("Not implemented");
@@ -170,8 +177,9 @@ public class SchedulerStubProber{
 		
 	}
 	
+	/* Disconnect from the Scheduler. */
 	public void disconnect() throws NotConnectedException, PermissionException, InvalidProtocolException, HttpException, IOException{	
-		if (protocol == ProActiveProxyProtocol.JAVAPA){	
+		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.	
 			schedulerStub.disconnect();
 			
 		}else if (protocol == ProActiveProxyProtocol.REST){

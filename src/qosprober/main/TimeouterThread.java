@@ -1,5 +1,6 @@
 package qosprober.main;
 
+/** Class useful to kill the whole process in case the Scheduler becomes unresponsive. */
 public class TimeouterThread extends Thread{
 	private int timeoutsec;
 	private int errorcode;
