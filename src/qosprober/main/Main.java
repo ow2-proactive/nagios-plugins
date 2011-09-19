@@ -65,14 +65,23 @@ public class Main {
 		String user = (String)parser.getOptionValue(userO, "demo"); 			/* User. */
 		String pass = (String)parser.getOptionValue(passO, "demo"); 			/* Pass. */
 		String protocol = (String)parser.getOptionValue(protocolO, "JAVAPA"); 	/* Protocol, either REST or JAVAPA. */
-		String jobpath = (String)parser.getOptionValue(jobpathO, ""); 			/* Path of the job descriptor (xml). */
-		String url = (String)parser.getOptionValue(urlO, "pamr://1"); 			/* Url of the Scheduler/RM. */
+		String jobpath = (String)parser.getOptionValue(jobpathO); 				/* Path of the job descriptor (xml). */
+		String url = (String)parser.getOptionValue(urlO); 						/* Url of the Scheduler/RM. */
 		Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO, new Integer(60)); /* Timeout in seconds for the job to be executed. */
 		String paconf = (String)parser.getOptionValue(paconfO); 				/* Path of the ProActive xml configuration file. */
 		String logfile = (String)parser.getOptionValue(logfileO, null); 		/* Path of the logfile (if any). */
 		String host = (String)parser.getOptionValue(hostO, "localhost"); 		/* Host to be tested. Ignored. */
 		Double warning = (Double)parser.getOptionValue(warningO, new Double(100)); /* Warning level. Ignored. */
 		Double critical = (Double)parser.getOptionValue(criticalO, new Double(100)); /* Critical level. Ignored. */ 
+		
+		
+		if (jobpath == null || user == null || pass == null || protocol == null || jobpath == null){
+			/* In case something is not expected, print usage and exit. */
+		    logger.fatal("There are some missing parameters.");
+		    Main.printUsage();
+		    System.exit(RESULT_ERROR);
+		}
+		
 		
 		PropertyConfigurator.configure("log4j.properties");
 		
