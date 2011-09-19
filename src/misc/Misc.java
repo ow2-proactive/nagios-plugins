@@ -256,59 +256,59 @@ public class Misc {
     	}
     	throw new ElementNotFoundException("The key '" + key + "' was not found.");
     }
-    
-    /* */
-    public static void redirectStdOut(boolean alltostdoutt, String filename) throws FileNotFoundException{
-    	alltostdout = alltostdoutt;
-	
-    	if (stdout == null){
-    		stdout = System.out;
-    		if (filename!=null){
-    			stdlog = new PrintStream(new FileOutputStream(filename));
-    		}else{
-    			stdlog = new PrintStream(
-    						new OutputStream() {
-    							public void write(int b) {
-    								//DO NOTHING
-    							}
-    						}
-    					);
-    
-    		}
-    	}
-    	if (alltostdout==true){
-    		System.setOut(stdout);
-    	}else{
-	    	System.setOut(stdlog);
-    	}
-    	
-    }
-    
-    /* Print the given string in the std out (it depends on the 'debug' flag). */
-    public static void print(String str){
-    	PrintStream previous = System.out;
-    	if (alltostdout==true){
-    		System.setOut(stdout);
-    	}else{
-	    	System.setOut(stdout);
-    	}
-        System.out.println(str);
-        System.setOut(previous);
-        
-    }
-    
-    /* Print the given string in the log out (it depends on the 'debug' flag). */
-    public static void log(String str){
-    	PrintStream previous = System.out;
-    	if (alltostdout==true){
-    		System.setOut(stdout);
-    	}else{
-    		System.setOut(stdlog);
-    	}
-    	System.out.println(str);
-    	System.setOut(previous);
-    }
-    
+//    
+//    /* */
+//    public static void redirectStdOut(boolean alltostdoutt, String filename) throws FileNotFoundException{
+//    	alltostdout = alltostdoutt;
+//	
+//    	if (stdout == null){
+//    		stdout = System.out;
+//    		if (filename!=null){
+//    			stdlog = new PrintStream(new FileOutputStream(filename));
+//    		}else{
+//    			stdlog = new PrintStream(
+//    						new OutputStream() {
+//    							public void write(int b) {
+//    								//DO NOTHING
+//    							}
+//    						}
+//    					);
+//    
+//    		}
+//    	}
+//    	if (alltostdout==true){
+//    		System.setOut(stdout);
+//    	}else{
+//	    	System.setOut(stdlog);
+//    	}
+//    	
+//    }
+//    
+//    /* Print the given string in the std out (it depends on the 'debug' flag). */
+//    public static void print(String str){
+//    	PrintStream previous = System.out;
+//    	if (alltostdout==true){
+//    		System.setOut(stdout);
+//    	}else{
+//	    	System.setOut(stdout);
+//    	}
+//        System.out.println(str);
+//        System.setOut(previous);
+//        
+//    }
+//    
+//    /* Print the given string in the log out (it depends on the 'debug' flag). */
+//    public static void log(String str){
+//    	PrintStream previous = System.out;
+//    	if (alltostdout==true){
+//    		System.setOut(stdout);
+//    	}else{
+//    		System.setOut(stdlog);
+//    	}
+//    	System.out.println(str);
+//    	System.setOut(previous);
+//    }
+//    
     /* Print the classpath (used for debug only). */
     public static String getClasspath() {
         //Get the System Classloader
