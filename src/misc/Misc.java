@@ -1,4 +1,5 @@
 package misc;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -6,12 +7,17 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.RandomAccessFile;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+
+import org.apache.log4j.Logger;
 
 import exceptions.ElementNotFoundException;
 
@@ -22,9 +28,12 @@ public class Misc {
 	private static boolean alltostdout = false;
 	private static PrintStream stdout;
 	private static PrintStream stdlog;
+	private static final long MAX_BUFFER = 1024 * 1024 * 2; // 2 MiB the maximum size of a file to get loaded completely. 
 	
     private Misc(){}
 
+    /* Get a descriptive string from the given object. 
+     * Particularly useful if the argument is an ArrayList, or just an array. */
     public static String getDescriptiveString(Object o){
         String output = "";
         if (o instanceof ArrayList){
@@ -59,33 +68,31 @@ public class Misc {
 
         return output;
     }
-    //public static int executeCall(String call) throws Exception {
 
-     
-
+    /* Delete a given file. */
     public static void deleteFile(String filename) throws Exception{
         File file = new File(filename);
         if(file.delete()){
-            //System.out.println("File '" + filename + "' deleted.");
+            //Logger.getRootLogger().info("File '" + filename + "' deleted.");
         }else{
-            System.out.println("Error deleting file '" + filename + "'...");
+        	Logger.getRootLogger().info("Error deleting file '" + filename + "'...");
         }
 
     }
 
-
-
+    /* Delete a set of files matching the given extension. */
     public static void deleteFilesFrom(String extension, String tool_path) throws Exception{
         ArrayList<File> files = Misc.getListOfFiles(extension, tool_path);
         for (File f: files){
             if(f.delete()){
-                System.out.println("File '" + f.getPath() + "' deleted.");
+            	Logger.getRootLogger().info("File '" + f.getPath() + "' deleted.");
             }else{
-                System.out.println("Error deleting file '" + f.getPath() + "'...");
+            	Logger.getRootLogger().info("Error deleting file '" + f.getPath() + "'...");
             }
         }
     }
 
+    /* Gets a list of files matching the extension given. */
     public static ArrayList<File> getListOfFiles(String extension, String tool_path) throws Exception{
         final String exten = extension;
 
@@ -124,6 +131,7 @@ public class Misc {
         return output;
     }
 
+    /* Gets a list of files with particular suffix (including extension). */
     public static ArrayList<File> getListOfFilesEndingWith(String ending, String tool_path) throws Exception{
         final String ending_final = ending;
 
@@ -163,18 +171,20 @@ public class Misc {
     }
 
 
+    /* Put the content of a file into a String. */
     public static String readAllFile(String filename) throws IOException{
-        String str =  null;
-        
-        FileInputStream i = new FileInputStream(filename);
-        byte buff[] = new byte[i.available()];
-        i.read(buff);
-        i.close();
-        str = new String(buff);
-    
+        RandomAccessFile file = new RandomAccessFile (filename, "r");
+        if (file.length() > MAX_BUFFER){
+        	throw new IOException("The file '"+filename+"' is too big to load it completely in memory.");
+        }
+        byte buff[] = new byte[(int) file.length()];
+        file.readFully(buff);
+        String str = new String(buff);
+        file.close();
         return str;
     }
 
+    /* Write a content into a file. */
     public static void writeAllFile(String filename, String content) throws Exception{
         try {
             FileOutputStream i = new FileOutputStream(filename);
@@ -185,6 +195,7 @@ public class Misc {
         }
     }
 
+    /* Append a content into a file. */
     public static void appendToFile(String filename, String content) throws Exception{
         try {
             FileOutputStream appendedFile =
@@ -198,7 +209,7 @@ public class Misc {
 
     }
 
-
+    /* Split a String into many Strings with the lines of the first one. */
     public static ArrayList<String> getLines(String input){
         String str;
         ArrayList<String> ret = new ArrayList<String>();
@@ -216,7 +227,7 @@ public class Misc {
     }
 
 
-
+    /* Filter out empty Strings from the set. */
     public static ArrayList<String> filterEmptyLines(ArrayList<String> inp){
         ArrayList<String> ret = new ArrayList<String>();
         for(String l:inp){
@@ -224,7 +235,6 @@ public class Misc {
                 ret.add(l);
             }
         }
-
         return ret;
     }
 
@@ -237,6 +247,7 @@ public class Misc {
         return null;
     }
     
+    /* A key-value Strings set is given. This method gets the value section using the key. */
     public static String getValueUsingKey(String key, ArrayList<String> set) throws ElementNotFoundException{
     	for (String s: set){
     		if (s.toUpperCase().startsWith(key.toUpperCase())){
@@ -246,7 +257,7 @@ public class Misc {
     	throw new ElementNotFoundException("The key '" + key + "' was not found.");
     }
     
-    
+    /* */
     public static void redirectStdOut(boolean alltostdoutt, String filename) throws FileNotFoundException{
     	alltostdout = alltostdoutt;
 	
@@ -261,8 +272,8 @@ public class Misc {
     								//DO NOTHING
     							}
     						}
-    						);
-    				
+    					);
+    
     		}
     	}
     	if (alltostdout==true){
@@ -273,6 +284,7 @@ public class Misc {
     	
     }
     
+    /* Print the given string in the std out (it depends on the 'debug' flag). */
     public static void print(String str){
     	PrintStream previous = System.out;
     	if (alltostdout==true){
@@ -285,7 +297,7 @@ public class Misc {
         
     }
     
-    
+    /* Print the given string in the log out (it depends on the 'debug' flag). */
     public static void log(String str){
     	PrintStream previous = System.out;
     	if (alltostdout==true){
@@ -297,18 +309,38 @@ public class Misc {
     	System.setOut(previous);
     }
     
-    public static void printClasspath() {
-
+    /* Print the classpath (used for debug only). */
+    public static String getClasspath() {
         //Get the System Classloader
+    	String ret = "";
         ClassLoader sysClassLoader = ClassLoader.getSystemClassLoader();
-        System.out.println("Classpath [");
+        ret = "Classpath [";
         //Get the URLs
         URL[] urls = ((URLClassLoader)sysClassLoader).getURLs();
 
         for(int i=0; i< urls.length; i++)
         {
-            System.out.println("\t-" + urls[i].getFile());
+            ret = ret + "\t-" + urls[i].getFile() + "\n";
         }       
-        System.out.println("]");
+        ret = ret + "]";
+        return ret;
     }
+    
+    
+    /* Read all the content of a resource file. */
+    public static String readAllTextResource(String resource) throws IOException{
+		InputStream is = Misc.class.getResourceAsStream(resource);
+	    InputStreamReader isr = new InputStreamReader(is);
+	    BufferedReader br = new BufferedReader(isr);
+	    String line;
+	    String ret = "";
+	    while ((line = br.readLine()) != null){
+	      ret = ret + line + "\n";
+	    }
+	    br.close();
+	    isr.close();
+	    is.close();
+	    return ret;
+	}
+    
 }

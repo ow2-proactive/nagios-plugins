@@ -1,3 +1,4 @@
+
 import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
@@ -12,6 +13,7 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.httpclient.HttpException;
+import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.api.PAActiveObject;
 import org.objectweb.proactive.core.ProActiveTimeoutException;
@@ -58,12 +60,12 @@ public class SchedulerStubProber{
 		protocol = ProActiveProxyProtocol.parseProtocol(protocolStr);
 		if (protocol == ProActiveProxyProtocol.JAVAPA){ 
 			
-			System.out.println("Joining to the scheduler...");
+			Logger.getRootLogger().info("Joining to the scheduler...");
 	        SchedulerAuthenticationInterface auth = SchedulerConnection.waitAndJoin(url);
 	        //SchedulerAuthenticationInterface auth = SchedulerConnection.join(url);
-	        System.out.println("Creating credentials...");
+	        Logger.getRootLogger().info("Creating credentials...");
 	        Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
-	        System.out.println("Logging in...");
+	        Logger.getRootLogger().info("Logging in...");
 	        schedulerStub = auth.login(cred);
 	        SchedulerEventsListener aa = PAActiveObject.newActive(SchedulerEventsListener.class, new Object[]{}); 
 	        schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
@@ -77,7 +79,7 @@ public class SchedulerStubProber{
 		    client.executeMethod(methodLogin);
 		    
 		    sessionId = methodLogin.getResponseBodyAsString();
-		    System.out.println("Logged in with sessionId " + sessionId);
+		    Logger.getRootLogger().info("Logged in with sessionId " + sessionId);
 
 		}else{
 			throw new InvalidProtocolException("Protocol " + protocolStr + " not supported.");
@@ -92,8 +94,6 @@ public class SchedulerStubProber{
 			PostMethod method = new PostMethod(uri.toString() + "/submit");
 			method.addRequestHeader("sessionid", sessionId);
 			String stt = Misc.readAllFile(jobpath);
-			System.out.println(stt);
-			//method.setQueryString(stt);
 			
 			stt = new String(stt.getBytes(), "UTF8");
 			method.setRequestEntity(new StringRequestEntity(stt, "HTTP_CONTENT_TYPE", "UTF8"));
@@ -101,7 +101,7 @@ public class SchedulerStubProber{
 		   
 		    client.executeMethod(method);
 		    String response = method.getResponseBodyAsString();
-		    System.out.println("Submitting job response: " + response);
+		    Logger.getRootLogger().info("Submitting job response: " + response);
 
 			return null;
 		}else{
@@ -117,8 +117,6 @@ public class SchedulerStubProber{
 		    method.addRequestHeader("sessionid", sessionId);
 		    HttpClient client = new HttpClient();
 		    client.executeMethod(method);
-		    //result = method.getResponseBodyAsString().length();
-		    System.out.println(method.getResponseBodyAsString());
 			return null;
 		}else{
 			throw new InvalidProtocolException("Invalid protocol selected.");
@@ -126,29 +124,21 @@ public class SchedulerStubProber{
 	}
 	
 	public void waitUntilJobFinishes(JobId jobId, int timeoutms) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
-		//jobWaited = jobId;
-		//System.out.println ("We will wait for job: " + jobWaited); 
+
 		if (protocol == ProActiveProxyProtocol.JAVAPA){
 			long start = (new Date()).getTime();
 			long end;
 			boolean timeout;
 			do{
 				synchronized(SchedulerStubProber.class){
-					//System.out.println("WAIT");
+					
 					try {
 						SchedulerStubProber.class.wait(timeoutms);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					end = (new Date()).getTime();
 					timeout = (end-start>=timeoutms);
-					//if (timeout){
-						//System.out.println("TIMEOUT");
-					//}else{
-						//System.out.println("NOTIFIED");
-					//}
-					
 				}
 				
 			}while(SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId)==false && timeout==false);
@@ -170,8 +160,6 @@ public class SchedulerStubProber{
 		    method.addRequestHeader("sessionid", sessionId);
 		    HttpClient client = new HttpClient();
 		    client.executeMethod(method);
-		    System.out.println(method.getResponseBodyAsString());
-			
 			return null;
 		}else{
 			throw new InvalidProtocolException("Invalid protocol selected.");
@@ -183,7 +171,7 @@ public class SchedulerStubProber{
 		if (protocol == ProActiveProxyProtocol.JAVAPA){	
 			schedulerStub.removeJob(jobId);
 		}else if (protocol == ProActiveProxyProtocol.REST){
-			System.out.println("Not implemented");
+			Logger.getRootLogger().error("Not implemented");
 			//throw new Exception("Not implemented.");
 		}else{
 			throw new InvalidProtocolException("Invalid protocol selected.");
@@ -201,7 +189,6 @@ public class SchedulerStubProber{
 		    dismethod.addRequestHeader("sessionid", sessionId);
 		    HttpClient client = new HttpClient();
 		    client.executeMethod(dismethod);
-		    System.out.println(dismethod.getResponseBodyAsString());
 		}else{
 			throw new InvalidProtocolException("Invalid protocol selected.");
 		}
