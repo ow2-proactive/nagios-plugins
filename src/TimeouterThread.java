@@ -19,7 +19,7 @@ public class TimeouterThread extends Thread{
 			e.printStackTrace();
 		}
 		
-		Misc.printAndExit(errorcode, message);
+		Main.printAndExit(errorcode, message);
 	
 	}
 }

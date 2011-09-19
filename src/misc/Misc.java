@@ -285,10 +285,6 @@ public class Misc {
         
     }
     
-    public synchronized static void printAndExit(Integer ret, String str){
-    	Misc.print(str);
-    	System.exit(ret);
-    }
     
     public static void log(String str){
     	PrintStream previous = System.out;
