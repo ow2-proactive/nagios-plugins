@@ -49,8 +49,6 @@ public class Main {
 		CmdLineParser.Option urlO = parser.addStringOption("url");
 		CmdLineParser.Option timeoutsecO = parser.addIntegerOption('t', "timeout");
 		CmdLineParser.Option paconfO = parser.addStringOption('f', "paconf");
-		CmdLineParser.Option logfileO = parser.addStringOption('l', "logfile");
-		
 		CmdLineParser.Option hostO = parser.addStringOption('H', "hostname");
 		CmdLineParser.Option warningO = parser.addDoubleOption('w', "warning");
 		CmdLineParser.Option criticalO = parser.addDoubleOption('c', "critical");
@@ -72,7 +70,7 @@ public class Main {
 		String url = (String)parser.getOptionValue(urlO); 						/* Url of the Scheduler/RM. */
 		Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO, new Integer(60)); /* Timeout in seconds for the job to be executed. */
 		String paconf = (String)parser.getOptionValue(paconfO); 				/* Path of the ProActive xml configuration file. */
-		String logfile = (String)parser.getOptionValue(logfileO, null); 		/* Path of the logfile (if any). */
+		
 		String host = (String)parser.getOptionValue(hostO, "localhost"); 		/* Host to be tested. Ignored. */
 		Double warning = (Double)parser.getOptionValue(warningO, new Double(100)); /* Warning level. Ignored. */
 		Double critical = (Double)parser.getOptionValue(criticalO, new Double(100)); /* Critical level. Ignored. */ 
@@ -86,23 +84,21 @@ public class Main {
 		}
 		
 		
-		
-		
-		PropertyConfigurator.configure("log4j.properties");
-		
-		//Properties properties = new Properties();
-		//properties.put("log4j.appender.NULL","org.apache.log4j.varia.NullAppender");
-
-		//properties.put("log4j.rootLogger", "FATAL, NULL");
-		//PropertyConfigurator.configure(properties);
-		
-		//System.setProperty("log4j.logger.rootLogger", "FATAL");
-		//System.setProperty("log4j.logger.root", "FATAL");
-		//Logger.getRootLogger().setLevel(Level.FATAL);
-		/* If debug is true then we let print log4j messages in the stdout. */
-		//System.setProperty("log4j.defaultInitOverride", new Boolean(!debug).toString().toLowerCase());
-		
-		
+		if (debug == true){
+			// We load the log4j.properties file.
+			PropertyConfigurator.configure("log4j.properties");
+		}else{
+			// We do the log4j configuration on the fly.
+			Properties properties = new Properties();
+			//properties.put("log4j.appender.NULL","org.apache.log4j.varia.NullAppender");
+			//properties.put("log4j.logger", "FATAL");
+			//properties.put("log4j.defaultInitOverride", "true");
+			properties.put("log4j.rootLogger", "FATAL");
+			properties.put("log4j.logger.proactive", "FATAL");
+			properties.put("log4j.logger.qosprober", "FATAL");
+			
+			PropertyConfigurator.configure(properties);
+		}
 		
 		/* Show all the arguments considered. */
 		logger.info(
@@ -115,7 +111,6 @@ public class Main {
 				"\t url     : " + url + "\n" +
 				"\t timeout : " + timeoutsec + "\n" +
 				"\t paconf  : " + paconf + "\n" +
-				"\t logfile : " + logfile + "\n" +
 				"\t host    : " + host + "\n" +
 				"\t warning : " + warning  + "\n" +
 				"\t critical: " + critical + "\n" 

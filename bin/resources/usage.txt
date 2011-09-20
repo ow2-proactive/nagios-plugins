@@ -7,7 +7,7 @@ DESCRIPTION
 Mandatory arguments to long options are mandatory for short options too.
    
    -d, --debug
-      Verbose debugging mode.
+      Verbose debugging mode. If true it will try to load 'log4j.properties' to know what and where to put the log messages.
        
    -u, --user=USER
       User name to be used to get connected to the Scheduler.
