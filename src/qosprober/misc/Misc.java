@@ -255,11 +255,11 @@ public class Misc {
 
     /* Print the classpath (used for debug only). */
     public static String getClasspath() {
-        //Get the System Classloader
+        // Get the System Classloader
     	String ret = "";
         ClassLoader sysClassLoader = ClassLoader.getSystemClassLoader();
         ret = "Classpath [";
-        //Get the URLs
+        // Get the URLs
         URL[] urls = ((URLClassLoader)sysClassLoader).getURLs();
 
         for(int i=0; i< urls.length; i++)

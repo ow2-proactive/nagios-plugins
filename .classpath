@@ -2,14 +2,27 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/thirds/jargs.jar"/>
-	<classpathentry kind="lib" path="/user/mjost/home/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive.jar" sourcepath="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/src"/>
-	<classpathentry kind="lib" path="/user/mjost/home/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_Scheduler-client.jar" sourcepath="/user/mjost/home/proactive/scheduling/trunk/src/scheduler"/>
-	<classpathentry kind="lib" path="/user/mjost/home/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_SRM-common-client.jar" sourcepath="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/src"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/commons-httpclient-3.1.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/jruby-engine.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/jython-engine.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_ResourceManager.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_Scheduler-core.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_Scheduler-mapreduce.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_Scheduler-matsci.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ProActive_SRM-common.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/script-js.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/log4j.jar"/>
-	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/servlet-api.jar"/>
-	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/jetty-6.1.18.jar"/>
-	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/jetty-util-6.1.18.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/thirds/jargs.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/http-2.0.4.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/bouncycastle.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/javassist.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/fractal-api-2.0.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/isorelax.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/msv.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/wstx-lgpl-3.9.2.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/relaxngDatatype.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/xsdlib.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

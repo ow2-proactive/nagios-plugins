@@ -8,11 +8,17 @@ import java.io.IOException;
 import java.security.KeyException;
 import java.util.Date;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.security.auth.login.LoginException;
 import qosprober.misc.Misc;
 import org.apache.commons.httpclient.HttpException;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.objectweb.proactive.ActiveObjectCreationException;
@@ -28,15 +34,16 @@ import qosprober.exceptions.InvalidProtocolException;
 public class Main {
 
 	/* Nagios exit codes. */
-	private static final int RESULT_ERROR = -1; 	// Error not related to Nagios output (issue in the prober). 
-	private static final int RESULT_OK = 0; 		// Nagios code. Execution successfully. 
-	private static final int RESULT_WARNING = 1; 	// Nagios code. Warning. 
-	private static final int RESULT_CRITICAL = 2; 	// Nagios code. Critical problem in the tested entity.
-	private static final int RESULT_UNKNOWN = 3; 	// Nagios code. Unknown state of the tested entity.
+	private static final int RESULT_ERROR_NON_NAGIOS = -1; 	// Error not related to Nagios output (issue in the prober). 
+	private static final int RESULT_OK = 0; 				// Nagios code. Execution successfully. 
+	private static final int RESULT_WARNING = 1; 			// Nagios code. Warning. 
+	private static final int RESULT_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
+	private static final int RESULT_UNKNOWN = 3; 			// Nagios code. Unknown state of the tested entity.
 	
 	public static Logger logger = Logger.getLogger(Main.class.getName()); // Logger.
 	
 	public static void main(String[] args) throws Exception{
+		
 		
 		/* Parsing of arguments. */
 		CmdLineParser parser = new CmdLineParser();
@@ -59,28 +66,27 @@ public class Main {
 			/* In case something is not expected, print usage and exit. */
 		    System.err.println(e.getMessage());
 		    Main.printUsage();
-		    System.exit(RESULT_ERROR);
+		    System.exit(RESULT_ERROR_NON_NAGIOS);
 		}
 		
-		Boolean debug = (Boolean)parser.getOptionValue(debugO, Boolean.FALSE); 	/* If false, only Nagios output. */
-		String user = (String)parser.getOptionValue(userO, "demo"); 			/* User. */
-		String pass = (String)parser.getOptionValue(passO, "demo"); 			/* Pass. */
-		String protocol = (String)parser.getOptionValue(protocolO, "JAVAPA"); 	/* Protocol, either REST or JAVAPA. */
-		String jobpath = (String)parser.getOptionValue(jobpathO); 				/* Path of the job descriptor (xml). */
-		String url = (String)parser.getOptionValue(urlO); 						/* Url of the Scheduler/RM. */
-		Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO, new Integer(60)); /* Timeout in seconds for the job to be executed. */
-		String paconf = (String)parser.getOptionValue(paconfO); 				/* Path of the ProActive xml configuration file. */
-		
-		String host = (String)parser.getOptionValue(hostO, "localhost"); 		/* Host to be tested. Ignored. */
-		Double warning = (Double)parser.getOptionValue(warningO, new Double(100)); /* Warning level. Ignored. */
-		Double critical = (Double)parser.getOptionValue(criticalO, new Double(100)); /* Critical level. Ignored. */ 
+		final Boolean debug = (Boolean)parser.getOptionValue(debugO, Boolean.FALSE); 	/* If false, only Nagios output. */
+		final String user = (String)parser.getOptionValue(userO);			 			/* User. */
+		final String pass = (String)parser.getOptionValue(passO); 					/* Pass. */
+		final String protocol = (String)parser.getOptionValue(protocolO);			 	/* Protocol, either REST or JAVAPA. */
+		final String jobpath = (String)parser.getOptionValue(jobpathO); 				/* Path of the job descriptor (xml). */
+		final String url = (String)parser.getOptionValue(urlO); 						/* Url of the Scheduler/RM. */
+		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO, new Integer(60)); /* Timeout in seconds for the job to be executed. */
+		final String paconf = (String)parser.getOptionValue(paconfO); 				/* Path of the ProActive xml configuration file. */
+		final String host = (String)parser.getOptionValue(hostO); 					/* Host to be tested. Ignored. */
+		final Double warning = (Double)parser.getOptionValue(warningO, new Double(100)); /* Warning level. Ignored. */
+		final Double critical = (Double)parser.getOptionValue(criticalO, new Double(100)); /* Critical level. Ignored. */ 
 		
 		
 		if (jobpath == null || user == null || pass == null || protocol == null || jobpath == null){
 			/* In case something is not expected, print usage and exit. */
 		    logger.fatal("There are some missing parameters.");
 		    Main.printUsage();
-		    System.exit(RESULT_ERROR);
+		    System.exit(RESULT_ERROR_NON_NAGIOS);
 		}
 		
 		
@@ -90,14 +96,27 @@ public class Main {
 		}else{
 			// We do the log4j configuration on the fly.
 			Properties properties = new Properties();
-			//properties.put("log4j.appender.NULL","org.apache.log4j.varia.NullAppender");
+			
 			//properties.put("log4j.logger", "FATAL");
 			//properties.put("log4j.defaultInitOverride", "true");
-			properties.put("log4j.rootLogger", "FATAL");
-			properties.put("log4j.logger.proactive", "FATAL");
-			properties.put("log4j.logger.qosprober", "FATAL");
-			
+			properties.put("log4j.rootLogger", "WARN,NULL");
+			properties.put("log4j.logger.org","WARN,stdout");
+			properties.put("log4j.logger.proactive", "WARN,stdout");
+			properties.put("log4j.logger.qosprober", "WARN,stdout");
+			// NULL Appender
+			properties.put("log4j.appender.NULL","org.apache.log4j.varia.NullAppender");
+			// STDOUT Appender
+			properties.put("log4j.appender.stdout","org.apache.log4j.ConsoleAppender");
+			properties.put("log4j.appender.stdout.Target","System.out");
+			properties.put("log4j.appender.stdout.layout","org.apache.log4j.PatternLayout");
+			properties.put("log4j.appender.stdout.layout.ConversionPattern","%-4r [%t] %-5p %c %x - %m%n");
 			PropertyConfigurator.configure(properties);
+			
+			logger.debug("DEBUG TEST MESSAGE");
+			logger.info("INFO TEST MESSAGE");
+			logger.warn("WARN TEST MESSAGE");
+			logger.error("ERROR TEST MESSAGE");
+			logger.fatal("FATAL TEST MESSAGE");
 		}
 		
 		/* Show all the arguments considered. */
@@ -121,8 +140,7 @@ public class Main {
 		Main.createPolicyAndLoadIt();
 		logger.info("Done.");
 		
-		
-		Boolean usepaconffile = false;
+		Boolean usepaconffilee = false;
 		if (paconf!=null){
 			/* A ProActiveConf.xml file was given. If we find it, we use it. */
 			if (new File(paconf).exists()==false){
@@ -131,9 +149,10 @@ public class Main {
 				throw new ElementNotFoundException(msg);
 			}
 			System.setProperty("proactive.configuration", paconf);
-			usepaconffile = true;
+			usepaconffilee = true;
 		}
 		
+		final Boolean usepaconffile = usepaconffilee;
 		/* No need of other arguments. */
 		//String[] otherArgs = parser.getRemainingArgs();
 		
@@ -141,18 +160,32 @@ public class Main {
 		/*** Job submission ***/
 		/**********************/
 		
-		/* Thread with timeout mechanism. 
-		 * This kills the application after a huge effort trying to get connected to the Scheduler/RM. */
-		TimeouterThread timeouter = new TimeouterThread(timeoutsec, Main.RESULT_CRITICAL, "TIMEOUT");
-		timeouter.start();
+		// We prepare our probe to run it in a different thread.
+		// The probe consists in a job submission done to the Scheduler.
+		ExecutorService executor = Executors.newFixedThreadPool(1);
 		
-		/* Probe agains the Scheduler. Job submission and Nagios-formatted output delivery. */
+		Callable<Object[]> proberCallable = new Callable<Object[]>(){
+			public Object[] call() throws Exception {
+				return Main.probe(url, user, pass, protocol, jobpath, timeoutsec, usepaconffile);
+			}
+		};
+		
+		Future<Object[]> proberFuture = executor.submit(proberCallable); // We ask to execute the probe.
+		
 		try{
-			Object[] rete = Main.probe(url, user, pass, protocol, jobpath, timeoutsec, usepaconffile);
-			Main.printAndExit((Integer)rete[0], (String)rete[1]);
-		}catch(Exception e){
-			logger.fatal("Issue with the job submission. Error: '"+e.getMessage()+"'.", e);
+			
+			Object[] res = proberFuture.get(timeoutsec, TimeUnit.SECONDS);
+			// All went okay.
+			Main.printAndExit((Integer)res[0], (String)res[1]);
+		}catch(TimeoutException e){
+			// The execution took more time than expected.
+			Main.printAndExit(Main.RESULT_CRITICAL, "TIMEOUT");
+		}catch(ExecutionException e){
+			// There was an unexpected problem with the execution of the prober.
+			Main.printAndExit(Main.RESULT_CRITICAL, "ERROR:" + e.getMessage());
 		}
+		
+		
 	}
 	
 	
