@@ -7,9 +7,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.security.KeyException;
 import java.util.Date;
+import java.util.Properties;
+
 import javax.security.auth.login.LoginException;
 import qosprober.misc.Misc;
 import org.apache.commons.httpclient.HttpException;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.objectweb.proactive.ActiveObjectCreationException;
@@ -61,7 +64,7 @@ public class Main {
 		    System.exit(RESULT_ERROR);
 		}
 		
-		Boolean debug = (Boolean)parser.getOptionValue(debugO, Boolean.FALSE); 	/* If false, only Nagios output. */ 
+		Boolean debug = (Boolean)parser.getOptionValue(debugO, Boolean.FALSE); 	/* If false, only Nagios output. */
 		String user = (String)parser.getOptionValue(userO, "demo"); 			/* User. */
 		String pass = (String)parser.getOptionValue(passO, "demo"); 			/* Pass. */
 		String protocol = (String)parser.getOptionValue(protocolO, "JAVAPA"); 	/* Protocol, either REST or JAVAPA. */
@@ -83,10 +86,22 @@ public class Main {
 		}
 		
 		
+		
+		
 		PropertyConfigurator.configure("log4j.properties");
 		
+		//Properties properties = new Properties();
+		//properties.put("log4j.appender.NULL","org.apache.log4j.varia.NullAppender");
+
+		//properties.put("log4j.rootLogger", "FATAL, NULL");
+		//PropertyConfigurator.configure(properties);
+		
+		//System.setProperty("log4j.logger.rootLogger", "FATAL");
+		//System.setProperty("log4j.logger.root", "FATAL");
+		//Logger.getRootLogger().setLevel(Level.FATAL);
 		/* If debug is true then we let print log4j messages in the stdout. */
-		System.setProperty("log4j.defaultInitOverride", new Boolean(!debug).toString().toLowerCase());
+		//System.setProperty("log4j.defaultInitOverride", new Boolean(!debug).toString().toLowerCase());
+		
 		
 		
 		/* Show all the arguments considered. */
