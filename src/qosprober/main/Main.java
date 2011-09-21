@@ -34,16 +34,19 @@ import qosprober.exceptions.InvalidProtocolException;
 public class Main {
 
 	/* Nagios exit codes. */
-	private static final int RESULT_ERROR_NON_NAGIOS = -1; 	// Error not related to Nagios output (issue in the prober). 
 	private static final int RESULT_OK = 0; 				// Nagios code. Execution successfully. 
 	private static final int RESULT_WARNING = 1; 			// Nagios code. Warning. 
 	private static final int RESULT_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
 	private static final int RESULT_UNKNOWN = 3; 			// Nagios code. Unknown state of the tested entity.
 	
+	private static String lastStatus;
+	
 	public static Logger logger = Logger.getLogger(Main.class.getName()); // Logger.
+	
 	
 	public static void main(String[] args) throws Exception{
 		
+		Main.setLastStatuss("started, parsing arguments...");
 		
 		/* Parsing of arguments. */
 		CmdLineParser parser = new CmdLineParser();
@@ -66,7 +69,7 @@ public class Main {
 			/* In case something is not expected, print usage and exit. */
 		    System.err.println(e.getMessage());
 		    Main.printUsage();
-		    System.exit(RESULT_ERROR_NON_NAGIOS);
+		    System.exit(RESULT_CRITICAL);
 		}
 		
 		final Boolean debug = (Boolean)parser.getOptionValue(debugO, Boolean.FALSE); 	/* If false, only Nagios output. */
@@ -75,20 +78,19 @@ public class Main {
 		final String protocol = (String)parser.getOptionValue(protocolO);			 	/* Protocol, either REST or JAVAPA. */
 		final String jobpath = (String)parser.getOptionValue(jobpathO); 				/* Path of the job descriptor (xml). */
 		final String url = (String)parser.getOptionValue(urlO); 						/* Url of the Scheduler/RM. */
-		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO, new Integer(60)); /* Timeout in seconds for the job to be executed. */
+		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO); /* Timeout in seconds for the job to be executed. */
 		final String paconf = (String)parser.getOptionValue(paconfO); 				/* Path of the ProActive xml configuration file. */
 		final String host = (String)parser.getOptionValue(hostO); 					/* Host to be tested. Ignored. */
 		final Double warning = (Double)parser.getOptionValue(warningO, new Double(100)); /* Warning level. Ignored. */
 		final Double critical = (Double)parser.getOptionValue(criticalO, new Double(100)); /* Critical level. Ignored. */ 
 		
 		
-		if (jobpath == null || user == null || pass == null || protocol == null || jobpath == null){
+		if (jobpath == null || user == null || pass == null || protocol == null || jobpath == null || timeoutsec == null){
 			/* In case something is not expected, print usage and exit. */
 		    logger.fatal("There are some missing parameters.");
 		    Main.printUsage();
-		    System.exit(RESULT_ERROR_NON_NAGIOS);
+		    System.exit(RESULT_CRITICAL);
 		}
-		
 		
 		if (debug == true){
 			// We load the log4j.properties file.
@@ -111,13 +113,15 @@ public class Main {
 			properties.put("log4j.appender.stdout.layout","org.apache.log4j.PatternLayout");
 			properties.put("log4j.appender.stdout.layout.ConversionPattern","%-4r [%t] %-5p %c %x - %m%n");
 			PropertyConfigurator.configure(properties);
-			
-			logger.debug("DEBUG TEST MESSAGE");
-			logger.info("INFO TEST MESSAGE");
-			logger.warn("WARN TEST MESSAGE");
-			logger.error("ERROR TEST MESSAGE");
-			logger.fatal("FATAL TEST MESSAGE");
 		}
+		
+		Main.setLastStatuss("parameters parsed, doing log4j configuration...");
+		
+		/* Testing of the log4j behavior. */
+		//logger.debug("DEBUG TEST MESSAGE");
+		//logger.info("INFO TEST MESSAGE");
+		//logger.warn("WARN TEST MESSAGE");
+		//logger.error("ERROR TEST MESSAGE");
 		
 		/* Show all the arguments considered. */
 		logger.info(
@@ -135,10 +139,14 @@ public class Main {
 				"\t critical: " + critical + "\n" 
 				);
 		
+		Main.setLastStatuss("log4j configuration done, loading security policy...");
+		
 		/* Security policy procedure. */
 		logger.info("Setting security policies... ");
 		Main.createPolicyAndLoadIt();
 		logger.info("Done.");
+		
+		Main.setLastStatuss("security policy loaded, loading proactive configuration (if needed)...");
 		
 		Boolean usepaconffilee = false;
 		if (paconf!=null){
@@ -151,6 +159,8 @@ public class Main {
 			System.setProperty("proactive.configuration", paconf);
 			usepaconffilee = true;
 		}
+		
+		Main.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		
 		final Boolean usepaconffile = usepaconffilee;
 		/* No need of other arguments. */
@@ -179,10 +189,10 @@ public class Main {
 			Main.printAndExit((Integer)res[0], (String)res[1]);
 		}catch(TimeoutException e){
 			// The execution took more time than expected.
-			Main.printAndExit(Main.RESULT_CRITICAL, "TIMEOUT");
+			Main.printAndExit(Main.RESULT_CRITICAL, "JOB RESULT - TIMEOUT (last status was '"+Main.getLastStatus()+"')");
 		}catch(ExecutionException e){
 			// There was an unexpected problem with the execution of the prober.
-			Main.printAndExit(Main.RESULT_CRITICAL, "ERROR:" + e.getMessage());
+			Main.printAndExit(Main.RESULT_CRITICAL, "JOB RESULT - ERROR:" + e.getMessage());
 		}
 		
 		
@@ -193,8 +203,13 @@ public class Main {
 		
 		SchedulerStubProber schedulerstub = new SchedulerStubProber(); // We get connected to the Scheduler through this stub, later we submit a job, etc. 
 		
+		Main.setLastStatuss("scheduler stub created, connecting to shceduler...");
+		
 		logger.info("Connecting... "); 					// Connecting to the Scheduler...
 		schedulerstub.init(protocol, url, user, pass); 	// Login procedure...
+		
+		Main.setLastStatuss("connected to scheduler, loading proactive configuration...");
+		
 		if (usepaconffile==true){
 			logger.info("Loading ProActive configuration (xml) file... ");
 			ProActiveConfiguration.load();
@@ -203,6 +218,7 @@ public class Main {
 		}
 		logger.info("Done.");
 		
+		Main.setLastStatuss("proactiv configuration loaded, submitting job...");
 		
 		int output_to_return = Main.RESULT_CRITICAL; 
 		String output_to_print = "NO TEST PERFORMED"; 		// Default output (for Nagios).
@@ -216,9 +232,13 @@ public class Main {
 		JobId jobId = schedulerstub.submitJob(jobpath); 	// Submission of the job.
 		logger.info("Done.");
 		
+		Main.setLastStatuss("job submitted, waiting for it...");
+		
 		logger.info("Waiting for " + jobname + ":" + jobId + " job...");
 		schedulerstub.waitUntilJobFinishes(jobId, timeoutsec * 1000); // Wait up to 'timeoutsec' seconds until giving up.
 		logger.info("Done.");
+		
+		Main.setLastStatuss("job finished, getting its result...");
 		
 		long stop = (new Date()).getTime(); 				// Time counting. End.
 		
@@ -226,12 +246,14 @@ public class Main {
 		
 		float durationsec = ((float)(stop-start)/1000); 	// Calculation of the time elapsed between submission and arrival of result. 
 		
+		
+		Main.setLastStatuss("job result retrieved, checking it...");
 		logger.info("Duration of submission+execution+retrieval: " + durationsec + " seconds.");
 		
 		if (jr==null){ 	// Timeout case. No results obtained.
 			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
-			output_to_return = Main.RESULT_WARNING;
-			output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - TIMEDOUT"; 
+			output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - ERROR (job told to be finished, but no result obtained)";
+			output_to_return = Main.RESULT_CRITICAL;
 		}else{ 			// Non-timeout case. Result obtained.
 			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: " + jr.toString());
 			
@@ -247,6 +269,7 @@ public class Main {
 			} catch (Exception e1) {
 				logger.warn("Could not write the output of the process. ", e1);
 			}
+			
 			try{
 				String expectedoutput = Misc.readAllFile(jobpath + ".out"); // Checking of the expected output '.out' file.
 				if (jr.toString().equals(expectedoutput)){ 		// Checked file, all OK.
@@ -262,14 +285,19 @@ public class Main {
 			}
 		}
 		
+		Main.setLastStatuss("job result checked, removing job from scheduler...");
+		
 		logger.info("Removing job "+ jobname + ":" + jobId + "...");
 		schedulerstub.removeJob(jobId);							// Job removed from the list of jobs in the Scheduler.
 		logger.info("Done.");
 		
+		Main.setLastStatuss("job removed from scheduler, disconnecting...");
 		
 		logger.info("Disconnecting...");
 		schedulerstub.disconnect();								// Getting disconnected from the Scheduler.
 		logger.info("Done.");
+		
+		Main.setLastStatuss("disconnected from scheduler, retrieving Nagios result...");
 		
 		Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
 		ret[0] = new Integer(output_to_return);
@@ -302,6 +330,20 @@ public class Main {
 		}catch(Exception e){
 			throw new Exception("Error while creating the security policy file. " + e.getMessage());
 		}
+	}
+	
+	/* Save a message regarding the last status of the probe. 
+	 * This last status will be used in case of timeout to tell Nagios up to which point
+	 * (logging, job submission, job retrieval, etc.) the probe arrived. */
+	public synchronized static void setLastStatuss(String laststatus){
+		Main.lastStatus = laststatus;
+	}
+	
+	/* Get a message regarding the last status of the probe. 
+	 * This last status will be used in case of timeout to tell Nagios up to which point
+	 * (logging, job submission, job retrieval, etc.) the probe arrived. */
+	public synchronized static String getLastStatus(){
+		return Main.lastStatus;
 	}
 	
 	/* Print a message in the stdout (for Nagios to use it) and return with the given error code. */
