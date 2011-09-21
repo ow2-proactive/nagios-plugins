@@ -199,7 +199,7 @@ public class Main {
 	}
 	
 	
-	public static Object[] probe(String url, String user, String pass, String protocol, String jobpath, int timeoutsec, Boolean usepaconffile) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException{
+	public static Object[] probe(String url, String user, String pass, String protocol, String jobpath, int timeoutsec, Boolean usepaconffile) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		
 		SchedulerStubProber schedulerstub = new SchedulerStubProber(); // We get connected to the Scheduler through this stub, later we submit a job, etc. 
 		
@@ -218,7 +218,7 @@ public class Main {
 		}
 		logger.info("Done.");
 		
-		Main.setLastStatuss("proactiv configuration loaded, submitting job...");
+		Main.setLastStatuss("proactive configuration loaded, submitting job...");
 		
 		int output_to_return = Main.RESULT_CRITICAL; 
 		String output_to_print = "NO TEST PERFORMED"; 		// Default output (for Nagios).
@@ -229,33 +229,32 @@ public class Main {
 		long start = (new Date()).getTime(); 				// Time counting... Start...
 		
 		logger.info("Submitting '" + jobname + "' job...");
-		JobId jobId = schedulerstub.submitJob(jobpath); 	// Submission of the job.
+		String jobId = schedulerstub.submitJob(jobpath); 	// Submission of the job.
 		logger.info("Done.");
 		
-		Main.setLastStatuss("job submitted, waiting for it...");
+		Main.setLastStatuss("job "+jobId+" submitted, waiting for it...");
 		
 		logger.info("Waiting for " + jobname + ":" + jobId + " job...");
 		schedulerstub.waitUntilJobFinishes(jobId, timeoutsec * 1000); // Wait up to 'timeoutsec' seconds until giving up.
 		logger.info("Done.");
 		
-		Main.setLastStatuss("job finished, getting its result...");
+		Main.setLastStatuss("job "+jobId+" finished, getting its result...");
 		
 		long stop = (new Date()).getTime(); 				// Time counting. End.
 		
-		JobResult jr = schedulerstub.getJobResult(jobId); 	// Getting the result of the submitted job.
+		String jresult = schedulerstub.getJobResult(jobId); 	// Getting the result of the submitted job.
 		
 		float durationsec = ((float)(stop-start)/1000); 	// Calculation of the time elapsed between submission and arrival of result. 
 		
-		
-		Main.setLastStatuss("job result retrieved, checking it...");
+		Main.setLastStatuss("job "+jobId+" result retrieved, checking it...");
 		logger.info("Duration of submission+execution+retrieval: " + durationsec + " seconds.");
 		
-		if (jr==null){ 	// Timeout case. No results obtained.
+		if (jresult==null){ 	// Timeout case. No results obtained.
 			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
 			output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - ERROR (job told to be finished, but no result obtained)";
 			output_to_return = Main.RESULT_CRITICAL;
 		}else{ 			// Non-timeout case. Result obtained.
-			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: " + jr.toString());
+			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: " + jresult.toString());
 			
 			try { 
 				/* The result is saved beside the jobdescriptor (xml) file. 
@@ -264,7 +263,7 @@ public class Main {
 				 */
 				String ppath = jobpath + ".out.tmp";
 				logger.info("Writing output in '" + ppath + "'...");
-				Misc.writeAllFile(ppath, jr.toString());
+				Misc.writeAllFile(ppath, jresult.toString());
 				logger.info("Done.");
 			} catch (Exception e1) {
 				logger.warn("Could not write the output of the process. ", e1);
@@ -272,7 +271,7 @@ public class Main {
 			
 			try{
 				String expectedoutput = Misc.readAllFile(jobpath + ".out"); // Checking of the expected output '.out' file.
-				if (jr.toString().equals(expectedoutput)){ 		// Checked file, all OK.
+				if (jresult.toString().equals(expectedoutput)){ 		// Checked file, all OK.
 					output_to_return = Main.RESULT_OK;
 					output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - OK ("+ durationsec +" sec)";
 				}else{ 											// Outputs were different. 
@@ -285,13 +284,13 @@ public class Main {
 			}
 		}
 		
-		Main.setLastStatuss("job result checked, removing job from scheduler...");
+		Main.setLastStatuss("job "+jobId+" result checked, removing job from scheduler...");
 		
 		logger.info("Removing job "+ jobname + ":" + jobId + "...");
 		schedulerstub.removeJob(jobId);							// Job removed from the list of jobs in the Scheduler.
 		logger.info("Done.");
 		
-		Main.setLastStatuss("job removed from scheduler, disconnecting...");
+		Main.setLastStatuss("job "+jobId+" removed from scheduler, disconnecting...");
 		
 		logger.info("Disconnecting...");
 		schedulerstub.disconnect();								// Getting disconnected from the Scheduler.

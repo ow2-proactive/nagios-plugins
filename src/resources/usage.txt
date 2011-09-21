@@ -23,6 +23,7 @@ Mandatory arguments to long options are mandatory for short options too.
       
    --url=URL
       URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
+      It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA and 'http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' for REST.     
        
    -t, --timeout=TIMEOUT
       Timeout (in seconds) to wait for a job submission.

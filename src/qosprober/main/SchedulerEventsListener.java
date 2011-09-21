@@ -22,11 +22,11 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 	public static int currentCounter = 0; 														// Circular index. 
 	
 	/* Check if the given job is in the list of last finished jobs. */
-	public static synchronized boolean checkIfJobIdHasJustFinished(JobId jobId){
-		logger.info("Checking if " + jobId.value() + " has already finished...");
+	public static synchronized boolean checkIfJobIdHasJustFinished(String jobId){
+		logger.info("Checking if " + jobId + " has already finished...");
 		printList();
 		for (String j:lastFinishedJobs){
-			if (j!=null && j.equals(jobId.value())){
+			if (j!=null && j.equals(jobId)){
 				logger.info("\t" + "yes");
 				return true;
 			}
