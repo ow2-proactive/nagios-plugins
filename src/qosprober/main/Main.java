@@ -25,8 +25,6 @@ import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.core.config.ProActiveConfiguration;
 import org.objectweb.proactive.core.node.NodeException;
 import org.ow2.proactive.scheduler.common.exception.SchedulerException;
-import org.ow2.proactive.scheduler.common.job.JobId;
-import org.ow2.proactive.scheduler.common.job.JobResult;
 import qosprober.exceptions.ElementNotFoundException;
 import qosprober.exceptions.InvalidProtocolException;
 
@@ -74,13 +72,13 @@ public class Main {
 		
 		final Boolean debug = (Boolean)parser.getOptionValue(debugO, Boolean.FALSE); 	/* If false, only Nagios output. */
 		final String user = (String)parser.getOptionValue(userO);			 			/* User. */
-		final String pass = (String)parser.getOptionValue(passO); 					/* Pass. */
+		final String pass = (String)parser.getOptionValue(passO); 						/* Pass. */
 		final String protocol = (String)parser.getOptionValue(protocolO);			 	/* Protocol, either REST or JAVAPA. */
 		final String jobpath = (String)parser.getOptionValue(jobpathO); 				/* Path of the job descriptor (xml). */
 		final String url = (String)parser.getOptionValue(urlO); 						/* Url of the Scheduler/RM. */
-		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO); /* Timeout in seconds for the job to be executed. */
-		final String paconf = (String)parser.getOptionValue(paconfO); 				/* Path of the ProActive xml configuration file. */
-		final String host = (String)parser.getOptionValue(hostO); 					/* Host to be tested. Ignored. */
+		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO,60); 		/* Timeout in seconds for the job to be executed. */
+		final String paconf = (String)parser.getOptionValue(paconfO); 					/* Path of the ProActive xml configuration file. */
+		final String host = (String)parser.getOptionValue(hostO); 						/* Host to be tested. Ignored. */
 		final Double warning = (Double)parser.getOptionValue(warningO, new Double(100)); /* Warning level. Ignored. */
 		final Double critical = (Double)parser.getOptionValue(criticalO, new Double(100)); /* Critical level. Ignored. */ 
 		
@@ -189,10 +187,12 @@ public class Main {
 			Main.printAndExit((Integer)res[0], (String)res[1]);
 		}catch(TimeoutException e){
 			// The execution took more time than expected.
-			Main.printAndExit(Main.RESULT_CRITICAL, "JOB RESULT - TIMEOUT (last status was '"+Main.getLastStatus()+"')");
+			Main.printAndExit(Main.RESULT_CRITICAL, "JOB RESULT - TIMEOUT (last status was '" + Main.getLastStatus() + "')");
 		}catch(ExecutionException e){
 			// There was an unexpected problem with the execution of the prober.
-			Main.printAndExit(Main.RESULT_CRITICAL, "JOB RESULT - ERROR:" + e.getMessage());
+			Main.printAndExit(Main.RESULT_CRITICAL, "JOB RESULT - FAILURE: " + e.getMessage());
+		}catch(Exception e){
+			Main.printAndExit(Main.RESULT_CRITICAL, "JOB RESULT - CRITICAL ERROR: " + e.getMessage());
 		}
 		
 		

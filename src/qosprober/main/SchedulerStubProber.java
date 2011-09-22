@@ -30,10 +30,8 @@ import org.ow2.proactive.scheduler.common.job.factories.JobFactory;
 import org.ow2.proactive.scheduler.common.Scheduler;
 import org.ow2.proactive.authentication.crypto.CredData;
 import org.ow2.proactive.scheduler.common.SchedulerAuthenticationInterface;
-import org.ow2.proactive.scheduler.job.InternalJob;
 import org.ow2.proactive.scheduler.job.InternalTaskFlowJob;
 import org.ow2.proactive.scheduler.job.JobIdImpl;
-import org.ow2.proactive.scheduler.job.JobResultImpl;
 
 import java.io.File;
 import java.io.IOException;
