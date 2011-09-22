@@ -14,14 +14,16 @@ import org.ow2.proactive.scheduler.common.job.UserIdentification;
 import org.ow2.proactive.scheduler.common.task.TaskInfo;
 
 
-/** Class that listens to events that happen in the remote Scheduler. */ 
+/** 
+ * Class that listens to events that happen in the remote Scheduler. */ 
 public class SchedulerEventsListener implements SchedulerEventListener, Serializable{
 	private static Logger logger = Logger.getLogger(SchedulerEventsListener.class.getName()); 	// Logger.	
 	private static final int lastFinishedJobsBufferSize = 100; 									// Maximum amount of elements in the lastFinishedJobs array.
 	public static String[] lastFinishedJobs = new String[lastFinishedJobsBufferSize]; 			// List of last finished jobs. 
 	public static int currentCounter = 0; 														// Circular index. 
 	
-	/* Check if the given job is in the list of last finished jobs. */
+	/** 
+	 * Check if the given job is in the list of last finished jobs. */
 	public static synchronized boolean checkIfJobIdHasJustFinished(String jobId){
 		logger.info("Checking if " + jobId + " has already finished...");
 		printList();
@@ -35,14 +37,16 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 		return false;
 	}
 	
-	/* Add a job to the list of last finished jobs. */
+	/**
+	 * Add a job to the list of last finished jobs. */
 	public static synchronized void addFinishedJobId(String jobId){
 		lastFinishedJobs[currentCounter] = jobId;
 		currentCounter = (currentCounter + 1) % lastFinishedJobsBufferSize;
 		printList();
 	}
 	
-	/* Print the list of last finished jobs. */
+	/**
+	 * Print the list of last finished jobs. */
 	private static synchronized void printList(){
 		logger.info("Last finished jobs: ");
 		logger.info(Misc.getDescriptiveString((Object)lastFinishedJobs));

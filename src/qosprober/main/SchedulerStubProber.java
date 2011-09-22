@@ -49,24 +49,32 @@ import com.google.gson.InstanceCreator;
 
 import qosprober.exceptions.InvalidProtocolException;
 
-/** Class to work as a Stub or point of access to the Scheduler. 
+/** 
+ * Class that connects the test with the real scheduler, works as a stub. 
  * This is our interface to the remote Scheduler.
- * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST.  
- * */
+ * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST. */
 public class SchedulerStubProber{
 	
-	private static Logger logger = Logger.getLogger(SchedulerStubProber.class.getName()); // Logger.
-	private Scheduler schedulerStub; 											// Stub to the scheduler.
-	private ProActiveProxyProtocol protocol = ProActiveProxyProtocol.UNKNOWN; 	// Protocol to get connected with the Scheduler.
+	private static Logger logger = Logger.getLogger(SchedulerStubProber.class.getName()); 	// Logger.
+	private Scheduler schedulerStub; 														// Stub to the scheduler.
+	private ProActiveProxyProtocol protocol = ProActiveProxyProtocol.UNKNOWN; 				// Protocol to get connected with the Scheduler.
 	
-	/* REST attributes. */
-	private String sessionId = null; 						// For the REST protocol, it defines the ID of the session.
-	private URI uri; 										// It defines the URI used as a suffix to get the final URL for the REST server.
-	private static final int RETRY_SEC_PERIOD_REST = 10; 	// Wait for X seconds to poll again and get a job status (only REST protocol mode).
+	/** REST attributes. */
+	private String sessionId = null; 					// For the REST protocol, it defines the ID of the session.
+	private URI uri; 									// It defines the URI used as a suffix to get the final URL for the REST server.
+	private static final int RETRY_SEC_PERIOD_REST = 10;// Wait for X seconds to poll again and get a job status (only REST protocol mode).
 	
+	/**
+	 * Constructor method. */
 	public SchedulerStubProber(){}
 	
-	/* Initialize the connection/session. */
+	/** 
+	 * Initialize the connection/session with the scheduler.
+	 * @param protocolStr, protocol to be used to get connected to the scheduler. 
+	 * @param url, url of the scheduler. 
+	 * @param user, username to access the scheduler.
+	 * @param pass, password to access the scheduler.
+	 * */
 	public void init(String protocolStr, String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, InvalidProtocolException, HttpException, IOException{
 		protocol = ProActiveProxyProtocol.parseProtocol(protocolStr);
 		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol. 
@@ -92,7 +100,10 @@ public class SchedulerStubProber{
 		}
 	}
 	
-	/* Submit a job. */
+	/** 
+	 * Submit a job to the scheduler. 
+	 * @param jobpath, path of the job descriptor file (xml). 
+	 * @return and ID of the submitted job in case of success. */
 	public String submitJob(String jobpath) throws IOException, NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException, InvalidProtocolException{
 		Job job = JobFactory.getFactory().createJob(jobpath);
 		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.
@@ -126,7 +137,10 @@ public class SchedulerStubProber{
 		} 
 	}
 	
-	/* Get the result of the job. */
+	/**
+	 * Get the result of the job. 
+	 * @param jobId, the ID of the job. 
+	 * @return The raw output of the job. */
 	public String getJobResult(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
 		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.
 			JobResult jr = schedulerStub.getJobResult(jobId);
@@ -135,7 +149,7 @@ public class SchedulerStubProber{
 			}else{
 				return null;
 			}
-		}else if (protocol == ProActiveProxyProtocol.REST){
+		}else if (protocol == ProActiveProxyProtocol.REST){ // Rest protocol. 
 		    GetMethod method = new GetMethod(uri.toString()+ "/jobs/" + jobId + "/result");
 		    method.addRequestHeader("sessionid", sessionId);
 		    HttpClient client = new HttpClient();
@@ -152,7 +166,10 @@ public class SchedulerStubProber{
 		}
 	}
 	
-	/* Wait for a job to finish. */
+	/** 
+	 * Wait for a job to finish. 
+	 * @param jobId, the ID of the job to wait. 
+	 * @param timeoutms, the maximum time in milliseconds to wait for this job. */
 	public void waitUntilJobFinishes(String jobId, int timeoutms) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
 
 		long start = (new Date()).getTime();
@@ -181,7 +198,6 @@ public class SchedulerStubProber{
 				try {
 					Thread.sleep(RETRY_SEC_PERIOD_REST * 1000);
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					logger.warn("Not supposed to happen...", e);
 				}
 				JobStatus status = this.getJobStatus(jobId);
@@ -195,11 +211,14 @@ public class SchedulerStubProber{
 		}
 	}
 
-	/* Return the state of the job in the current Scheduler */
+	/** 
+	 * Return the status of the job (running, finished, etc.). 
+	 * @param jobId, the ID of the job. 
+	 * @return the status of the job. */
 	public JobStatus getJobStatus(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, InvalidProtocolException, HttpException, IOException{
 		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.
 			return schedulerStub.getJobState(jobId).getStatus();
-		}else if (protocol == ProActiveProxyProtocol.REST){
+		}else if (protocol == ProActiveProxyProtocol.REST){ // Rest protocol. 
 			GetMethod method = new GetMethod(uri.toString()+ "/jobs/" + jobId);
 			method.addRequestHeader("sessionid", sessionId);
 			HttpClient client = new HttpClient();
@@ -210,13 +229,15 @@ public class SchedulerStubProber{
 			InternalTaskFlowJob ret = gsonn.fromJson(response, InternalTaskFlowJob.class);
 			System.out.println (ret.getStatus());
 		    return ret.getStatus(); 
-			
 		}else{
 			throw new InvalidProtocolException("Invalid protocol selected.");
 		}
 	}
 
-	/* Remove the job from the Scheduler. */
+	/** 
+	 * Remove the job from the Scheduler. No leftovers of the job in the server.
+	 * This is specially useful to delete the probe job, so we do not contaminate what the administrator sees.
+	 * @param jobId, the ID of the job. */
 	public void removeJob(String jobId) throws Exception, NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
 		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.	
 			schedulerStub.removeJob(jobId);
@@ -234,7 +255,8 @@ public class SchedulerStubProber{
 		}
 	}
 	
-	/* Disconnect from the Scheduler. */
+	/** 
+	 * Disconnect from the Scheduler. */
 	public void disconnect() throws NotConnectedException, PermissionException, InvalidProtocolException, HttpException, IOException{	
 		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol.	
 			schedulerStub.disconnect();
@@ -250,24 +272,28 @@ public class SchedulerStubProber{
 	}
 }
 
-/* This class helps performing the deserealization of JobId objects. */
+/** 
+ * This class helps performing the deserealization of JobId objects. */
 class JobIdImplInstanceCreator implements InstanceCreator<JobIdImpl> {
 	public JobIdImpl createInstance(Type type) {
 		return (JobIdImpl)JobIdImpl.makeJobId("0");
 	}
 }
 
-/* This class helps avoiding the parsing of a few heavy attributes 
+/** 
+ * This class helps avoiding the parsing of a few heavy attributes 
  * while doing deserialization of JobStatus objects. */
 class MyExclusionStrategy implements ExclusionStrategy {
     public MyExclusionStrategy() {}
 
+    /** This method helps to identify which attributes should be avoided when deserializing. */
     public boolean shouldSkipClass(Class<?> clazz) {
     	String name = clazz.getName();
     	Boolean skip = name.contains("JobId");
     	return skip;
     }
 
+    /** This method helps to identify which attributes should be avoided when deserializing. */
     public boolean shouldSkipField(FieldAttributes f) {
     	String name = f.getName();
     	Boolean skipit = name.equals("tasks");

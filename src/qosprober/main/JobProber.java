@@ -28,10 +28,14 @@ import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import qosprober.exceptions.ElementNotFoundException;
 import qosprober.exceptions.InvalidProtocolException;
 
-
+/** This is a general Nagios plugin class that performs a test on the scheduler, by doing:
+ *    -Job submission
+ *    -Job result retrieval
+ *    -Job result comparison 
+ *  After that the result of the test is shown using Nagios format. */
 public class JobProber {
 
-	/* Nagios exit codes. */
+	/** Nagios exit codes. */
 	private static final int RESULT_OK = 0; 				// Nagios code. Execution successfully. 
 	private static final int RESULT_WARNING = 1; 			// Nagios code. Warning. 
 	private static final int RESULT_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
@@ -43,7 +47,10 @@ public class JobProber {
 	
 	public static Logger logger = Logger.getLogger(JobProber.class.getName()); // Logger.
 	
-	
+	/**
+	 * Starting point.
+	 * The arguments/parameters are specified in the file /resources/usage.txt
+	 * @return Nagios error code. */
 	public static void main(String[] args) throws Exception{
 		
 		JobProber.setLastStatuss("started, parsing arguments...");
@@ -72,17 +79,17 @@ public class JobProber {
 		    System.exit(RESULT_CRITICAL);
 		}
 		
-		final Boolean debug = (Boolean)parser.getOptionValue(debugO, Boolean.FALSE); 	/* If false, only Nagios output. */
-		final String user = (String)parser.getOptionValue(userO);			 			/* User. */
-		final String pass = (String)parser.getOptionValue(passO); 						/* Pass. */
-		final String protocol = (String)parser.getOptionValue(protocolO);			 	/* Protocol, either REST or JAVAPA. */
-		final String jobpath = (String)parser.getOptionValue(jobpathO); 				/* Path of the job descriptor (xml). */
-		final String url = (String)parser.getOptionValue(urlO); 						/* Url of the Scheduler/RM. */
-		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO,60); 		/* Timeout in seconds for the job to be executed. */
-		final String paconf = (String)parser.getOptionValue(paconfO); 					/* Path of the ProActive xml configuration file. */
-		final String host = (String)parser.getOptionValue(hostO); 						/* Host to be tested. Ignored. */
-		final Double warning = (Double)parser.getOptionValue(warningO, new Double(100)); /* Warning level. Ignored. */
-		final Double critical = (Double)parser.getOptionValue(criticalO, new Double(100)); /* Critical level. Ignored. */ 
+		final Boolean debug = (Boolean)parser.getOptionValue(debugO, Boolean.FALSE); 	// If false, only Nagios output.
+		final String user = (String)parser.getOptionValue(userO);			 			// User.
+		final String pass = (String)parser.getOptionValue(passO); 						// Pass.
+		final String protocol = (String)parser.getOptionValue(protocolO);			 	// Protocol, either REST or JAVAPA.
+		final String jobpath = (String)parser.getOptionValue(jobpathO); 				// Path of the job descriptor (xml).
+		final String url = (String)parser.getOptionValue(urlO); 						// Url of the Scheduler/RM.
+		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO,60); 		// Timeout in seconds for the job to be executed.
+		final String paconf = (String)parser.getOptionValue(paconfO); 					// Path of the ProActive xml configuration file.
+		final String host = (String)parser.getOptionValue(hostO); 						// Host to be tested. Ignored.
+		final Double warning = (Double)parser.getOptionValue(warningO, new Double(100)); // Warning level. Ignored.
+		final Double critical = (Double)parser.getOptionValue(criticalO, new Double(100)); // Critical level. Ignored. 
 		
 		
 		if (jobpath == null || user == null || pass == null || protocol == null || jobpath == null || timeoutsec == null){
@@ -93,23 +100,11 @@ public class JobProber {
 		}
 		
 		if (debug == true){
-			// We load the log4j.properties file.
+			/* We load the log4j.properties file. */
 			PropertyConfigurator.configure("log4j.properties");
 		}else{
-			// We do the log4j configuration on the fly.
-			Properties properties = new Properties();
-
-			properties.put("log4j.rootLogger",				"WARN,NULL"); 	// By default, do not show anything.
-			properties.put("log4j.logger.org",				"WARN,STDOUT");	// For this module, show warning messages in stdout.
-			properties.put("log4j.logger.proactive", 		"WARN,STDOUT");
-			properties.put("log4j.logger.qosprober", 		"WARN,STDOUT");
-			// NULL Appender
-			properties.put("log4j.appender.NULL",			"org.apache.log4j.varia.NullAppender");
-			// STDOUT Appender
-			properties.put("log4j.appender.STDOUT",			"org.apache.log4j.ConsoleAppender");
-			properties.put("log4j.appender.STDOUT.Target",	"System.out");
-			properties.put("log4j.appender.STDOUT.layout",	"org.apache.log4j.PatternLayout");
-			properties.put("log4j.appender.STDOUT.layout.ConversionPattern","%-4r [%t] %-5p %c %x - %m%n");
+			/* We do the log4j configuration on the fly. */
+			Properties properties = JobProber.getMainLoggingProperties();
 			PropertyConfigurator.configure(properties);
 		}
 		
@@ -146,6 +141,7 @@ public class JobProber {
 		
 		JobProber.setLastStatuss("security policy loaded, loading proactive configuration (if needed)...");
 		
+		/* Check whether to use or not the ProActive configuration file. */
 		Boolean usepaconffilee = false;
 		if (paconf!=null){
 			/* A ProActiveConf.xml file was given. If we find it, we use it. */
@@ -161,15 +157,12 @@ public class JobProber {
 		JobProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		
 		final Boolean usepaconffile = usepaconffilee;
+		
 		/* No need of other arguments. */
 		//String[] otherArgs = parser.getRemainingArgs();
 		
-		/**********************/
-		/*** Job submission ***/
-		/**********************/
-		
-		// We prepare our probe to run it in a different thread.
-		// The probe consists in a job submission done to the Scheduler.
+		/* We prepare our probe to run it in a different thread. */
+		/* The probe consists in a job submission done to the Scheduler. */
 		ExecutorService executor = Executors.newFixedThreadPool(1);
 		
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
@@ -178,29 +171,34 @@ public class JobProber {
 			}
 		};
 
-		// We submit to the executor the prober activity (and the prober will then submit a job to the scheduler in that activity).
+		/* We submit to the executor the prober activity (and the prober will then 
+		 * submit a job to the scheduler in that activity). */
 		Future<Object[]> proberFuture = executor.submit(proberCallable); // We ask to execute the probe.
 		
 		try{
-			// We execute the future using a timeout.
+			/* We execute the future using a timeout. */
 			Object[] res = proberFuture.get(timeoutsec, TimeUnit.SECONDS);
-			// All went okay.
+			/* At this point all went okay. */ 
 			JobProber.printAndExit((Integer)res[0], (String)res[1]);
 		}catch(TimeoutException e){
-			// The execution took more time than expected.
+			/* The execution took more time than expected. */
 			JobProber.printAndExit(JobProber.RESULT_CRITICAL, "JOB RESULT - TIMEOUT ("+timeoutsec+" seconds, last status was '" + JobProber.getLastStatus() + "')");
 		}catch(ExecutionException e){
-			// There was an unexpected problem with the execution of the prober.
+			/* There was an unexpected problem with the execution of the prober. */
 			JobProber.printAndExit(JobProber.RESULT_CRITICAL, "JOB RESULT - FAILURE: " + e.getMessage());
 		}catch(Exception e){
+			/* There was an unexpected critical exception not captured. */
 			JobProber.printAndExit(JobProber.RESULT_CRITICAL, "JOB RESULT - CRITICAL ERROR: " + e.getMessage());
 		}
 	}
 	
-	
+	/**
+	 * Probe the scheduler.
+	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
 	public static Object[] probe(String url, String user, String pass, String protocol, String jobpath, int timeoutsec, Boolean usepaconffile) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		
-		SchedulerStubProber schedulerstub = new SchedulerStubProber(); // We get connected to the Scheduler through this stub, later we submit a job, etc. 
+		SchedulerStubProber schedulerstub = new SchedulerStubProber(); 	// We get connected to the Scheduler through this stub, 
+																		// later we submit a job, etc. 
 		
 		JobProber.setLastStatuss("scheduler stub created, connecting to shceduler...");
 		
@@ -211,7 +209,7 @@ public class JobProber {
 		
 		if (usepaconffile==true){
 			logger.info("Loading ProActive configuration (xml) file... ");
-			ProActiveConfiguration.load();
+			ProActiveConfiguration.load(); // Load the ProActive configuration file.
 		}else{
 			logger.info("Avoiding ProActive configuration (xml) file... ");
 		}
@@ -304,11 +302,12 @@ public class JobProber {
 		return ret;
 	}
 
-	/* Creates a java.policy file to grant permissions. */
+	/** 
+	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
 	public static void createPolicyAndLoadIt() throws Exception{
 		try{
-			
 			// Create temp file.
+			
 		    File temp = File.createTempFile("javapolicy", ".policy");
 		    
 		    // Delete temp file when program exits.
@@ -330,27 +329,32 @@ public class JobProber {
 		}
 	}
 	
-	/* Save a message regarding the last status of the probe. 
+	/** 
+	 * Save a message regarding the last status of the probe. 
 	 * This last status will be used in case of timeout to tell Nagios up to which point
 	 * (logging, job submission, job retrieval, etc.) the probe arrived. */
 	public synchronized static void setLastStatuss(String laststatus){
 		JobProber.lastStatus = laststatus;
 	}
 	
-	/* Get a message regarding the last status of the probe. 
+	/** 
+	 * Get a message regarding the last status of the probe. 
 	 * This last status will be used in case of timeout to tell Nagios up to which point
-	 * (logging, job submission, job retrieval, etc.) the probe arrived. */
+	 * (logging, job submission, job retrieval, etc.) the probe arrived. 
+	 * @return the last status of the test. */
 	public synchronized static String getLastStatus(){
 		return JobProber.lastStatus;
 	}
 	
-	/* Print a message in the stdout (for Nagios to use it) and return with the given error code. */
+	/** 
+	 * Print a message in the stdout (for Nagios to use it) and return with the given error code. */
 	public synchronized static void printAndExit(Integer ret, String str){
     	System.out.println(str);
     	System.exit(ret);
     }
     
-	/* Print the usage of the application. */
+	/**
+	 * Print the usage of the application. */
 	public static void printUsage(){
 		String usage = null;
 		try {
@@ -360,6 +364,24 @@ public class JobProber {
 			// TODO Auto-generated catch block
 			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
 		}
+	}
+	
+	/**
+	 * Creates a default set of properties for the log4j logging module. */
+	public static Properties getMainLoggingProperties(){
+		Properties properties = new Properties();
+		properties.put("log4j.rootLogger",				"WARN,NULL"); 	// By default, do not show anything.
+		properties.put("log4j.logger.org",				"WARN,STDOUT");	// For this module, show warning messages in stdout.
+		properties.put("log4j.logger.proactive", 		"WARN,STDOUT");
+		properties.put("log4j.logger.qosprober", 		"WARN,STDOUT");
+		/* NULL Appender. */
+		properties.put("log4j.appender.NULL",			"org.apache.log4j.varia.NullAppender");
+		/* STDOUT Appender. */
+		properties.put("log4j.appender.STDOUT",			"org.apache.log4j.ConsoleAppender");
+		properties.put("log4j.appender.STDOUT.Target",	"System.out");
+		properties.put("log4j.appender.STDOUT.layout",	"org.apache.log4j.PatternLayout");
+		properties.put("log4j.appender.STDOUT.layout.ConversionPattern","%-4r [%t] %-5p %c %x - %m%n");
+		return properties;
 	}
 	
 }
