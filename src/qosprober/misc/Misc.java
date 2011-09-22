@@ -122,7 +122,7 @@ public class Misc {
                 output.add(list_of_log[i]);
             }
         }catch(Exception e){
-            e.printStackTrace();
+        	logger.warn("Not supposed to happen...", e);
         }
         return output;
     }
@@ -161,7 +161,7 @@ public class Misc {
                 output.add(list_of_log[i]);
             }
         }catch(Exception e){
-            e.printStackTrace();
+        	logger.warn("Not supposed to happen...", e);
         }
         return output;
     }
@@ -199,8 +199,8 @@ public class Misc {
             appendedFile.write(content.getBytes());
             appendedFile.close();
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception e) {
+        	logger.warn("Not supposed to happen...", e);
         }
 
     }
@@ -217,7 +217,7 @@ public class Misc {
                 }
             }
         }catch(Exception e){
-            e.printStackTrace();
+        	logger.warn("Not supposed to happen...", e);
         }
         return ret;
     }

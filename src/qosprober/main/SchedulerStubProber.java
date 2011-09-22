@@ -70,7 +70,7 @@ public class SchedulerStubProber{
 	public void init(String protocolStr, String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, InvalidProtocolException, HttpException, IOException{
 		protocol = ProActiveProxyProtocol.parseProtocol(protocolStr);
 		if (protocol == ProActiveProxyProtocol.JAVAPA){ // Java ProActive protocol. 
-			logger .info("Joining to the scheduler...");
+			logger .info("Joining the scheduler...");
 	        SchedulerAuthenticationInterface auth = SchedulerConnection.waitAndJoin(url);
 	        logger .info("Creating credentials...");
 	        Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
@@ -166,7 +166,7 @@ public class SchedulerStubProber{
 					try {
 						SchedulerStubProber.class.wait(timeoutms); // This thread is blocked until the SchedulerEventsListener notifies of a new finished job.
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						logger.warn("Not supposed to happen...", e);
 					}
 					end = (new Date()).getTime(); 
 					timeout = (end-start>=timeoutms);
@@ -182,7 +182,7 @@ public class SchedulerStubProber{
 					Thread.sleep(RETRY_SEC_PERIOD_REST * 1000);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					logger.warn("Not supposed to happen...", e);
 				}
 				JobStatus status = this.getJobStatus(jobId);
 				logger.info("Current status: " +  status);
