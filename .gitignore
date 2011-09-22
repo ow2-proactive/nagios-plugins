@@ -1,3 +1,4 @@
 *.class
 *.log
 bin/resources/usage.txt
+*.jar

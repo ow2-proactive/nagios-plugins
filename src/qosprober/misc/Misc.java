@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import org.apache.log4j.Logger;
 
 import qosprober.exceptions.ElementNotFoundException;
-import qosprober.main.SchedulerStubProber;
 
 
 /** This class is supposed to have multiple minor functionalities. */
@@ -30,6 +29,7 @@ public class Misc {
 
     /* Get a descriptive string from the given object. 
      * Particularly useful if the argument is an ArrayList, or just an array. */
+	@SuppressWarnings("unchecked")
 	public static String getDescriptiveString(Object o){
         String output = "";
         if (o instanceof ArrayList){

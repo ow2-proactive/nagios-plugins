@@ -28,7 +28,8 @@ import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import qosprober.exceptions.ElementNotFoundException;
 import qosprober.exceptions.InvalidProtocolException;
 
-/** This is a general Nagios plugin class that performs a test on the scheduler, by doing:
+/** 
+ * This is a general Nagios plugin class that performs a test on the scheduler, by doing:
  *    -Job submission
  *    -Job result retrieval
  *    -Job result comparison 
@@ -36,10 +37,10 @@ import qosprober.exceptions.InvalidProtocolException;
 public class JobProber {
 
 	/** Nagios exit codes. */
-	private static final int RESULT_OK = 0; 				// Nagios code. Execution successfully. 
-	private static final int RESULT_WARNING = 1; 			// Nagios code. Warning. 
-	private static final int RESULT_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
-	private static final int RESULT_UNKNOWN = 3; 			// Nagios code. Unknown state of the tested entity.
+	public static final int RESULT_OK = 0; 					// Nagios code. Execution successfully. 
+	public static final int RESULT_WARNING = 1; 			// Nagios code. Warning. 
+	public static final int RESULT_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
+	public static final int RESULT_UNKNOWN = 3; 			// Nagios code. Unknown state of the tested entity.
 	
 	private static String lastStatus;						// Holds a message representative of the current status of the test.
 															// It is used in case of TIMEOUT, to help the administrator guess
@@ -192,8 +193,18 @@ public class JobProber {
 		}
 	}
 	
+	
 	/**
-	 * Probe the scheduler.
+	 * Probe the scheduler
+	 * Several calls are done against the scheduler:
+	 *   - join
+	 *   - submit job
+	 *   - get job status (or event registering, depends on the protocol chosen)
+	 *   - get job result
+	 *   - remove job
+	 *   - disconnect
+	 *  After a correct disconnection call, the output of the job is compared with a 
+	 *  given correct output, and the result of the test is told. 
 	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
 	public static Object[] probe(String url, String user, String pass, String protocol, String jobpath, int timeoutsec, Boolean usepaconffile) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		
@@ -237,20 +248,20 @@ public class JobProber {
 		
 		JobProber.setLastStatuss("job "+jobId+" finished, getting its result...");
 		
-		long stop = (new Date()).getTime(); 				// Time counting. End.
+		long stop = (new Date()).getTime(); 					// Time counting. End.
 		
 		String jresult = schedulerstub.getJobResult(jobId); 	// Getting the result of the submitted job.
 		
-		float durationsec = ((float)(stop-start)/1000); 	// Calculation of the time elapsed between submission and arrival of result. 
+		float durationsec = ((float)(stop-start)/1000); 		// Calculation of the time elapsed between submission and arrival of result. 
 		
 		JobProber.setLastStatuss("job "+jobId+" result retrieved, checking it...");
 		logger.info("Duration of submission+execution+retrieval: " + durationsec + " seconds.");
 		
-		if (jresult==null){ 	// Timeout case. No results obtained.
+		if (jresult==null){ 		// Timeout case. No results obtained.
 			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
 			output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - ERROR (job told to be finished, but no result obtained)";
 			output_to_return = JobProber.RESULT_CRITICAL;
-		}else{ 			// Non-timeout case. Result obtained.
+		}else{ 						// Non-timeout case. Result obtained.
 			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: " + jresult.toString());
 			
 			try { 
@@ -268,14 +279,14 @@ public class JobProber {
 			
 			try{
 				String expectedoutput = Misc.readAllFile(jobpath + ".out"); // Checking of the expected output '.out' file.
-				if (jresult.toString().equals(expectedoutput)){ 		// Checked file, all OK.
+				if (jresult.toString().equals(expectedoutput)){ 			// Checked file, all OK.
 					output_to_return = JobProber.RESULT_OK;
 					output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - OK ("+ durationsec +" sec)";
-				}else{ 											// Outputs were different. 
+				}else{ 														// Outputs were different. 
 					output_to_return = JobProber.RESULT_CRITICAL;
 					output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - OUTPUT CHECK FAILED ("+ durationsec +" sec)";
 				}
-			}catch(IOException e){								// No 'output' reference point to do the checking.
+			}catch(IOException e){											// No 'output' reference point to do the checking.
 				output_to_return = JobProber.RESULT_UNKNOWN; 		
 				output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - OUTPUT NOT CHECKED ("+ durationsec +" sec)";
 			}
@@ -361,7 +372,6 @@ public class JobProber {
 			usage = Misc.readAllTextResource("/resources/usage.txt");
 			System.out.println(usage);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
 		}
 	}
