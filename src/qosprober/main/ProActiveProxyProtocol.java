@@ -26,7 +26,7 @@ public enum ProActiveProxyProtocol
 		}else if(str.equals(PROTOCOL_REST_STR)){
 			return REST;
 		}else{
-			throw new IllegalArgumentException("ProActiveProxyProtocol unknown:" + str);
+			return UNKNOWN;
 		}
 	}
 	

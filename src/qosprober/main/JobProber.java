@@ -59,7 +59,7 @@ public class JobProber {
 		/* Parsing of arguments. */
 		CmdLineParser parser = new CmdLineParser();
 		
-		CmdLineParser.Option debugO = parser.addBooleanOption('d', "debug");
+		CmdLineParser.Option debugO = parser.addBooleanOption('v', "debug");
 		CmdLineParser.Option userO = parser.addStringOption('u', "user");
 		CmdLineParser.Option passO = parser.addStringOption('p', "pass");
 		CmdLineParser.Option protocolO = parser.addStringOption("protocol");
@@ -68,8 +68,8 @@ public class JobProber {
 		CmdLineParser.Option timeoutsecO = parser.addIntegerOption('t', "timeout");
 		CmdLineParser.Option paconfO = parser.addStringOption('f', "paconf");
 		CmdLineParser.Option hostO = parser.addStringOption('H', "hostname");
-		CmdLineParser.Option warningO = parser.addDoubleOption('w', "warning");
-		CmdLineParser.Option criticalO = parser.addDoubleOption('c', "critical");
+		CmdLineParser.Option warningO = parser.addStringOption('w', "warning");
+		CmdLineParser.Option criticalO = parser.addStringOption('c', "critical");
 
 		try {
 		    parser.parse(args);
@@ -89,8 +89,8 @@ public class JobProber {
 		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO,60); 		// Timeout in seconds for the job to be executed.
 		final String paconf = (String)parser.getOptionValue(paconfO); 					// Path of the ProActive xml configuration file.
 		final String host = (String)parser.getOptionValue(hostO); 						// Host to be tested. Ignored.
-		final Double warning = (Double)parser.getOptionValue(warningO, new Double(100)); // Warning level. Ignored.
-		final Double critical = (Double)parser.getOptionValue(criticalO, new Double(100)); // Critical level. Ignored. 
+		final String warning = (String)parser.getOptionValue(warningO, "ignored");		// Warning level. Ignored.
+		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
 		
 		
 		if (jobpath == null || user == null || pass == null || protocol == null || jobpath == null || timeoutsec == null){
@@ -208,8 +208,20 @@ public class JobProber {
 	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
 	public static Object[] probe(String url, String user, String pass, String protocol, String jobpath, int timeoutsec, Boolean usepaconffile) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		
-		SchedulerStubProber schedulerstub = new SchedulerStubProber(); 	// We get connected to the Scheduler through this stub, 
-																		// later we submit a job, etc. 
+		
+		/* We get connected to the Scheduler through this stub, later we submit a job, etc. */
+		SchedulerStubProber schedulerstub; 
+		
+		ProActiveProxyProtocol papp = ProActiveProxyProtocol.parseProtocol(protocol);
+		
+		if (papp.equals(ProActiveProxyProtocol.JAVAPA)){
+			schedulerstub = new SchedulerStubProberJava();
+		}else if (papp.equals(ProActiveProxyProtocol.REST)){
+			schedulerstub = new SchedulerStubProberRest();
+		}else{
+			throw new InvalidProtocolException("Unknown protocol '"+protocol+"'");
+		}
+		
 		
 		JobProber.setLastStatuss("scheduler stub created, connecting to shceduler...");
 		
@@ -257,6 +269,7 @@ public class JobProber {
 		JobProber.setLastStatuss("job "+jobId+" result retrieved, checking it...");
 		logger.info("Duration of submission+execution+retrieval: " + durationsec + " seconds.");
 		
+		logger.info("Checking output...");
 		if (jresult==null){ 		// Timeout case. No results obtained.
 			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
 			output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - ERROR (job told to be finished, but no result obtained)";
@@ -291,6 +304,7 @@ public class JobProber {
 				output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - OUTPUT NOT CHECKED ("+ durationsec +" sec)";
 			}
 		}
+		logger.info("Done.");
 		
 		JobProber.setLastStatuss("job "+jobId+" result checked, removing job from scheduler...");
 		
@@ -317,12 +331,12 @@ public class JobProber {
 	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
 	public static void createPolicyAndLoadIt() throws Exception{
 		try{
-			// Create temp file.
 			
-		    File temp = File.createTempFile("javapolicy", ".policy");
+			
+		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
 		    
-		    // Delete temp file when program exits.
-		    temp.deleteOnExit();
+
+		    temp.deleteOnExit(); // Delete temp file when program exits.
 
 		    // Write to temp file.
 		    BufferedWriter out = new BufferedWriter(new FileWriter(temp));
@@ -332,8 +346,7 @@ public class JobProber {
 
 		    String policypath = temp.getAbsolutePath(); 
 		    
-		    // Load security policy. 
-		    System.setProperty("java.security.policy", policypath);
+		    System.setProperty("java.security.policy", policypath); // Load security policy.
 		    
 		}catch(Exception e){
 			throw new Exception("Error while creating the security policy file. " + e.getMessage());
@@ -380,10 +393,10 @@ public class JobProber {
 	 * Creates a default set of properties for the log4j logging module. */
 	public static Properties getMainLoggingProperties(){
 		Properties properties = new Properties();
-		properties.put("log4j.rootLogger",				"WARN,NULL"); 	// By default, do not show anything.
-		properties.put("log4j.logger.org",				"WARN,STDOUT");	// For this module, show warning messages in stdout.
-		properties.put("log4j.logger.proactive", 		"WARN,STDOUT");
-		properties.put("log4j.logger.qosprober", 		"WARN,STDOUT");
+		properties.put("log4j.rootLogger",				"ERROR,NULL"); 	// By default, do not show anything.
+		properties.put("log4j.logger.org",				"ERROR,STDOUT");	// For this module, show warning messages in stdout.
+		properties.put("log4j.logger.proactive", 		"ERROR,STDOUT");
+		properties.put("log4j.logger.qosprober", 		"ERROR,STDOUT");
 		/* NULL Appender. */
 		properties.put("log4j.appender.NULL",			"org.apache.log4j.varia.NullAppender");
 		/* STDOUT Appender. */

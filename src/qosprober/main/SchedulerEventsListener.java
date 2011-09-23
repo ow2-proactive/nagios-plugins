@@ -67,8 +67,8 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 			/* If we receive a running-to-finished event for a job, we add this job to the 
 			 * list of last finished jobs. */ 
 			addFinishedJobId(info.getData().getJobId().value());
-			synchronized(SchedulerStubProber.class){
-				SchedulerStubProber.class.notifyAll();
+			synchronized(SchedulerStubProberJava.class){
+				SchedulerStubProberJava.class.notifyAll();
 			}
 		} 
 	}
