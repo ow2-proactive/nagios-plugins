@@ -5,9 +5,8 @@ SYNOPSIS
 DESCRIPTION
 
 Nagios plugin to probe the responsiveness of a ProActive based scheduler grid.
-The output of the job is compared with a local copy of the correct output to make sure everything works fine.
-The output of the job is written in a file whose path is exactly the same as the path of the job descriptor + .out.tmp
-The correct output of the job should be put in a file whose path is exactly the same as the path of the job descriptor + .out 
+It uses a simple job probe submission to test a grid concerning its responsiveness, and status in general.  
+The output of the probe job is compared with a local copy of the correct output to make sure it is correctly executed. The output of the probe job (once executed the test) is written in a file whose path is exactly the same as the path of the job descriptor + '.out.tmp'. The correct output of the job should be put in a file whose path is exactly the same as the path of the job descriptor + '.out'. 
    
 Mandatory arguments to long options are mandatory for short options too.
    
@@ -45,8 +44,17 @@ Mandatory arguments to long options are mandatory for short options too.
    -c, --critical=CRITICAL
       Nagios compatibility. Critical level to be used.
       
-   
-EXAMPLE
+
+NAGIOS OUTPUT INTERPRETATION
+
+   SERVICE STATUS: JOBID <jobid> <status> | tottime=<TIME>s
+	
+   where
+      - jobid is the id of the probe job.
+      - status is a message regarding to the result of the test and job 'jobid' used as probe job.
+      - TIME is the time (in seconds) that was spent for submission and whole execution of the probe job. 
+	
+EXECUTION EXAMPLE
 
    Case for a local Scheduler/RM running
       java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ --user=demo --pass=demo --protocol=JAVAPA --jobpath=/tmp/job.xml 

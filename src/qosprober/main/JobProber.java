@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.security.KeyException;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -186,7 +187,7 @@ public class JobProber {
 			/* The execution took more time than expected. */
 			JobProber.printAndExit(
 					JobProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "TIMEOUT (last status was '" + JobProber.getLastStatus() + "') | tottime=" + timeoutsec + "s");
+					NAG_OUTPUT_PREFIX + "TIMEOUT (last status was '" + JobProber.getLastStatus() + "')");
 		}catch(ExecutionException e){
 			/* There was an unexpected problem with the execution of the prober. */
 			JobProber.printAndExit(
@@ -215,6 +216,9 @@ public class JobProber {
 	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
 	public static Object[] probe(String url, String user, String pass, String protocol, String jobpath, int timeoutsec, Boolean usepaconffile) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		
+		TimeTick timer = new TimeTick();
+		
+		double time_initializing = timer.tickSec();
 		
 		/* We get connected to the Scheduler through this stub, later we submit a job, etc. */
 		SchedulerStubProber schedulerstub; 
@@ -233,9 +237,12 @@ public class JobProber {
 		JobProber.setLastStatuss("scheduler stub created, connecting to shceduler...");
 		
 		logger.info("Connecting... "); 					// Connecting to the Scheduler...
+
 		schedulerstub.init(protocol, url, user, pass); 	// Login procedure...
-		
 		JobProber.setLastStatuss("connected to scheduler, loading proactive configuration...");
+		
+		double time_connection = timer.tickSec();
+		
 		
 		if (usepaconffile==true){
 			logger.info("Loading ProActive configuration (xml) file... ");
@@ -254,13 +261,13 @@ public class JobProber {
 		File f = new File(jobpath); 						// Path of the job descriptor file (xml) to submit to the Scheduler.
 		String jobname = f.getName(); 						// We get the name of the jobdescriptor file to tell it in the logs.
 		
-		long start = (new Date()).getTime(); 				// Time counting... Start...
-		
 		logger.info("Submitting '" + jobname + "' job...");
 		String jobId = schedulerstub.submitJob(jobpath); 	// Submission of the job.
 		logger.info("Done.");
 		
 		JobProber.setLastStatuss("job "+jobId+" submitted, waiting for it...");
+		
+		double time_submission = timer.tickSec();
 		
 		logger.info("Waiting for " + jobname + ":" + jobId + " job...");
 		schedulerstub.waitUntilJobFinishes(jobId, timeoutsec * 1000); // Wait up to 'timeoutsec' seconds until giving up.
@@ -268,26 +275,53 @@ public class JobProber {
 		
 		JobProber.setLastStatuss("job "+jobId+" finished, getting its result...");
 		
-		long stop = (new Date()).getTime(); 					// Time counting. End.
+		double time_execution = timer.tickSec();
 		
 		String jresult = schedulerstub.getJobResult(jobId); 	// Getting the result of the submitted job.
 		
-		float durationsec = ((float)(stop-start)/1000); 		// Calculation of the time elapsed between submission and arrival of result. 
+		JobProber.setLastStatuss("job "+jobId+" result retrieved, removing job from scheduler...");
+		//logger.info("Duration of submission+execution: " + durationsec + " seconds.");
 		
-		JobProber.setLastStatuss("job "+jobId+" result retrieved, checking it...");
-		logger.info("Duration of submission+execution+retrieval: " + durationsec + " seconds.");
+		double time_retrieval = timer.tickSec();
+		
+		logger.info("Removing job "+ jobname + ":" + jobId + "...");
+		schedulerstub.removeJob(jobId);							// Job removed from the list of jobs in the Scheduler.
+		logger.info("Done.");
+		
+		double time_removal = timer.tickSec();
+		
+		JobProber.setLastStatuss("job "+jobId+" removed from scheduler, disconnecting...");
+		
+		logger.info("Disconnecting...");
+		schedulerstub.disconnect();								// Getting disconnected from the Scheduler.
+		logger.info("Done.");
+		
+		JobProber.setLastStatuss("disconnected from scheduler, checking job result...");
+		
+		double time_disconn = timer.tickSec();
+		
+		 
+		String timesummary =
+			"initi=" + String.format(Locale.ENGLISH, "%1.03f", time_initializing) + "s " +
+			"conne=" + String.format(Locale.ENGLISH, "%1.03f", time_connection)   + "s " + 
+			"submi=" + String.format(Locale.ENGLISH, "%1.03f", time_submission)   + "s " + 
+			"execu=" + String.format(Locale.ENGLISH, "%1.03f", time_execution )   + "s " + 
+			"retri=" + String.format(Locale.ENGLISH, "%1.03f", time_retrieval )   + "s " +
+			"remov=" + String.format(Locale.ENGLISH, "%1.03f", time_removal   )   + "s " + 
+			"disco=" + String.format(Locale.ENGLISH, "%1.03f", time_disconn   )   + "s " + 
+			"all="   + String.format(Locale.ENGLISH, "%1.03f", (time_initializing+time_connection+time_submission+time_execution+time_retrieval+time_removal+time_disconn)) + "s"; 
 		
 		logger.info("Checking output...");
 		if (jresult==null){ 		// Timeout case. No results obtained.
-			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
+			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
 			output_to_print = 
 				NAG_OUTPUT_PREFIX + "JOBID " + jobId + " ERROR (no job result obtained)";
 			output_to_return = JobProber.RESULT_CRITICAL;
 		}else{ 						// Non-timeout case. Result obtained.
-			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: " + jresult.toString());
+			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: " + jresult.toString());
 			
 			try { 
-				/* The result is saved beside the jobdescriptor (xml) file. 
+				/* The result is saved beside the job descriptor (xml) file. 
 				 * To have a better checking of the output of the job, just remove the extension '.tmp' of this output, (remaining a '.out' file).
 				 * This '.out' file is the file used to match the output of the job.
 				 */
@@ -304,34 +338,20 @@ public class JobProber {
 				if (jresult.toString().equals(expectedoutput)){ 			// Checked file, all OK.
 					output_to_return = JobProber.RESULT_OK;
 					output_to_print = 
-						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OK | tottime="+ durationsec +"s";
+						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OK | " + timesummary;
 				}else{ 														// Outputs were different. 
 					output_to_return = JobProber.RESULT_CRITICAL;
 					output_to_print = 
-						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OUTPUT CHECK FAILED | tottime="+ durationsec +"s";
+						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OUTPUT CHECK FAILED | " + timesummary;
 				}
 			}catch(IOException e){											// No 'output' reference point to do the checking.
 				output_to_return = JobProber.RESULT_UNKNOWN; 		
 				output_to_print = 
-						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OUTPUT NOT CHECKED | tottime="+ durationsec +"s";
+						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OUTPUT NOT CHECKED | " + timesummary;
 			}
 		}
-		logger.info("Done.");
 		
-		JobProber.setLastStatuss("job "+jobId+" result checked, removing job from scheduler...");
-		
-		logger.info("Removing job "+ jobname + ":" + jobId + "...");
-		schedulerstub.removeJob(jobId);							// Job removed from the list of jobs in the Scheduler.
-		logger.info("Done.");
-		
-		JobProber.setLastStatuss("job "+jobId+" removed from scheduler, disconnecting...");
-		
-		logger.info("Disconnecting...");
-		schedulerstub.disconnect();								// Getting disconnected from the Scheduler.
-		logger.info("Done.");
-		
-		JobProber.setLastStatuss("disconnected from scheduler, retrieving Nagios result...");
-		
+				
 		Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
 		ret[0] = new Integer(output_to_return);
 		ret[1] = output_to_print;
