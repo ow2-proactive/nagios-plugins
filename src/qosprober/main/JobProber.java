@@ -36,6 +36,7 @@ import qosprober.exceptions.InvalidProtocolException;
  *  After that the result of the test is shown using Nagios format. */
 public class JobProber {
 
+	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
 	/** Nagios exit codes. */
 	public static final int RESULT_OK = 0; 					// Nagios code. Execution successfully. 
 	public static final int RESULT_WARNING = 1; 			// Nagios code. Warning. 
@@ -183,13 +184,19 @@ public class JobProber {
 			JobProber.printAndExit((Integer)res[0], (String)res[1]);
 		}catch(TimeoutException e){
 			/* The execution took more time than expected. */
-			JobProber.printAndExit(JobProber.RESULT_CRITICAL, "JOB RESULT - TIMEOUT ("+timeoutsec+" seconds, last status was '" + JobProber.getLastStatus() + "')");
+			JobProber.printAndExit(
+					JobProber.RESULT_CRITICAL, 
+					NAG_OUTPUT_PREFIX + "TIMEOUT (last status was '" + JobProber.getLastStatus() + "') | tottime=" + timeoutsec + "s");
 		}catch(ExecutionException e){
 			/* There was an unexpected problem with the execution of the prober. */
-			JobProber.printAndExit(JobProber.RESULT_CRITICAL, "JOB RESULT - FAILURE: " + e.getMessage());
+			JobProber.printAndExit(
+					JobProber.RESULT_CRITICAL, 
+					NAG_OUTPUT_PREFIX + "FAILURE: " + e.getMessage());
 		}catch(Exception e){
 			/* There was an unexpected critical exception not captured. */
-			JobProber.printAndExit(JobProber.RESULT_CRITICAL, "JOB RESULT - CRITICAL ERROR: " + e.getMessage());
+			JobProber.printAndExit(
+					JobProber.RESULT_CRITICAL, 
+					NAG_OUTPUT_PREFIX + "CRITICAL ERROR: " + e.getMessage());
 		}
 	}
 	
@@ -241,7 +248,8 @@ public class JobProber {
 		JobProber.setLastStatuss("proactive configuration loaded, submitting job...");
 		
 		int output_to_return = JobProber.RESULT_CRITICAL; 
-		String output_to_print = "NO TEST PERFORMED"; 		// Default output (for Nagios).
+		String output_to_print = 
+			NAG_OUTPUT_PREFIX + "NO TEST PERFORMED"; 		// Default output (for Nagios).
 		
 		File f = new File(jobpath); 						// Path of the job descriptor file (xml) to submit to the Scheduler.
 		String jobname = f.getName(); 						// We get the name of the jobdescriptor file to tell it in the logs.
@@ -272,7 +280,8 @@ public class JobProber {
 		logger.info("Checking output...");
 		if (jresult==null){ 		// Timeout case. No results obtained.
 			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
-			output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - ERROR (job told to be finished, but no result obtained)";
+			output_to_print = 
+				NAG_OUTPUT_PREFIX + "JOBID " + jobId + " ERROR (no job result obtained)";
 			output_to_return = JobProber.RESULT_CRITICAL;
 		}else{ 						// Non-timeout case. Result obtained.
 			logger.info("Finished period for job  " + jobname + ":" + jobId + ". Result: " + jresult.toString());
@@ -294,14 +303,17 @@ public class JobProber {
 				String expectedoutput = Misc.readAllFile(jobpath + ".out"); // Checking of the expected output '.out' file.
 				if (jresult.toString().equals(expectedoutput)){ 			// Checked file, all OK.
 					output_to_return = JobProber.RESULT_OK;
-					output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - OK ("+ durationsec +" sec)";
+					output_to_print = 
+						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OK | tottime="+ durationsec +"s";
 				}else{ 														// Outputs were different. 
 					output_to_return = JobProber.RESULT_CRITICAL;
-					output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - OUTPUT CHECK FAILED ("+ durationsec +" sec)";
+					output_to_print = 
+						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OUTPUT CHECK FAILED | tottime="+ durationsec +"s";
 				}
 			}catch(IOException e){											// No 'output' reference point to do the checking.
 				output_to_return = JobProber.RESULT_UNKNOWN; 		
-				output_to_print = "RESULT JOB " + jobname + " ID " + jobId + " - OUTPUT NOT CHECKED ("+ durationsec +" sec)";
+				output_to_print = 
+						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OUTPUT NOT CHECKED | tottime="+ durationsec +"s";
 			}
 		}
 		logger.info("Done.");
