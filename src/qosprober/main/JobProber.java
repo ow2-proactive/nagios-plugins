@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.KeyException;
-import java.util.Date;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -216,9 +215,7 @@ public class JobProber {
 	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
 	public static Object[] probe(String url, String user, String pass, String protocol, String jobpath, int timeoutsec, Boolean usepaconffile) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		
-		TimeTick timer = new TimeTick();
-		
-		double time_initializing = timer.tickSec();
+		TimeTick timer = new TimeTick(); // We want to get time durations.
 		
 		/* We get connected to the Scheduler through this stub, later we submit a job, etc. */
 		SchedulerStubProber schedulerstub; 
@@ -233,6 +230,7 @@ public class JobProber {
 			throw new InvalidProtocolException("Unknown protocol '"+protocol+"'");
 		}
 		
+		double time_initializing = timer.tickSec();
 		
 		JobProber.setLastStatuss("scheduler stub created, connecting to shceduler...");
 		
