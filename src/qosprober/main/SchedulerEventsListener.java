@@ -18,38 +18,73 @@ import org.ow2.proactive.scheduler.common.task.TaskInfo;
 public class SchedulerEventsListener implements SchedulerEventListener, Serializable{
 	private static final long serialVersionUID = 1L;
 	private static Logger logger = Logger.getLogger(SchedulerEventsListener.class.getName()); 	// Logger.	
-	private static final int lastFinishedJobsBufferSize = 100; 									// Maximum amount of elements in the lastFinishedJobs array.
-	public static String[] lastFinishedJobs = new String[lastFinishedJobsBufferSize]; 			// List of last finished jobs. 
-	public static int currentCounter = 0; 														// Circular index. 
+	private static final int lastSomethingJobsBufferSize = 200; 									// Maximum amount of elements in the lastFinishedJobs array.
+	public static String[] lastFinishedJobs = new String[lastSomethingJobsBufferSize]; 			// List of last finished jobs.
+	public static String[] lastRemovedJobs  = new String[lastSomethingJobsBufferSize]; 			// List of last finished jobs.
+	public static int currentCounterFinished = 0; 														// Circular index.
+	public static int currentCounterRemoved  = 0;
 	
 	/** 
 	 * Check if the given job is in the list of last finished jobs. */
 	public static synchronized boolean checkIfJobIdHasJustFinished(String jobId){
-		logger.info("Checking if " + jobId + " has already finished...");
-		printList();
+		logger.info("\tChecking if " + jobId + " has already finished...");
+		printListFinished();
 		for (String j:lastFinishedJobs){
 			if (j!=null && j.equals(jobId)){
-				logger.info("\t" + "yes");
+				logger.info("\t\t" + "yes");
 				return true;
 			}
 		}
-		logger.info("\t" + "no");
+		logger.info("\t\t" + "no");
 		return false;
 	}
+
+	
+
+	/** 
+	 * Check if the given job is in the list of last removed jobs. */
+	public static synchronized boolean checkIfJobIdHasJustBeenRemoved(String jobId){
+		logger.info("\tChecking if " + jobId + " has been already removed...");
+		printListRemoved();
+		for (String j:lastRemovedJobs){
+			if (j!=null && j.equals(jobId)){
+				logger.info("\t\t" + "yes");
+				return true;
+			}
+		}
+		logger.info("\t\t" + "no");
+		return false;
+	}
+
+	
+	/**
+	 * Add a job to the list of last removed jobs. */
+	public static synchronized void addRemovedJobId(String jobId){
+		lastRemovedJobs[currentCounterRemoved] = jobId;
+		currentCounterRemoved = (currentCounterRemoved + 1) % lastSomethingJobsBufferSize;
+		printListRemoved();
+	}
+
 	
 	/**
 	 * Add a job to the list of last finished jobs. */
 	public static synchronized void addFinishedJobId(String jobId){
-		lastFinishedJobs[currentCounter] = jobId;
-		currentCounter = (currentCounter + 1) % lastFinishedJobsBufferSize;
-		printList();
+		lastFinishedJobs[currentCounterFinished] = jobId;
+		currentCounterFinished = (currentCounterFinished + 1) % lastSomethingJobsBufferSize ;
+		printListFinished();
 	}
 	
 	/**
 	 * Print the list of last finished jobs. */
-	private static synchronized void printList(){
-		logger.info("Last finished jobs: ");
-		logger.info(Misc.getDescriptiveString((Object)lastFinishedJobs));
+	private static synchronized void printListFinished(){
+		logger.info("\tLast finished jobs: " + Misc.getDescriptiveString((Object)lastFinishedJobs));
+	}
+
+	
+	/**
+	 * Print the list of last removed jobs. */
+	private static synchronized void printListRemoved(){
+		logger.info("\tLast removed jobs: " + Misc.getDescriptiveString((Object)lastRemovedJobs));
 	}
 
 	
@@ -61,7 +96,7 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 	
 	@Override
 	public void jobStateUpdatedEvent(NotificationData<JobInfo> info) {
-		logger.info(">>Event " + info.getData() +  " " + info.getEventType().toString());
+		logger.info(">> " + info.getData().getJobId().value() + " event " + info.getEventType().toString());
 		
 		if (info.getEventType().equals(SchedulerEvent.JOB_RUNNING_TO_FINISHED)){
 			/* If we receive a running-to-finished event for a job, we add this job to the 
@@ -71,6 +106,15 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 				SchedulerStubProberJava.class.notifyAll();
 			}
 		} 
+		
+		if (info.getEventType().equals(SchedulerEvent.JOB_REMOVE_FINISHED)){
+			/* If we receive a remove-finished event for a job, we add this job to the 
+			 * list of last removed jobs. */ 
+			addRemovedJobId(info.getData().getJobId().value());
+			synchronized(SchedulerStubProberJava.class){
+				SchedulerStubProberJava.class.notifyAll();
+			}
+		}
 	}
 
 	@Override

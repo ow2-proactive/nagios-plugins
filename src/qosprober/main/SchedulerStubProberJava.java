@@ -7,6 +7,7 @@ import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.api.PAActiveObject;
 import org.objectweb.proactive.core.node.NodeException;
 import org.ow2.proactive.scheduler.common.SchedulerConnection;
+import org.ow2.proactive.scheduler.common.SchedulerState;
 import org.ow2.proactive.scheduler.common.exception.JobCreationException;
 import org.ow2.proactive.scheduler.common.exception.NotConnectedException;
 import org.ow2.proactive.scheduler.common.exception.PermissionException;
@@ -21,6 +22,8 @@ import org.ow2.proactive.scheduler.common.SchedulerAuthenticationInterface;
 import java.io.IOException;
 import java.security.KeyException;
 import java.util.Date;
+import java.util.Vector;
+
 import org.ow2.proactive.authentication.crypto.Credentials;
 import qosprober.exceptions.InvalidProtocolException;
 
@@ -109,6 +112,38 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 		}while(SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId)==false && timeout==false);
 	}
 
+	
+	
+
+	/** 
+	 * Wait for a job to be cleaned (removed or finished). 
+	 * @param jobId, the ID of the job to wait for. 
+	 * @param timeoutms, the maximum time in milliseconds to wait for this job's removal. */
+	public void waitUntilJobIsCleaned(String jobId, int timeoutms) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{
+
+		long start = (new Date()).getTime();
+		long end;
+		boolean timeout;
+		
+		do{
+			synchronized(SchedulerStubProberJava.class){
+				
+				try {
+					SchedulerStubProberJava.class.wait(timeoutms); // This thread is blocked until the SchedulerEventsListener notifies of a new removed job.
+				} catch (InterruptedException e) {
+					logger.warn("Not supposed to happen...", e);
+				}
+				end = (new Date()).getTime(); 
+				timeout = (end-start>=timeoutms);
+			}
+			
+		}while(
+				SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId) == false    && 
+				SchedulerEventsListener.checkIfJobIdHasJustBeenRemoved(jobId) == false &&
+				timeout==false);
+	}
+
+	
 	/** 
 	 * Return the status of the job (running, finished, etc.). 
 	 * @param jobId, the ID of the job. 
@@ -122,6 +157,7 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 	 * This is specially useful to delete the probe job, so we do not contaminate what the administrator sees.
 	 * @param jobId, the ID of the job. */
 	public void removeJob(String jobId) throws Exception, NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
+		schedulerStub.killJob(jobId);
 		schedulerStub.removeJob(jobId);
 	}
 	
@@ -129,5 +165,43 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 	 * Disconnect from the Scheduler. */
 	public void disconnect() throws NotConnectedException, PermissionException, HttpException, IOException{		
 		schedulerStub.disconnect();
+	}
+	
+	/**
+	 * Get a list of all jobs with the given name that are in pending, running and finished queues 
+	 * of the scheduler (my jobs only). */
+	public Vector<String> getAllCurrentJobsList(String jobname) throws NotConnectedException, PermissionException{
+		
+		logger.info("\tGetting list of jobs...");
+		
+		if (jobname == null){
+			throw new IllegalArgumentException("'name' argument cannot be null");
+		}
+		
+		SchedulerState st = schedulerStub.getState(true);
+		
+		Vector<JobState> vector = new Vector<JobState>();
+		
+		vector.addAll(st.getPendingJobs());
+		vector.addAll(st.getRunningJobs());
+		vector.addAll(st.getFinishedJobs());
+		
+		Vector<String> jobs = new Vector<String>(); 
+		
+		
+		
+		for(JobState j: vector){
+			logger.info("\tcomparing " + jobname + " with " + j.getName() + "...");
+			
+			if (j.getName().equals(jobname)){
+				jobs.add(j.getId().value());
+				logger.info("\t\tyes!");
+			}else{
+				logger.info("\t\tno...");
+			}
+		}
+		
+		return jobs;
+		
 	}
 }

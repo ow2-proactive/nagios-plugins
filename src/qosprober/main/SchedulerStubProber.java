@@ -13,6 +13,7 @@ import org.ow2.proactive.scheduler.common.exception.UnknownJobException;
 import org.ow2.proactive.scheduler.common.job.*;
 import java.io.IOException;
 import java.security.KeyException;
+import java.util.Vector;
 
 /** 
  * Class that connects the test with the real scheduler, works as a stub. 
@@ -49,6 +50,12 @@ public interface SchedulerStubProber{
 	 * @param jobId, the ID of the job to wait. 
 	 * @param timeoutms, the maximum time in milliseconds to wait for this job. */
 	public void waitUntilJobFinishes(String jobId, int timeoutms) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException;
+	
+	/** 
+	 * Wait for a job to be cleaned (removed or finished). 
+	 * @param jobId, the ID of the job to wait for. 
+	 * @param timeoutms, the maximum time in milliseconds to wait for this job removal. */
+	public void waitUntilJobIsCleaned(String jobId, int timeoutms) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException;
 
 	/** 
 	 * Return the status of the job (running, finished, etc.). 
@@ -66,4 +73,8 @@ public interface SchedulerStubProber{
 	 * Disconnect from the Scheduler. */
 	public void disconnect() throws NotConnectedException, PermissionException, HttpException, IOException;	
 
+	/**
+	 * Get a list of all jobs with the given name that are in pending, running and finished queues 
+	 * of the scheduler (my jobs only). */
+	public Vector<String> getAllCurrentJobsList(String jobname) throws NotConnectedException, PermissionException;
 }

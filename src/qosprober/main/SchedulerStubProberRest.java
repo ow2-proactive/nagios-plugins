@@ -29,6 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.security.KeyException;
 import java.util.Date;
+import java.util.Vector;
+
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -178,6 +180,20 @@ public class SchedulerStubProberRest implements SchedulerStubProber{
 	    method.addRequestHeader("sessionid", sessionId);
 	    HttpClient client = new HttpClient();
 	    client.executeMethod(method);
+	}
+
+	@Override
+	public Vector<String> getAllCurrentJobsList(String jobname)
+			throws NotConnectedException, PermissionException {
+		throw new RuntimeException("Not implemented yet");
+	}
+
+	@Override
+	public void waitUntilJobIsCleaned(String jobId, int timeoutms)
+			throws NotConnectedException, PermissionException,
+			UnknownJobException, HttpException, IOException {
+		throw new RuntimeException("Not implemented yet");
+		
 	}
 }
 

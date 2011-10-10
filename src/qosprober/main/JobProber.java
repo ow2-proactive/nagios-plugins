@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.security.KeyException;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -101,14 +102,9 @@ public class JobProber {
 		    System.exit(RESULT_CRITICAL);
 		}
 		
-		if (debug == true){
-			/* We load the log4j.properties file. */
-			PropertyConfigurator.configure("log4j.properties");
-		}else{
-			/* We do the log4j configuration on the fly. */
-			Properties properties = JobProber.getMainLoggingProperties();
-			PropertyConfigurator.configure(properties);
-		}
+		log4jConfiguration(debug);
+		
+		
 		
 		JobProber.setLastStatuss("parameters parsed, doing log4j configuration...");
 		
@@ -227,7 +223,7 @@ public class JobProber {
 		}else if (papp.equals(ProActiveProxyProtocol.REST)){
 			schedulerstub = new SchedulerStubProberRest();
 		}else{
-			throw new InvalidProtocolException("Unknown protocol '"+protocol+"'");
+			throw new InvalidProtocolException("Unknown protocol '" + protocol + "'");
 		}
 		
 		double time_initializing = timer.tickSec();
@@ -250,14 +246,41 @@ public class JobProber {
 		}
 		logger.info("Done.");
 		
-		JobProber.setLastStatuss("proactive configuration loaded, submitting job...");
+		String jobname = Misc.getJobNameFromJobDescriptor(jobpath); // We get the name of the jobdescriptor file to tell it in the logs.
+		logger.info("Probe job's name: '"+jobname+"'");
+		/*******************/
+		
+		JobProber.setLastStatuss("proactive configuration loaded, removing old jobs...");
+		
+		logger.info("Removing old jobs...");
+		Vector<String> schedulerjobs;
+		schedulerjobs = schedulerstub.getAllCurrentJobsList(jobname);
+		for(String jobb:schedulerjobs){
+			logger.info("\tRemoving old job '" + jobname + "' with JobId " + jobb + "...");
+			JobProber.setLastStatuss("proactive configuration loaded, removing old job (jobid " + jobb + ")...");
+			schedulerstub.removeJob(jobb);
+			schedulerstub.waitUntilJobIsCleaned(jobb, timeoutsec * 1000); // Wait until either job's end or removal.
+		}
+		logger.info("Done.");
+
+		schedulerjobs = schedulerstub.getAllCurrentJobsList(jobname);
+		if (schedulerjobs.size()!=0){
+			String output_to_print = NAG_OUTPUT_PREFIX + " ERROR (not possible to remove all previous probe jobs in the scheduler)";
+			int output_to_return = JobProber.RESULT_CRITICAL;
+			Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
+			ret[0] = new Integer(output_to_return);
+			ret[1] = output_to_print;
+			return ret;
+		}
+		
+		double time_removing_old_jobs = timer.tickSec();
+		JobProber.setLastStatuss("removed old jobs, submitting job...");
+		
+		/*******************/
 		
 		int output_to_return = JobProber.RESULT_CRITICAL; 
 		String output_to_print = 
 			NAG_OUTPUT_PREFIX + "NO TEST PERFORMED"; 		// Default output (for Nagios).
-		
-		File f = new File(jobpath); 						// Path of the job descriptor file (xml) to submit to the Scheduler.
-		String jobname = f.getName(); 						// We get the name of the jobdescriptor file to tell it in the logs.
 		
 		logger.info("Submitting '" + jobname + "' job...");
 		String jobId = schedulerstub.submitJob(jobpath); 	// Submission of the job.
@@ -278,7 +301,6 @@ public class JobProber {
 		String jresult = schedulerstub.getJobResult(jobId); 	// Getting the result of the submitted job.
 		
 		JobProber.setLastStatuss("job "+jobId+" result retrieved, removing job from scheduler...");
-		//logger.info("Duration of submission+execution: " + durationsec + " seconds.");
 		
 		double time_retrieval = timer.tickSec();
 		
@@ -298,16 +320,16 @@ public class JobProber {
 		
 		double time_disconn = timer.tickSec();
 		
-		 
 		String timesummary =
-			"initi=" + String.format(Locale.ENGLISH, "%1.03f", time_initializing) + "s " +
-			"conne=" + String.format(Locale.ENGLISH, "%1.03f", time_connection)   + "s " + 
-			"submi=" + String.format(Locale.ENGLISH, "%1.03f", time_submission)   + "s " + 
-			"execu=" + String.format(Locale.ENGLISH, "%1.03f", time_execution )   + "s " + 
-			"retri=" + String.format(Locale.ENGLISH, "%1.03f", time_retrieval )   + "s " +
-			"remov=" + String.format(Locale.ENGLISH, "%1.03f", time_removal   )   + "s " + 
-			"disco=" + String.format(Locale.ENGLISH, "%1.03f", time_disconn   )   + "s " + 
-			"all="   + String.format(Locale.ENGLISH, "%1.03f", (time_initializing+time_connection+time_submission+time_execution+time_retrieval+time_removal+time_disconn)) + "s"; 
+			"time_initialization=" + String.format(Locale.ENGLISH, "%1.03f", time_initializing) + "s " +
+			"time_connection=" + String.format(Locale.ENGLISH, "%1.03f", time_connection)   + "s " +
+			"time_cleaning_old_jobs=" + String.format(Locale.ENGLISH, "%1.03f", time_removing_old_jobs) + "s " +
+			"time_submission=" + String.format(Locale.ENGLISH, "%1.03f", time_submission)   + "s " + 
+			"time_execution=" + String.format(Locale.ENGLISH, "%1.03f", time_execution )   + "s " + 
+			"time_output_retrieval=" + String.format(Locale.ENGLISH, "%1.03f", time_retrieval )   + "s " +
+			"time_job_removal=" + String.format(Locale.ENGLISH, "%1.03f", time_removal   )   + "s " + 
+			"time_disconnection=" + String.format(Locale.ENGLISH, "%1.03f", time_disconn   )   + "s " + 
+			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", (time_initializing+time_connection+time_submission+time_execution+time_retrieval+time_removal+time_disconn)) + "s"; 
 		
 		logger.info("Checking output...");
 		if (jresult==null){ 		// Timeout case. No results obtained.
@@ -435,6 +457,20 @@ public class JobProber {
 		properties.put("log4j.appender.STDOUT.layout",	"org.apache.log4j.PatternLayout");
 		properties.put("log4j.appender.STDOUT.layout.ConversionPattern","%-4r [%t] %-5p %c %x - %m%n");
 		return properties;
+	}
+	
+	/**
+	 * Configures de log4j module for logging. */
+	public static void log4jConfiguration(boolean debug){
+		System.setProperty("log4j.configuration", "");
+		if (debug == true){
+			/* We load the log4j.properties file. */
+			PropertyConfigurator.configure("log4j.properties");
+		}else{
+			/* We do the log4j configuration on the fly. */
+			Properties properties = JobProber.getMainLoggingProperties();
+			PropertyConfigurator.configure(properties);
+		}
 	}
 	
 }
