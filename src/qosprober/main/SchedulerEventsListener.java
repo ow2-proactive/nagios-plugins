@@ -27,15 +27,15 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 	/** 
 	 * Check if the given job is in the list of last finished jobs. */
 	public static synchronized boolean checkIfJobIdHasJustFinished(String jobId){
-		logger.info("\tChecking if " + jobId + " has already finished...");
+		logger.debug("\tChecking if " + jobId + " has already finished...");
 		printListFinished();
 		for (String j:lastFinishedJobs){
 			if (j!=null && j.equals(jobId)){
-				logger.info("\t\t" + "yes");
+				logger.info("\tjobId " + jobId + " finished.");
 				return true;
 			}
 		}
-		logger.info("\t\t" + "no");
+		logger.info("\tjobId " + jobId + " still there (not finished)...");
 		return false;
 	}
 
@@ -44,15 +44,15 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 	/** 
 	 * Check if the given job is in the list of last removed jobs. */
 	public static synchronized boolean checkIfJobIdHasJustBeenRemoved(String jobId){
-		logger.info("\tChecking if " + jobId + " has been already removed...");
+		logger.debug("\tChecking if " + jobId + " has been already removed...");
 		printListRemoved();
 		for (String j:lastRemovedJobs){
 			if (j!=null && j.equals(jobId)){
-				logger.info("\t\t" + "yes");
+				logger.info("\tjobId " + jobId + " removed.");
 				return true;
 			}
 		}
-		logger.info("\t\t" + "no");
+		logger.info("\tjobId " + jobId + " still there (not removed)...");
 		return false;
 	}
 
@@ -77,14 +77,14 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 	/**
 	 * Print the list of last finished jobs. */
 	private static synchronized void printListFinished(){
-		logger.info("\tLast finished jobs: " + Misc.getDescriptiveString((Object)lastFinishedJobs));
+		logger.debug("\tLast finished jobs: " + Misc.getDescriptiveString((Object)lastFinishedJobs));
 	}
 
 	
 	/**
 	 * Print the list of last removed jobs. */
 	private static synchronized void printListRemoved(){
-		logger.info("\tLast removed jobs: " + Misc.getDescriptiveString((Object)lastRemovedJobs));
+		logger.debug("\tLast removed jobs: " + Misc.getDescriptiveString((Object)lastRemovedJobs));
 	}
 
 	
