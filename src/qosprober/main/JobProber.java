@@ -255,11 +255,17 @@ public class JobProber {
 		logger.info("Removing old jobs...");
 		Vector<String> schedulerjobs;
 		schedulerjobs = schedulerstub.getAllCurrentJobsList(jobname);
-		for(String jobb:schedulerjobs){
-			logger.info("\tRemoving old job '" + jobname + "' with JobId " + jobb + "...");
-			JobProber.setLastStatuss("proactive configuration loaded, removing old job (jobid " + jobb + ")...");
-			schedulerstub.removeJob(jobb);
-			schedulerstub.waitUntilJobIsCleaned(jobb, timeoutsec * 1000); // Wait until either job's end or removal.
+		
+		if (schedulerjobs.size()>0){
+			logger.info("\tThere are a few same-name old jobs...");
+			for(String jobb:schedulerjobs){
+				logger.info("\tRemoving old job '" + jobname + "' with JobId " + jobb + "...");
+				JobProber.setLastStatuss("proactive configuration loaded, removing old job (jobid " + jobb + ")...");
+				schedulerstub.removeJob(jobb);
+				schedulerstub.waitUntilJobIsCleaned(jobb, timeoutsec * 1000); // Wait until either job's end or removal.
+			}
+		}else{
+			logger.info("\tThere are no old jobs...");
 		}
 		logger.info("Done.");
 

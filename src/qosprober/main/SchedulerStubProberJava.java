@@ -172,7 +172,7 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 	 * of the scheduler (my jobs only). */
 	public Vector<String> getAllCurrentJobsList(String jobname) throws NotConnectedException, PermissionException{
 		
-		logger.info("\tGetting list of jobs...");
+		logger.debug("\tGetting list of jobs...");
 		
 		if (jobname == null){
 			throw new IllegalArgumentException("'name' argument cannot be null");
@@ -191,13 +191,13 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 		
 		
 		for(JobState j: vector){
-			logger.info("\tcomparing " + jobname + " with " + j.getName() + "...");
+			logger.debug("\tcomparing " + jobname + " with " + j.getName() + "...");
 			
 			if (j.getName().equals(jobname)){
 				jobs.add(j.getId().value());
-				logger.info("\t\tyes!");
+				logger.debug("\t\tyes!");
 			}else{
-				logger.info("\t\tno...");
+				logger.debug("\t\tno...");
 			}
 		}
 		

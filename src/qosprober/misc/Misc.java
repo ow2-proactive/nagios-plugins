@@ -290,8 +290,9 @@ public class Misc {
 	    return ret;
 	}
     
-    public static String getJobNameFromJobDescriptor(String xmlpath) throws Exception{
-    	Job job = JobFactory.getFactory().createJob(xmlpath);
+    /* Return the name of a job by reading its job file descriptor. */
+    public static String getJobNameFromJobDescriptor(String jobdescxmlpath) throws Exception{
+    	Job job = JobFactory.getFactory().createJob(jobdescxmlpath);
     	return job.getName();
     }
     

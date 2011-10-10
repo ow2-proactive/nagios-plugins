@@ -31,11 +31,11 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 		printListFinished();
 		for (String j:lastFinishedJobs){
 			if (j!=null && j.equals(jobId)){
-				logger.info("\tjobId " + jobId + " finished.");
+				logger.info("\tjobId " + jobId + " finished cleanly.");
 				return true;
 			}
 		}
-		logger.info("\tjobId " + jobId + " still there (not finished)...");
+		logger.info("\tjobId " + jobId + " not finished cleanly...");
 		return false;
 	}
 
@@ -52,7 +52,7 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 				return true;
 			}
 		}
-		logger.info("\tjobId " + jobId + " still there (not removed)...");
+		logger.info("\tjobId " + jobId + " not removed...");
 		return false;
 	}
 
