@@ -34,7 +34,7 @@ import qosprober.exceptions.InvalidProtocolException;
  *    -Job submission
  *    -Job result retrieval
  *    -Job result comparison 
- *  After that the result of the test is shown using Nagios format. */
+ *  After that, a short summary regarding the result of the test is shown using Nagios format. */
 public class JobProber {
 
 	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";

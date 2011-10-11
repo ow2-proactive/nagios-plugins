@@ -1,0 +1,65 @@
+
+SYNOPSIS
+   java -jar jobsubmprobe.jar <url> <user> <pass> <protocol> <jobpath> [OPTIONS]
+
+DESCRIPTION
+
+Nagios plugin to probe the responsiveness of a ProActive based scheduler grid.
+It uses a simple job probe submission to test a grid concerning its responsiveness, and status in general.  
+The output of the probe job is compared with a local copy of the correct output to make sure it is correctly executed. The output of the probe job (once executed the test) is written in a file whose path is exactly the same as the path of the job descriptor + '.out.tmp'. The correct output of the job should be put in a file whose path is exactly the same as the path of the job descriptor + '.out'. 
+   
+Mandatory arguments to long options are mandatory for short options too.
+   
+   -v, --debug
+      Verbose debugging mode. If true it will try to load 'log4j.properties' to know what and where to put the log messages.
+       
+   -u, --user=USER
+      Username to be used to get connected to the Scheduler.
+      
+   -p, --pass=PASS
+      Password to be used to get connected to the Scheduler.
+      
+   --protocol=PROTOCOL
+      Protocol to be used to get connected to the Scheduler. For example JAVAPA or REST.
+      
+   -j, --jobpath=JOBPATH
+      Full path of the job descriptor (xml file) to be used as a probe.
+      
+   --url=URL
+      URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
+      It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA and 'http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' for REST.     
+       
+   -t, --timeout=TIMEOUT
+      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
+       
+   -n, --timeoutwarning=TIMEOUT_FOR_WARNING_MESSAGE
+      In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status.  
+      
+   -f, --paconf=PACONF
+      ProActive configuration file (usually ProActiveConfiguration.xml).
+      
+   -H, --hostname=HOSTNAME
+      Nagios compatibility. Hostname to be tested. Ignored because this information is given in the ProActive configuration file.
+      
+   -w, --warning=WARNING
+      Nagios compatibility. Warning level to be used.
+      
+   -c, --critical=CRITICAL
+      Nagios compatibility. Critical level to be used.
+      
+
+NAGIOS OUTPUT INTERPRETATION
+
+   SERVICE STATUS: JOBID <jobid> <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
+	
+   where
+      - jobid is the id of the probe job.
+      - status is a message regarding to the result of the test and job 'jobid' used as probe job.
+      - TIME is the time (in seconds) that was spent for the activity described by key* for the probe job. 
+	
+EXECUTION EXAMPLE
+
+   Case for a local Scheduler/RM running
+      java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ --user=demo --pass=demo --protocol=JAVAPA --jobpath=/tmp/job.xml 
+      java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ -u demo      -p demo    --protocol=JAVAPA -j /tmp/job.xml
+
