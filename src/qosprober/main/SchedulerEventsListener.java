@@ -17,11 +17,11 @@ import org.ow2.proactive.scheduler.common.task.TaskInfo;
  * Class that listens to events that happen in the remote Scheduler. */ 
 public class SchedulerEventsListener implements SchedulerEventListener, Serializable{
 	private static final long serialVersionUID = 1L;
-	private static Logger logger = Logger.getLogger(SchedulerEventsListener.class.getName()); 	// Logger.	
-	private static final int lastSomethingJobsBufferSize = 200; 									// Maximum amount of elements in the lastFinishedJobs array.
-	public static String[] lastFinishedJobs = new String[lastSomethingJobsBufferSize]; 			// List of last finished jobs.
-	public static String[] lastRemovedJobs  = new String[lastSomethingJobsBufferSize]; 			// List of last finished jobs.
-	public static int currentCounterFinished = 0; 														// Circular index.
+	private static Logger logger = Logger.getLogger(SchedulerEventsListener.class.getName());// Logger.	
+	private static final int lastSomethingJobsBufferSize = 200; 							 // Maximum amount of elements in the lastFinished/RemovedJobs array.
+	public static String[] lastFinishedJobs = new String[lastSomethingJobsBufferSize]; 		 // List of last finished jobs.
+	public static String[] lastRemovedJobs  = new String[lastSomethingJobsBufferSize]; 		 // List of last finished jobs.
+	public static int currentCounterFinished = 0; 											 // Circular index.
 	public static int currentCounterRemoved  = 0;
 	
 	/** 
@@ -31,15 +31,13 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 		printListFinished();
 		for (String j:lastFinishedJobs){
 			if (j!=null && j.equals(jobId)){
-				logger.info("\tjobId " + jobId + " finished cleanly.");
+				logger.debug("\t\tjobId " + jobId + " finished cleanly.");
 				return true;
 			}
 		}
-		logger.info("\tjobId " + jobId + " not finished cleanly...");
+		logger.debug("\t\tjobId " + jobId + " not finished cleanly...");
 		return false;
 	}
-
-	
 
 	/** 
 	 * Check if the given job is in the list of last removed jobs. */
@@ -48,11 +46,11 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 		printListRemoved();
 		for (String j:lastRemovedJobs){
 			if (j!=null && j.equals(jobId)){
-				logger.info("\tjobId " + jobId + " removed.");
+				logger.debug("\t\tjobId " + jobId + " removed.");
 				return true;
 			}
 		}
-		logger.info("\tjobId " + jobId + " not removed...");
+		logger.debug("\t\tjobId " + jobId + " not removed...");
 		return false;
 	}
 
@@ -88,15 +86,15 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 	}
 
 	
-	/************************************/
-	/* Interface SchedulerEventListener */
-	/************************************/
+	/** 
+	 * Interface SchedulerEventListener
+	 * Notification of events that happen in the Scheduler.  
+	 */
 
-	/* Notification of events that happen in the Scheduler. */
 	
 	@Override
 	public void jobStateUpdatedEvent(NotificationData<JobInfo> info) {
-		logger.info(">> " + info.getData().getJobId().value() + " event " + info.getEventType().toString());
+		logger.info(">> Event " + info.getData().getJobId().value() + " " + info.getEventType().toString());
 		
 		if (info.getEventType().equals(SchedulerEvent.JOB_RUNNING_TO_FINISHED)){
 			/* If we receive a running-to-finished event for a job, we add this job to the 

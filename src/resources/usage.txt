@@ -30,8 +30,11 @@ Mandatory arguments to long options are mandatory for short options too.
       It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA and 'http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' for REST.     
        
    -t, --timeout=TIMEOUT
-      Timeout (in seconds) to wait for a job submission.
+      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
        
+   -n, --timeoutwarning=TIMEOUT_FOR_WARNING_MESSAGE
+      In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status.  
+      
    -f, --paconf=PACONF
       ProActive configuration file (usually ProActiveConfiguration.xml).
       
