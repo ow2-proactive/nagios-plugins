@@ -1,4 +1,6 @@
 *.class
 *.log
-bin/resources/usage.txt
+*/bin/resources/usage.txt
 *.jar
+scheduler
+.metadata
