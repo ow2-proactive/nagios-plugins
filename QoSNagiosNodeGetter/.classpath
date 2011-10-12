@@ -26,5 +26,6 @@
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/http-2.0.4.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/commons-httpclient-3.1.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/thirds/google-gson-1.7.1/gson-1.7.1.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveSchedulingResourcing-3.1.0_src/dist/lib/ejb3-persistence.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

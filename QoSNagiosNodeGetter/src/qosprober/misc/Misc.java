@@ -17,7 +17,6 @@ import java.util.HashSet;
 import org.apache.log4j.Logger;
 import org.ow2.proactive.scheduler.common.job.Job;
 import org.ow2.proactive.scheduler.common.job.factories.JobFactory;
-import org.w3c.dom.Node;
 
 import qosprober.exceptions.ElementNotFoundException;
 

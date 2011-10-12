@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.security.KeyException;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,16 +18,14 @@ import java.util.concurrent.TimeoutException;
 
 import javax.security.auth.login.LoginException;
 
-import org.apache.commons.httpclient.HttpException;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.core.config.ProActiveConfiguration;
-import org.objectweb.proactive.core.node.NodeException;
-import org.ow2.proactive.scheduler.common.exception.SchedulerException;
+import org.objectweb.proactive.core.node.Node;
+import org.ow2.proactive.resourcemanager.exception.RMException;
+import org.ow2.proactive.utils.NodeSet;
 
 import qosprober.exceptions.ElementNotFoundException;
-import qosprober.exceptions.InvalidProtocolException;
 import qosprober.misc.Misc;
 
 
@@ -38,7 +35,7 @@ import qosprober.misc.Misc;
  *    -Job result retrieval
  *    -Job result comparison 
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
-public class JobProber {
+public class RMProber {
 
 	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
 	/** Nagios exit codes. */
@@ -51,15 +48,15 @@ public class JobProber {
 															// It is used in case of TIMEOUT, to help the administrator guess
 															// where the problem is.
 	
-	public static Logger logger = Logger.getLogger(JobProber.class.getName()); // Logger.
+	public static Logger logger = Logger.getLogger(RMProber.class.getName()); // Logger.
 	
 	/**
 	 * Starting point.
 	 * The arguments/parameters are specified in the file /resources/usage.txt
 	 * @return Nagios error code. */
-	public static void main1(String[] args) throws Exception{
+	public static void main(String[] args) throws Exception{
 		
-		JobProber.setLastStatuss("started, parsing arguments...");
+		RMProber.setLastStatuss("started, parsing arguments...");
 		
 		/* Parsing of arguments. */
 		CmdLineParser parser = new CmdLineParser();
@@ -67,9 +64,12 @@ public class JobProber {
 		CmdLineParser.Option debugO = parser.addBooleanOption('v', "debug");
 		CmdLineParser.Option userO = parser.addStringOption('u', "user");
 		CmdLineParser.Option passO = parser.addStringOption('p', "pass");
-		CmdLineParser.Option protocolO = parser.addStringOption("protocol");
-		CmdLineParser.Option jobpathO = parser.addStringOption('j',"jobpath");
+		//CmdLineParser.Option protocolO = parser.addStringOption("protocol");
+		//CmdLineParser.Option jobpathO = parser.addStringOption('j',"jobpath");
 		CmdLineParser.Option urlO = parser.addStringOption("url");
+		CmdLineParser.Option nodesrequiredO = parser.addIntegerOption('r', "nodes");
+		CmdLineParser.Option nodeswarningO = parser.addIntegerOption("nodeswarning");
+		CmdLineParser.Option nodescriticalO = parser.addIntegerOption("nodescritical");
 		CmdLineParser.Option timeoutsecO = parser.addIntegerOption('t', "timeout");
 		CmdLineParser.Option timeoutwarnsecO = parser.addIntegerOption('n', "timeoutwarning");
 		CmdLineParser.Option paconfO = parser.addStringOption('f', "paconf");
@@ -82,16 +82,19 @@ public class JobProber {
 		} catch ( CmdLineParser.OptionException e ) {
 			/* In case something is not expected, print usage and exit. */
 		    System.err.println(e.getMessage());
-		    JobProber.printUsage();
+		    RMProber.printUsage();
 		    System.exit(RESULT_CRITICAL);
 		}
 		
 		final Boolean debug = (Boolean)parser.getOptionValue(debugO, Boolean.FALSE); 	// If false, only Nagios output.
 		final String user = (String)parser.getOptionValue(userO);			 			// User.
 		final String pass = (String)parser.getOptionValue(passO); 						// Pass.
-		final String protocol = (String)parser.getOptionValue(protocolO);			 	// Protocol, either REST or JAVAPA.
-		final String jobpath = (String)parser.getOptionValue(jobpathO); 				// Path of the job descriptor (xml).
+		//final String protocol = (String)parser.getOptionValue(protocolO);			 	// Protocol, either REST or JAVAPA.
+		//final String jobpath = (String)parser.getOptionValue(jobpathO); 				// Path of the job descriptor (xml).
 		final String url = (String)parser.getOptionValue(urlO); 						// Url of the Scheduler/RM.
+		final Integer nodesrequired = (Integer)parser.getOptionValue(nodesrequiredO,4); // Amount of nodes to be asked to the Resource Manager.
+		final Integer nodeswarning = (Integer)parser.getOptionValue(nodeswarningO,0);   // Obtaining fewer nodes than this, a warning message will be thrown. 
+		final Integer nodescritical = (Integer)parser.getOptionValue(nodescriticalO,0); // Obtaining fewer nodes than this, a critical message will be thrown. 
 		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO,60); 		// Timeout in seconds for the job to be executed.
 		final Integer timeoutwarnsec = 
 			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 				// Timeout in seconds for the warning message to be thrown.
@@ -101,50 +104,43 @@ public class JobProber {
 		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
 		
 		
-		if (jobpath == null || user == null || pass == null || protocol == null || jobpath == null || timeoutsec == null){
+		if (user == null || pass == null /*|| protocol == null */ || timeoutsec == null){
 			/* In case something is not expected, print usage and exit. */
 		    logger.fatal("There are some missing parameters.");
-		    JobProber.printUsage();
+		    RMProber.printUsage();
 		    System.exit(RESULT_CRITICAL);
 		}
 		
 		log4jConfiguration(debug);
 		
-		
-		
-		JobProber.setLastStatuss("parameters parsed, doing log4j configuration...");
-		
-		/* Testing of the log4j behavior. */
-		//logger.debug("DEBUG TEST MESSAGE");
-		//logger.info("INFO TEST MESSAGE");
-		//logger.warn("WARN TEST MESSAGE");
-		//logger.error("ERROR TEST MESSAGE");
+		RMProber.setLastStatuss("parameters parsed, doing log4j configuration...");
 		
 		/* Show all the arguments considered. */
 		logger.info(
 				"Configuration: \n" +
-				"\t debug           : " + debug + "\n" +
-				"\t user            : " + user + "\n" +
-				"\t pass            : " + pass + "\n" +
-				"\t prot            : " + protocol + "\n" +
-				"\t jobpath         : " + jobpath + "\n" +
-				"\t url             : " + url + "\n" +
-				"\t timeout         : " + timeoutsec + "\n" +
-				"\t warning timeout : " + timeoutwarnsec + "\n" +
-				"\t paconf          : " + paconf + "\n" +
-				"\t host            : " + host + "\n" +
-				"\t warning         : " + warning  + "\n" +
-				"\t critical        : " + critical + "\n" 
+				"\t debug              : " + debug + "\n" +
+				"\t user               : " + user + "\n" +
+				"\t pass               : " + pass + "\n" +
+				"\t url                : " + url + "\n" +
+				"\t nodes required     : " + nodesrequired + "\n" +
+				"\t min. nodes warning : " + nodeswarning + "\n" +
+				"\t min. nodes critical: " + nodescritical + "\n" +
+				"\t timeout            : " + timeoutsec + "\n" +
+				"\t warning timeout    : " + timeoutwarnsec + "\n" +
+				"\t paconf             : " + paconf + "\n" +
+				"\t host               : " + host + "\n" +
+				"\t warning            : " + warning  + "\n" +
+				"\t critical           : " + critical + "\n" 
 				);
 		
-		JobProber.setLastStatuss("log4j configuration done, loading security policy...");
+		RMProber.setLastStatuss("log4j configuration done, loading security policy...");
 		
 		/* Security policy procedure. */
 		logger.info("Setting security policies... ");
-		JobProber.createPolicyAndLoadIt();
+		RMProber.createPolicyAndLoadIt();
 		logger.info("Done.");
 		
-		JobProber.setLastStatuss("security policy loaded, loading proactive configuration (if needed)...");
+		RMProber.setLastStatuss("security policy loaded, loading proactive configuration (if needed)...");
 		
 		/* Check whether to use or not the ProActive configuration file. */
 		Boolean usepaconffilee = false;
@@ -159,7 +155,7 @@ public class JobProber {
 			usepaconffilee = true;
 		}
 		
-		JobProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
+		RMProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		
 		final Boolean usepaconffile = usepaconffilee;
 		
@@ -167,38 +163,39 @@ public class JobProber {
 		//String[] otherArgs = parser.getRemainingArgs();
 		
 		/* We prepare our probe to run it in a different thread. */
-		/* The probe consists in a job submission done to the Scheduler. */
+		/* The probe consists in a node obtaining done from the Resource Manager. */
 		ExecutorService executor = Executors.newFixedThreadPool(1);
 		
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
 			public Object[] call() throws Exception {
-				return JobProber.probe(url, user, pass, protocol, jobpath, timeoutsec, usepaconffile, timeoutwarnsec);
+				return RMProber.probe(url, user, pass, timeoutsec, usepaconffile, timeoutwarnsec, nodesrequired, nodeswarning, nodescritical);
 			}
 		};
 
 		/* We submit to the executor the prober activity (and the prober will then 
-		 * submit a job to the scheduler in that activity). */
+		 * obtain a node from the RM in that activity). */
 		Future<Object[]> proberFuture = executor.submit(proberCallable); // We ask to execute the probe.
 		
 		try{
 			/* We execute the future using a timeout. */
 			Object[] res = proberFuture.get(timeoutsec, TimeUnit.SECONDS);
 			/* At this point all went okay. */ 
-			JobProber.printAndExit((Integer)res[0], (String)res[1]);
+			RMProber.printAndExit((Integer)res[0], (String)res[1]);
 		}catch(TimeoutException e){
 			/* The execution took more time than expected. */
-			JobProber.printAndExit(
-					JobProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "TIMEOUT (last status was '" + JobProber.getLastStatus() + "')");
+			RMProber.printAndExit(
+					RMProber.RESULT_CRITICAL, 
+					NAG_OUTPUT_PREFIX + "TIMEOUT (last status was '" + RMProber.getLastStatus() + "')");
 		}catch(ExecutionException e){
 			/* There was an unexpected problem with the execution of the prober. */
-			JobProber.printAndExit(
-					JobProber.RESULT_CRITICAL, 
+			e.printStackTrace();
+			RMProber.printAndExit(
+					RMProber.RESULT_CRITICAL, 
 					NAG_OUTPUT_PREFIX + "FAILURE: " + e.getMessage());
 		}catch(Exception e){
 			/* There was an unexpected critical exception not captured. */
-			JobProber.printAndExit(
-					JobProber.RESULT_CRITICAL, 
+			RMProber.printAndExit(
+					RMProber.RESULT_CRITICAL, 
 					NAG_OUTPUT_PREFIX + "CRITICAL ERROR: " + e.getMessage());
 		}
 	}
@@ -206,189 +203,113 @@ public class JobProber {
 	
 	/**
 	 * Probe the scheduler
-	 * Several calls are done against the scheduler:
+	 * A few calls are done against the Resource Manager (RM):
 	 *   - join
-	 *   - submit job
-	 *   - get job status (or event registering, depends on the protocol chosen)
-	 *   - get job result
-	 *   - remove job
+	 *   - get node/s
+	 *   - release node/s
 	 *   - disconnect
-	 *  After a correct disconnection call, the output of the job is compared with a 
-	 *  given correct output, and the result of the test is told. 
-	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
-	public static Object[] probe(String url, String user, String pass, String protocol, String jobpath, int timeoutsec, Boolean usepaconffile, int timeoutwarnsec) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
+	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. 
+	 * @throws RMException 
+	 * @throws LoginException 
+	 * @throws KeyException */	 
+	public static Object[] probe(String url, String user, String pass, int timeoutsec, Boolean usepaconffile, int timeoutwarnsec, int nodesRequired, int nodesminimumwarning, int nodesminimumcritical) throws KeyException, LoginException, RMException{
 		
-		TimeTick timer = new TimeTick(); // We want to get time durations.
+		TimeTick timer = new TimeTick(); // We want to get time durations of each operation.
 		
 		/* We get connected to the Scheduler through this stub, later we submit a job, etc. */
-		SchedulerStubProber schedulerstub; 
+		RMStubProber rmstub; 
 		
-		//ProActiveProxyProtocol papp = ProActiveProxyProtocol.parseProtocol(protocol);
-		
-		
-		schedulerstub = new RMStubProberJava();
-		
+		rmstub = new RMStubProber();
 		
 		double time_initializing = timer.tickSec();
 		
-		JobProber.setLastStatuss("scheduler stub created, connecting to shceduler...");
+		RMProber.setLastStatuss("RM stub created, connecting to RM...");
 		
-		logger.info("Connecting... "); 					// Connecting to the Scheduler...
+		logger.info("Connecting to Resource Manager... "); 	// Connecting to RM...
 
-		schedulerstub.init(protocol, url, user, pass); 	// Login procedure...
-		JobProber.setLastStatuss("connected to scheduler, loading proactive configuration...");
+		rmstub.init(url, user, pass); 						// Login procedure...
+		RMProber.setLastStatuss("connected to RM, loading proactive configuration...");
 		
 		double time_connection = timer.tickSec();
 		
-		
 		if (usepaconffile==true){
 			logger.info("Loading ProActive configuration (xml) file... ");
-			ProActiveConfiguration.load(); // Load the ProActive configuration file.
+			ProActiveConfiguration.load(); 					// Load the ProActive configuration file.
 		}else{
 			logger.info("Avoiding ProActive configuration (xml) file... ");
 		}
 		logger.info("Done.");
 		
-		String jobname = Misc.getJobNameFromJobDescriptor(jobpath); // We get the name of the jobdescriptor file to tell it in the logs.
-		logger.info("Probe job's name: '"+jobname+"'");
-		
-		JobProber.setLastStatuss("proactive configuration loaded, removing old jobs...");
-		
-		logger.info("Removing same-name old jobs...");
-		Vector<String> schedulerjobs;
-		schedulerjobs = schedulerstub.getAllCurrentJobsList(jobname);
-		
-		if (schedulerjobs.size()>0){
-			logger.info("\tThere are same-name old jobs...");
-			for(String jobb:schedulerjobs){
-				logger.info("\tRemoving same-name old job '" + jobname + "' with JobId " + jobb + "...");
-				JobProber.setLastStatuss("proactive configuration loaded, removing old job (jobid " + jobb + ")...");
-				schedulerstub.removeJob(jobb);
-				schedulerstub.waitUntilJobIsCleaned(jobb, timeoutsec * 1000); // Wait until either job's end or removal.
-			}
-		}else{
-			logger.info("\tThere are no same-name old jobs...");
-		}
-		logger.info("Done.");
-
-		schedulerjobs = schedulerstub.getAllCurrentJobsList(jobname);
-		if (schedulerjobs.size()!=0){
-			String output_to_print = NAG_OUTPUT_PREFIX + " ERROR (not possible to remove all previous probe jobs in the scheduler)";
-			int output_to_return = JobProber.RESULT_CRITICAL;
-			Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
-			ret[0] = new Integer(output_to_return);
-			ret[1] = output_to_print;
-			return ret;
-		}
-		
-		double time_removing_old_jobs = timer.tickSec();
-		JobProber.setLastStatuss("removed old jobs, submitting job...");
-		
-		
-		int output_to_return = JobProber.RESULT_CRITICAL; 
+				
+		int output_to_return = RMProber.RESULT_CRITICAL; 
 		String output_to_print = 
 			NAG_OUTPUT_PREFIX + "NO TEST PERFORMED"; 		// Default output (for Nagios).
 		
-		logger.info("Submitting '" + jobname + "' job...");
-		String jobId = schedulerstub.submitJob(jobpath); 	// Submission of the job.
+		RMProber.setLastStatuss("loaded proactive configuration, getting nodes...");
+		
+		logger.info("Getting nodes...");
+		NodeSet nodes = rmstub.getNodes(nodesRequired); 	// Request some nodes.
 		logger.info("Done.");
 		
-		JobProber.setLastStatuss("job "+jobId+" submitted, waiting for it...");
+		double time_getting_nodes = timer.tickSec();
 		
-		double time_submission = timer.tickSec();
-		
-		logger.info("Waiting for " + jobname + ":" + jobId + " job...");
-		schedulerstub.waitUntilJobFinishes(jobId, timeoutsec * 1000); // Wait up to 'timeoutsec' seconds until giving up.
-		logger.info("Done.");
-		
-		JobProber.setLastStatuss("job "+jobId+" finished, getting its result...");
-		
-		double time_execution = timer.tickSec();
-		
-		String jresult = schedulerstub.getJobResult(jobId); 	// Getting the result of the submitted job.
-		
-		JobProber.setLastStatuss("job "+jobId+" result retrieved, removing job from scheduler...");
-		
-		double time_retrieval = timer.tickSec();
-		
-		logger.info("Removing job "+ jobname + ":" + jobId + "...");
-		schedulerstub.removeJob(jobId);							// Job removed from the list of jobs in the Scheduler.
-		logger.info("Done.");
-		
-		double time_removal = timer.tickSec();
-		
-		JobProber.setLastStatuss("job "+jobId+" removed from scheduler, disconnecting...");
-		
-		logger.info("Disconnecting...");
-		schedulerstub.disconnect();								// Getting disconnected from the Scheduler.
-		logger.info("Done.");
-		
-		JobProber.setLastStatuss("disconnected from scheduler, checking job result...");
-		
+		int obtainednodes = nodes.size();
+		logger.info("Listing nodes...");					// List the nodes obtained.
+    	for(Node n:nodes){
+    		logger.info(" - " + n.getNodeInformation().getName());
+    	}
+    	logger.info("Done...");
+    	
+    	
+    	RMProber.setLastStatuss("obtained nodes, releasing nodes...");
+    	
+    	logger.info("Releasing nodes...");					// Release the nodes obtained.
+    	rmstub.releaseNodes(nodes);
+    	logger.info("Done...");
+    	
+    	double time_releasing_nodes = timer.tickSec();		
+    	
+    	RMProber.setLastStatuss("released nodes, disconnecting...");
+    	
+    	logger.info("Disconnecting...");					// Disconnecting from RM.
+    	rmstub.disconnect();
+    	logger.info("Done...");
+    				
 		double time_disconn = timer.tickSec();
 		
-		double time_all = time_initializing+time_connection+time_submission+time_execution+time_retrieval+time_removal+time_disconn;
+		double time_all = time_initializing+time_connection+time_getting_nodes+time_releasing_nodes+time_disconn;
 		
 		String timesummary =
-			"time_initialization=" + String.format(Locale.ENGLISH, "%1.03f", time_initializing) + "s " +
+			"nodes_required=" + (nodesRequired) + " " +
+			"nodes_obtained=" + (obtainednodes) + " " +
 			"time_connection=" + String.format(Locale.ENGLISH, "%1.03f", time_connection)   + "s " +
-			"time_cleaning_old_jobs=" + String.format(Locale.ENGLISH, "%1.03f", time_removing_old_jobs) + "s " +
-			"time_submission=" + String.format(Locale.ENGLISH, "%1.03f", time_submission)   + "s " + 
-			"time_execution=" + String.format(Locale.ENGLISH, "%1.03f", time_execution )   + "s " + 
-			"time_output_retrieval=" + String.format(Locale.ENGLISH, "%1.03f", time_retrieval )   + "s " +
-			"time_job_removal=" + String.format(Locale.ENGLISH, "%1.03f", time_removal   )   + "s " + 
+			"time_getting_nodes=" + String.format(Locale.ENGLISH, "%1.03f", time_getting_nodes) + "s " +
+			"time_releasing_nodes=" + String.format(Locale.ENGLISH, "%1.03f", time_releasing_nodes) + "s " +
 			"time_disconnection=" + String.format(Locale.ENGLISH, "%1.03f", time_disconn   )   + "s " +
 			"timeout_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutsec)   + "s " +
 			"time_all_warning_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutwarnsec)   + "s " +
 			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", time_all) + "s"; 
 		
-		logger.info("Checking output...");
-		if (jresult==null){ 		// Timeout case. No results obtained.
-			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
-			output_to_print = 
-				NAG_OUTPUT_PREFIX + "JOBID " + jobId + " ERROR (no job result obtained)";
-			output_to_return = JobProber.RESULT_CRITICAL;
-		}else{ 						// Non-timeout case. Result obtained.
-			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: '" + jresult.toString() + "'.");
-			
-			try { 
-				/* The result is saved beside the job descriptor (xml) file. 
-				 * To have a better checking of the output of the job, just remove the extension '.tmp' of this output, (remaining a '.out' file).
-				 * This '.out' file is the file used to match the output of the job.
-				 */
-				String ppath = jobpath + ".out.tmp";
-				logger.info("Writing output in '" + ppath + "'...");
-				Misc.writeAllFile(ppath, jresult.toString());
-				logger.info("Done.");
-			} catch (Exception e1) {
-				logger.warn("Could not write the output of the process.", e1);
-			}
-			
-			try{
-				String expectedoutput = Misc.readAllFile(jobpath + ".out"); // Checking of the expected output '.out' file.
-				if (jresult.toString().equals(expectedoutput)){ 			// Checked file, all OK.
-					if (time_all > timeoutwarnsec){
-						output_to_return = JobProber.RESULT_WARNING;
-						output_to_print = 
-							NAG_OUTPUT_PREFIX + "JOBID " + jobId + " TOO SLOW | " + timesummary;
-					}else{
-						output_to_return = JobProber.RESULT_OK;
-						output_to_print = 
-							NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OK | " + timesummary;
-					}
-				}else{ 														// Outputs were different. 
-					output_to_return = JobProber.RESULT_CRITICAL;
-					output_to_print = 
-						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OUTPUT CHECK FAILED | " + timesummary;
-				}
-			}catch(IOException e){											// No 'output' reference point to do the checking.
-				output_to_return = JobProber.RESULT_UNKNOWN; 		
-				output_to_print = 
-						NAG_OUTPUT_PREFIX + "JOBID " + jobId + " OUTPUT NOT CHECKED | " + timesummary;
-			}
-		}
+		String summary = "(obtained/required/critical/warning)=(" + obtainednodes + "/" + nodesRequired + "/" + nodesminimumcritical + "/" + nodesminimumwarning + ")";
 		
-				
+		if (obtainednodes < nodesminimumcritical){	// Else everything was okay.
+			output_to_return = RMProber.RESULT_CRITICAL;
+			output_to_print = 
+				NAG_OUTPUT_PREFIX + "CRITICAL STATE, TOO FEW NODES OBTAINED "+ summary + " | " + timesummary;
+		}else if (obtainednodes < nodesminimumwarning){		// Else everything was okay.
+			output_to_return = RMProber.RESULT_WARNING;
+			output_to_print = 
+				NAG_OUTPUT_PREFIX + "WARNING STATE, TOO FEW NODES OBTAINED "+ summary + " | " + timesummary;
+		}else if (time_all > timeoutwarnsec){						// If longer than timeoutwarnsec, warning message.
+			output_to_return = RMProber.RESULT_WARNING;
+			output_to_print = 
+				NAG_OUTPUT_PREFIX + "WARNING STATE, " + obtainednodes + " NODE/S OBTAINED TOO SLOWLY | " + timesummary;
+		}else{												// Else everything was okay.
+			output_to_return = RMProber.RESULT_OK;
+			output_to_print = 
+				NAG_OUTPUT_PREFIX + obtainednodes + " NODE/S OBTAINED OK | " + timesummary;
+		}
+	
 		Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
 		ret[0] = new Integer(output_to_return);
 		ret[1] = output_to_print;
@@ -404,7 +325,6 @@ public class JobProber {
 			
 		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
 		    
-
 		    temp.deleteOnExit(); // Delete temp file when program exits.
 
 		    // Write to temp file.
@@ -427,7 +347,7 @@ public class JobProber {
 	 * This last status will be used in case of timeout to tell Nagios up to which point
 	 * (logging, job submission, job retrieval, etc.) the probe arrived. */
 	public synchronized static void setLastStatuss(String laststatus){
-		JobProber.lastStatus = laststatus;
+		RMProber.lastStatus = laststatus;
 	}
 	
 	/** 
@@ -436,7 +356,7 @@ public class JobProber {
 	 * (logging, job submission, job retrieval, etc.) the probe arrived. 
 	 * @return the last status of the test. */
 	public synchronized static String getLastStatus(){
-		return JobProber.lastStatus;
+		return RMProber.lastStatus;
 	}
 	
 	/** 
@@ -485,7 +405,7 @@ public class JobProber {
 			PropertyConfigurator.configure("log4j.properties");
 		}else{
 			/* We do the log4j configuration on the fly. */
-			Properties properties = JobProber.getMainLoggingProperties();
+			Properties properties = RMProber.getMainLoggingProperties();
 			PropertyConfigurator.configure(properties);
 		}
 	}

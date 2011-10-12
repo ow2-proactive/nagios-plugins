@@ -1,6 +1,6 @@
 
 SYNOPSIS
-   java -jar jobsubmprobe.jar <url> <user> <pass> <protocol> <jobpath> [OPTIONS]
+   java -jar nodegetprobe.jar <url> <user> <pass> [OPTIONS]
 
 DESCRIPTION
 
@@ -19,16 +19,19 @@ Mandatory arguments to long options are mandatory for short options too.
    -p, --pass=PASS
       Password to be used to get connected to the Scheduler.
       
-   --protocol=PROTOCOL
-      Protocol to be used to get connected to the Scheduler. For example JAVAPA or REST.
-      
-   -j, --jobpath=JOBPATH
-      Full path of the job descriptor (xml file) to be used as a probe.
-      
    --url=URL
       URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
-      It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA and 'http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' for REST.     
-       
+      It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA and 'http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' for REST.
+           
+   -r, --nodes=AMOUNT_OF_NODES_TO_ASK_FOR
+      Amount of nodes that will be requested to the Resource Manager.
+
+   --nodeswarning=NODESWARNING
+      If the amount of nodes obtained is strictly smaller than NODESWARNING, then a warning message will be told to Nagios.
+
+   --nodescritical=NODESCRITICAL
+      If the amount of nodes obtained is strictly smaller than NODESCRITICAL, then a critical message will be told to Nagios.
+
    -t, --timeout=TIMEOUT
       Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
        
@@ -50,16 +53,16 @@ Mandatory arguments to long options are mandatory for short options too.
 
 NAGIOS OUTPUT INTERPRETATION
 
-   SERVICE STATUS: JOBID <jobid> <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
+   SERVICE STATUS: <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
 	
    where
-      - jobid is the id of the probe job.
-      - status is a message regarding to the result of the test and job 'jobid' used as probe job.
-      - TIME is the time (in seconds) that was spent for the activity described by key* for the probe job. 
+      - status is a message regarding to the result of the test.
+      - TIME is the time (in seconds) that was spent for the activity described by key* for the probe. 
 	
 EXECUTION EXAMPLE
 
    Case for a local Scheduler/RM running
-      java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ --user=demo --pass=demo --protocol=JAVAPA --jobpath=/tmp/job.xml 
-      java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ -u demo      -p demo    --protocol=JAVAPA -j /tmp/job.xml
+      java -jar nodegetprobe.jar --url=rmi://shainese.inria.fr:1099/ --user=demo --pass=demo --timeout=10
+      java -jar nodegetprobe.jar --url=rmi://shainese.inria.fr:1099/ -u demo     -p demo     -t 10
+       
 
