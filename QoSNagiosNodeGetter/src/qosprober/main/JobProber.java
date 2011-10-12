@@ -57,7 +57,7 @@ public class JobProber {
 	 * Starting point.
 	 * The arguments/parameters are specified in the file /resources/usage.txt
 	 * @return Nagios error code. */
-	public static void main(String[] args) throws Exception{
+	public static void main1(String[] args) throws Exception{
 		
 		JobProber.setLastStatuss("started, parsing arguments...");
 		
@@ -223,15 +223,11 @@ public class JobProber {
 		/* We get connected to the Scheduler through this stub, later we submit a job, etc. */
 		SchedulerStubProber schedulerstub; 
 		
-		ProActiveProxyProtocol papp = ProActiveProxyProtocol.parseProtocol(protocol);
+		//ProActiveProxyProtocol papp = ProActiveProxyProtocol.parseProtocol(protocol);
 		
-		if (papp.equals(ProActiveProxyProtocol.JAVAPA)){
-			schedulerstub = new SchedulerStubProberJava();
-		}else if (papp.equals(ProActiveProxyProtocol.REST)){
-			schedulerstub = new SchedulerStubProberRest();
-		}else{
-			throw new InvalidProtocolException("Unknown protocol '" + protocol + "'");
-		}
+		
+		schedulerstub = new RMStubProberJava();
+		
 		
 		double time_initializing = timer.tickSec();
 		

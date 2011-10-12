@@ -12,6 +12,7 @@ import java.io.StringReader;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.apache.log4j.Logger;
 import org.ow2.proactive.scheduler.common.job.Job;
@@ -61,8 +62,15 @@ public class Misc {
             for (int i=0;i<a.length;i++){
                 output = output + a[i] + " ";
             }
+        }else if(o instanceof HashSet){
+        	
+        	HashSet<Object> rr = (HashSet<Object>)o;
+            for(Object i:rr){
+                output = output + i + " ";
+            }
+        	
         }else{
-        	output = "<UNKNOWN FORMAT>";
+        	output = "<UNKNOWN FORMAT>: " + o.getClass().getName();
         }
 
         return output;
