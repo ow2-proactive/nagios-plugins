@@ -34,7 +34,7 @@ Mandatory arguments to long options are mandatory for short options too.
       Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
        
    -n, --timeoutwarning=TIMEOUT_FOR_WARNING_MESSAGE
-      In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status.  
+      In seconds. If the overall test time exceeds this value, then the plugin will tell to Nagios a warning status.  
       
    -f, --paconf=PACONF
       ProActive configuration file (usually ProActiveConfiguration.xml).
@@ -62,5 +62,7 @@ EXECUTION EXAMPLE
    Case for a local Scheduler/RM running
       java -jar nodegetprobe.jar --url=rmi://shainese.inria.fr:1099/ --user=demo --pass=demo --timeout=10
       java -jar nodegetprobe.jar --url=rmi://shainese.inria.fr:1099/ -u demo     -p demo     -t 10
+   General cases
+      java -jar nodegetprobe.jar --url=pamr://0 --user=d --pass=p --timeout=100 --paconf=/tmp/ProActiveConfiguration.xml 
        
 
