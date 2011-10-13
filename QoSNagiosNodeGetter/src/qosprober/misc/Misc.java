@@ -27,7 +27,6 @@ public class Misc {
 	private static Logger logger = Logger.getLogger(Misc.class.getName()); // Logger.
 	private static final long MAX_BUFFER = 1024 * 1024 * 2; // 2 MiB the maximum size of a file to get loaded completely. 
 	
-	
     private Misc(){}
 
     /* Get a descriptive string from the given object. 

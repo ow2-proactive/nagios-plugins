@@ -39,10 +39,10 @@ public class RMProber {
 
 	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
 	/** Nagios exit codes. */
-	public static final int RESULT_OK = 0; 					// Nagios code. Execution successfully. 
-	public static final int RESULT_WARNING = 1; 			// Nagios code. Warning. 
+	public static final int RESULT_OK       = 0; 			// Nagios code. Execution successfully. 
+	public static final int RESULT_WARNING  = 1; 			// Nagios code. Warning. 
 	public static final int RESULT_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
-	public static final int RESULT_UNKNOWN = 3; 			// Nagios code. Unknown state of the tested entity.
+	public static final int RESULT_UNKNOWN  = 3; 			// Nagios code. Unknown state of the tested entity.
 	
 	private static String lastStatus;						// Holds a message representative of the current status of the test.
 															// It is used in case of TIMEOUT, to help the administrator guess
@@ -233,11 +233,13 @@ public class RMProber {
 		double time_connection = timer.tickSec();
 		
 		if (usepaconffile==true){
-			logger.info("Loading ProActive configuration (xml) file... ");
+			logger.info("\tLoading ProActive configuration (xml) file... ");
 			ProActiveConfiguration.load(); 					// Load the ProActive configuration file.
+			logger.info("\tDone.");
 		}else{
-			logger.info("Avoiding ProActive configuration (xml) file... ");
+			logger.info("\tAvoiding ProActive configuration (xml) file... ");
 		}
+		
 		logger.info("Done.");
 		
 				
@@ -249,23 +251,23 @@ public class RMProber {
 		
 		logger.info("Getting nodes...");
 		NodeSet nodes = rmstub.getNodes(nodesRequired); 	// Request some nodes.
-		logger.info("Done.");
+		
 		
 		double time_getting_nodes = timer.tickSec();
 		
 		int obtainednodes = nodes.size();
-		logger.info("Listing nodes...");					// List the nodes obtained.
+		logger.info("\tListing nodes...");					// List the nodes obtained.
     	for(Node n:nodes){
-    		logger.info(" - " + n.getNodeInformation().getName());
+    		logger.info("\t - " + n.getNodeInformation().getName());
     	}
-    	logger.info("Done...");
+    	logger.info("Done.");
     	
     	
     	RMProber.setLastStatuss("obtained nodes, releasing nodes...");
     	
     	logger.info("Releasing nodes...");					// Release the nodes obtained.
     	rmstub.releaseNodes(nodes);
-    	logger.info("Done...");
+    	logger.info("Done.");
     	
     	double time_releasing_nodes = timer.tickSec();		
     	
@@ -273,7 +275,7 @@ public class RMProber {
     	
     	logger.info("Disconnecting...");					// Disconnecting from RM.
     	rmstub.disconnect();
-    	logger.info("Done...");
+    	logger.info("Done.");
     				
 		double time_disconn = timer.tickSec();
 		
@@ -325,7 +327,7 @@ public class RMProber {
 			
 		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
 		    
-		    temp.deleteOnExit(); // Delete temp file when program exits.
+		    temp.deleteOnExit(); // Delete temp. file when program exits.
 
 		    // Write to temp file.
 		    BufferedWriter out = new BufferedWriter(new FileWriter(temp));
