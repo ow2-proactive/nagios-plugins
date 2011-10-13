@@ -54,7 +54,6 @@ public class RMEventsListener implements RMEventListener, Serializable{
 	 * Notification of events that happen in the RM.  
 	 */
 
-	@Override
 	public void nodeEvent(RMNodeEvent event) {
 		logger.info(">> nodeEvent " + event.getEventType());
 		addEvent(event.getEventType().toString());
@@ -64,7 +63,6 @@ public class RMEventsListener implements RMEventListener, Serializable{
 				
 	}
 
-	@Override
 	public void nodeSourceEvent(RMNodeSourceEvent event) {
 		// TODO Auto-generated method stub
 		logger.info(">> nodeSourceEvent " + event.getEventType());
@@ -75,7 +73,6 @@ public class RMEventsListener implements RMEventListener, Serializable{
 	}
 
 
-	@Override
 	public void rmEvent(RMEvent event) {
 		// TODO Auto-generated method stub
 		logger.info(">> rmEvent " + event.getEventType());

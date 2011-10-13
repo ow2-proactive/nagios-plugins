@@ -4,9 +4,8 @@ SYNOPSIS
 
 DESCRIPTION
 
-Nagios plugin to probe the responsiveness of a ProActive based scheduler grid.
-It uses a simple job probe submission to test a grid concerning its responsiveness, and status in general.  
-The output of the probe job is compared with a local copy of the correct output to make sure it is correctly executed. The output of the probe job (once executed the test) is written in a file whose path is exactly the same as the path of the job descriptor + '.out.tmp'. The correct output of the job should be put in a file whose path is exactly the same as the path of the job descriptor + '.out'. 
+Nagios plugin to probe the responsiveness of a ProActive based Resource Manager (RM).
+It simply obtains a given number of nodes from the RM and releases them.  
    
 Mandatory arguments to long options are mandatory for short options too.
    
@@ -14,14 +13,13 @@ Mandatory arguments to long options are mandatory for short options too.
       Verbose debugging mode. If true it will try to load 'log4j.properties' to know what and where to put the log messages.
        
    -u, --user=USER
-      Username to be used to get connected to the Scheduler.
+      Username to be used to get connected to the RM.
       
    -p, --pass=PASS
-      Password to be used to get connected to the Scheduler.
+      Password to be used to get connected to the RM.
       
    --url=URL
-      URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
-      It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA and 'http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' for REST.
+      URL to be used to get connected to the RM. Can be 'pamr://0' if already specified the RM in the ProActive configuration file.
            
    -r, --nodes=AMOUNT_OF_NODES_TO_ASK_FOR
       Amount of nodes that will be requested to the Resource Manager.
