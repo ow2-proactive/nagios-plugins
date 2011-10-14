@@ -182,13 +182,12 @@ public class SchedulerStubProberRest implements SchedulerStubProber{
 	    client.executeMethod(method);
 	}
 
-	@Override
 	public Vector<String> getAllCurrentJobsList(String jobname)
 			throws NotConnectedException, PermissionException {
 		throw new RuntimeException("Not implemented yet");
 	}
 
-	@Override
+
 	public void waitUntilJobIsCleaned(String jobId, int timeoutms)
 			throws NotConnectedException, PermissionException,
 			UnknownJobException, HttpException, IOException {

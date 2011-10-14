@@ -62,4 +62,5 @@ EXECUTION EXAMPLE
    Case for a local Scheduler/RM running
       java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ --user=demo --pass=demo --protocol=JAVAPA --jobpath=/tmp/job.xml 
       java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ -u demo      -p demo    --protocol=JAVAPA -j /tmp/job.xml
-
+   General cases
+      java -jar jobsubmprobe.jar --user=u --pass=u --jobpath=/tmp/job.xml --protocol=JAVAPA --url=pamr://1 --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml

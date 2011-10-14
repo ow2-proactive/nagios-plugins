@@ -92,7 +92,6 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 	 */
 
 	
-	@Override
 	public void jobStateUpdatedEvent(NotificationData<JobInfo> info) {
 		logger.info(">> Event " + info.getData().getJobId().value() + " " + info.getEventType().toString());
 		
@@ -115,13 +114,13 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 		}
 	}
 
-	@Override
+	
 	public void jobSubmittedEvent(JobState arg0) {}
-	@Override
+	
 	public void schedulerStateUpdatedEvent(SchedulerEvent arg0) {}
-	@Override
+	
 	public void taskStateUpdatedEvent(NotificationData<TaskInfo> arg0) {}
-	@Override
+	
 	public void usersUpdatedEvent(NotificationData<UserIdentification> arg0) {}
 	
 }

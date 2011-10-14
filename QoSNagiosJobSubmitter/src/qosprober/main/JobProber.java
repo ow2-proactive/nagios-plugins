@@ -97,13 +97,27 @@ public class JobProber {
 		final String warning = (String)parser.getOptionValue(warningO, "ignored");		// Warning level. Ignored.
 		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
 		
+		/*******************/
 		
-		if (jobpath == null || user == null || pass == null || protocol == null || jobpath == null || timeoutsec == null){
+		String errorMessage = "";
+		Boolean errorParam = false;
+		if (jobpath == null)	{errorParam=true; errorMessage+="'Job' not defined... ";} 
+		if (user == null)		{errorParam=true; errorMessage+="'User' not defined... ";}
+		if (pass == null)		{errorParam=true; errorMessage+="'Pass' not defined... ";}
+		if (protocol == null) 	{errorParam=true; errorMessage+="'Protocol' not defined... ";}
+		if (timeoutsec == null)	{errorParam=true; errorMessage+="'Timeout' (sec) not defined... ";}
+			
+		if (errorParam==true)
+		{
 			/* In case something is not expected, print usage and exit. */
-		    logger.fatal("There are some missing parameters.");
+		    System.out.println("There are some missing mandatory parameters: " + errorMessage);
 		    JobProber.printUsage();
 		    System.exit(RESULT_CRITICAL);
 		}
+		
+		/*******************/
+		
+		
 		
 		log4jConfiguration(debug);
 		
@@ -186,7 +200,7 @@ public class JobProber {
 			/* The execution took more time than expected. */
 			JobProber.printAndExit(
 					JobProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "TIMEOUT (last status was '" + JobProber.getLastStatus() + "')");
+					NAG_OUTPUT_PREFIX + "TIMEOUT OF "+timeoutsec+ "s (last status was '" + JobProber.getLastStatus() + "')");
 		}catch(ExecutionException e){
 			/* There was an unexpected problem with the execution of the prober. */
 			JobProber.printAndExit(
@@ -453,7 +467,7 @@ public class JobProber {
 		String usage = null;
 		try {
 			usage = Misc.readAllTextResource("/resources/usage.txt");
-			System.out.println(usage);
+			System.err.println(usage);
 		} catch (IOException e) {
 			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
 		}
