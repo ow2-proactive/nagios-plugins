@@ -89,7 +89,7 @@ public class JobProber {
 		final String protocol = (String)parser.getOptionValue(protocolO);			 	// Protocol, either REST or JAVAPA.
 		final String jobpath = (String)parser.getOptionValue(jobpathO); 				// Path of the job descriptor (xml).
 		final String url = (String)parser.getOptionValue(urlO); 						// Url of the Scheduler/RM.
-		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO,60); 		// Timeout in seconds for the job to be executed.
+		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO);			// Timeout in seconds for the job to be executed.
 		final Integer timeoutwarnsec = 
 			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 				// Timeout in seconds for the warning message to be thrown.
 		final String paconf = (String)parser.getOptionValue(paconfO); 					// Path of the ProActive xml configuration file.
