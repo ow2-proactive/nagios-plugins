@@ -92,10 +92,10 @@ public class RMProber {
 		//final String protocol = (String)parser.getOptionValue(protocolO);			 	// Protocol, either REST or JAVAPA.
 		//final String jobpath = (String)parser.getOptionValue(jobpathO); 				// Path of the job descriptor (xml).
 		final String url = (String)parser.getOptionValue(urlO); 						// Url of the Scheduler/RM.
-		final Integer nodesrequired = (Integer)parser.getOptionValue(nodesrequiredO,4); // Amount of nodes to be asked to the Resource Manager.
+		final Integer nodesrequired = (Integer)parser.getOptionValue(nodesrequiredO,1); // Amount of nodes to be asked to the Resource Manager.
 		final Integer nodeswarning = (Integer)parser.getOptionValue(nodeswarningO,0);   // Obtaining fewer nodes than this, a warning message will be thrown. 
 		final Integer nodescritical = (Integer)parser.getOptionValue(nodescriticalO,0); // Obtaining fewer nodes than this, a critical message will be thrown. 
-		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO,60); 		// Timeout in seconds for the job to be executed.
+		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO); 		// Timeout in seconds for the job to be executed.
 		final Integer timeoutwarnsec = 
 			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 				// Timeout in seconds for the warning message to be thrown.
 		final String paconf = (String)parser.getOptionValue(paconfO); 					// Path of the ProActive xml configuration file.
