@@ -5,12 +5,12 @@
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/jruby-engine.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/jython-engine.jar"/>
-	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ProActive.jar" sourcepath="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/proactive/scheduling/trunk/src"/>
-	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ProActive_ResourceManager.jar" sourcepath="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/src"/>
-	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ProActive_Scheduler-core.jar" sourcepath="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/src"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ProActive.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ProActive_ResourceManager.jar"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ProActive_Scheduler-core.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ProActive_Scheduler-mapreduce.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ProActive_Scheduler-matsci.jar"/>
-	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ProActive_SRM-common.jar" sourcepath="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/src"/>
+	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ProActive_SRM-common.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/script-js.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/log4j.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/thirds/jargs.jar"/>
@@ -28,5 +28,5 @@
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/thirds/google-gson-1.7.1/gson-1.7.1.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ejb3-persistence.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/hibernate-annotations.jar"/>
-	<classpathentry kind="output" path="bin"/>
+<classpathentry kind="output" path="bin"/>
 </classpath>
