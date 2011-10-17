@@ -5,3 +5,4 @@
 scheduler
 .metadata
 QoSNagiosJobSubmitter/test_job.xml.*
+QoSNagiosJobSubmitter/bin/resources/usage.txt

@@ -1,6 +1,6 @@
 
 SYNOPSIS
-   java -jar nodegetprobe.jar <url> <user> <pass> [OPTIONS]
+   java -jar nodegetprobe.jar <url> <user> <pass> <timeout> [OPTIONS]
 
 DESCRIPTION
 
@@ -9,17 +9,17 @@ It simply obtains a given number of nodes from the RM and releases them.
    
 Mandatory arguments to long options are mandatory for short options too.
    
-   -v, --debug
-      Verbose debugging mode. If true it will try to load 'log4j.properties' to know what and where to put the log messages.
+   -v, --debug=LEVELOFVERBOSITY
+      Verbose debugging mode level. Value 3: it will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
        
    -u, --user=USER
-      Username to be used to get connected to the RM.
+      Username to get connected to the RM.
       
    -p, --pass=PASS
-      Password to be used to get connected to the RM.
+      Password to get connected to the RM.
       
    --url=URL
-      URL to be used to get connected to the RM. Can be 'pamr://0' if already specified the RM in the ProActive configuration file.
+      URL to get connected to the RM. Can be 'pamr://0' if already specified the RM in the ProActive configuration file.
            
    -r, --nodes=AMOUNT_OF_NODES_TO_ASK_FOR
       Amount of nodes that will be requested to the Resource Manager.

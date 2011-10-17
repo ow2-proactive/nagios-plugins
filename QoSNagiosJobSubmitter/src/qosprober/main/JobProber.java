@@ -44,6 +44,11 @@ public class JobProber {
 	public static final int RESULT_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
 	public static final int RESULT_UNKNOWN = 3; 			// Nagios code. Unknown state of the tested entity.
 	
+	public static final int DEBUG_LEVEL_0SILENT		= 0;	// Debug level, silent mode. 
+	public static final int DEBUG_LEVEL_1EXTENDED 	= 1;	// Debug level, more than silent mode. Shows backtraces if error. 
+	public static final int DEBUG_LEVEL_2VERBOSE	= 2;	// Debug level, similar to the previous one.
+	public static final int DEBUG_LEVEL_3USER		= 3;	// Debug level, debugging only.
+	
 	private static String lastStatus;						// Holds a message representative of the current status of the test.
 															// It is used in case of TIMEOUT, to help the administrator guess
 															// where the problem is.
@@ -61,7 +66,7 @@ public class JobProber {
 		/* Parsing of arguments. */
 		CmdLineParser parser = new CmdLineParser();
 		
-		CmdLineParser.Option debugO = parser.addBooleanOption('v', "debug");
+		CmdLineParser.Option debugO = parser.addIntegerOption('v', "debug");
 		CmdLineParser.Option userO = parser.addStringOption('u', "user");
 		CmdLineParser.Option passO = parser.addStringOption('p', "pass");
 		CmdLineParser.Option protocolO = parser.addStringOption("protocol");
@@ -83,7 +88,7 @@ public class JobProber {
 		    System.exit(RESULT_CRITICAL);
 		}
 		
-		final Boolean debug = (Boolean)parser.getOptionValue(debugO, Boolean.FALSE); 	// If false, only Nagios output.
+		final Integer debug = (Integer)parser.getOptionValue(debugO, 0); 				// Level of verbosity.
 		final String user = (String)parser.getOptionValue(userO);			 			// User.
 		final String pass = (String)parser.getOptionValue(passO); 						// Pass.
 		final String protocol = (String)parser.getOptionValue(protocolO);			 	// Protocol, either REST or JAVAPA.
@@ -197,20 +202,29 @@ public class JobProber {
 			/* At this point all went okay. */ 
 			JobProber.printAndExit((Integer)res[0], (String)res[1]);
 		}catch(TimeoutException e){
+			logger.info("Exception ", e);
 			/* The execution took more time than expected. */
 			JobProber.printAndExit(
 					JobProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "TIMEOUT OF "+timeoutsec+ "s (last status was '" + JobProber.getLastStatus() + "')");
+					NAG_OUTPUT_PREFIX + "TIMEOUT OF "+timeoutsec+ "s (last status was '" + JobProber.getLastStatus() + "')", 
+					debug,
+					e);
 		}catch(ExecutionException e){
 			/* There was an unexpected problem with the execution of the prober. */
+			logger.info("Exception ", e);
 			JobProber.printAndExit(
 					JobProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "FAILURE: " + e.getMessage());
+					NAG_OUTPUT_PREFIX + "FAILURE: " + e.getMessage(),
+					debug,
+					e);
 		}catch(Exception e){
 			/* There was an unexpected critical exception not captured. */
+			logger.info("Exception ", e);
 			JobProber.printAndExit(
 					JobProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "CRITICAL ERROR: " + e.getMessage());
+					NAG_OUTPUT_PREFIX + "CRITICAL ERROR: " + e.getMessage(),
+					debug,
+					e);
 		}
 	}
 	
@@ -461,6 +475,23 @@ public class JobProber {
     	System.exit(ret);
     }
     
+	/** 
+	 * Print a message in the stdout (for Nagios to use it) and return with the given error code. 
+	 * Print a backtrace only if the debuglevel is appropriate. */
+	public synchronized static void printAndExit(Integer ret, String str, int debuglevel, Throwable e){
+		switch(debuglevel){
+			case JobProber.DEBUG_LEVEL_0SILENT:
+				System.out.println(str);
+				break;
+			default:
+				System.out.println(str);
+				e.printStackTrace(System.out);
+				break;
+			
+		}
+    	System.exit(ret);
+    }
+	
 	/**
 	 * Print the usage of the application. */
 	public static void printUsage(){
@@ -475,7 +506,7 @@ public class JobProber {
 	
 	/**
 	 * Creates a default set of properties for the log4j logging module. */
-	public static Properties getMainLoggingProperties(){
+	public static Properties getSilentLoggingProperties(){
 		Properties properties = new Properties();
 		properties.put("log4j.rootLogger",				"ERROR,NULL"); 	// By default, do not show anything.
 		properties.put("log4j.logger.org",				"ERROR,STDOUT");	// For this module, show warning messages in stdout.
@@ -493,14 +524,14 @@ public class JobProber {
 	
 	/**
 	 * Configures de log4j module for logging. */
-	public static void log4jConfiguration(boolean debug){
+	public static void log4jConfiguration(int debuglevel){
 		System.setProperty("log4j.configuration", "");
-		if (debug == true){
+		if (debuglevel == JobProber.DEBUG_LEVEL_3USER){
 			/* We load the log4j.properties file. */
 			PropertyConfigurator.configure("log4j.properties");
-		}else{
+		}else {
 			/* We do the log4j configuration on the fly. */
-			Properties properties = JobProber.getMainLoggingProperties();
+			Properties properties = JobProber.getSilentLoggingProperties();
 			PropertyConfigurator.configure(properties);
 		}
 	}

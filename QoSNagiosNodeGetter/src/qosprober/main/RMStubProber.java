@@ -27,7 +27,7 @@ public class RMStubProber {
 	 */
 	public void init(String url, String user, String pass) throws RMException, KeyException, LoginException{
     	logger.info("\tJoining the Resource Manager...");
-        RMAuthentication auth = RMConnection.waitAndJoin(url); 	// Join the RM.
+        RMAuthentication auth = RMConnection.join(url); 	// Join the RM.
         logger.info("\tDone.");
         logger.info("\tCreating credentials...");
         Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());

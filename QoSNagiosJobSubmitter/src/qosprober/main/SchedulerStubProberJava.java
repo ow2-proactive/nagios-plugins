@@ -48,7 +48,7 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 	 * */
 	public void init(String protocolStr, String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, HttpException, IOException{
 		logger .info("Joining the scheduler...");
-        SchedulerAuthenticationInterface auth = SchedulerConnection.waitAndJoin(url);
+        SchedulerAuthenticationInterface auth = SchedulerConnection.join(url);
         logger .info("Creating credentials...");
         Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
         logger .info("Logging in...");
