@@ -50,17 +50,73 @@ public class PAMRProber {
 	public static final int DEBUG_LEVEL_2VERBOSE	= 2;	// Debug level, similar to the previous one.
 	public static final int DEBUG_LEVEL_3USER		= 3;	// Debug level, debugging only.
 	
+	
+	private final static String SERVER_NAME = "server";
+    public final static String PREFIX_URL = "pamr://";
+	public static String MESSAGE = "message";
+    
 	private static String lastStatus;						// Holds a message representative of the current status of the test.
 															// It is used in case of TIMEOUT, to help the administrator guess
 															// where the problem is.
 	
 	public static Logger logger = Logger.getLogger(PAMRProber.class.getName()); // Logger.
 	
+	
+	
+	
+	
+	
+	
+	public static void main(String[] args) throws Exception {
+		
+		
+		MESSAGE = Misc.generateRandomString(25 * 1024 * 1024);
+		
+    	System.setProperty("proactive.configuration", Misc.getProActiveConfigurationFile());
+    	Misc.createPolicyAndLoadIt();
+    	String serverurl = null;
+    	    	
+    	Server server = null;
+    
+        // Creates an active object for the server
+        server = org.objectweb.proactive.api.PAActiveObject.newActive(Server.class, null);
+
+        ProActiveConfiguration.load();
+        
+        org.objectweb.proactive.api.PAActiveObject.registerByName(server, SERVER_NAME);
+        String url = org.objectweb.proactive.api.PAActiveObject.getActiveObjectNodeUrl(server);
+        String url2 = org.objectweb.proactive.api.PAActiveObject.getUrl(server);
+        logger.info("Server is ready.");
+        logger.info("Returned URL for the ActiveObjectNode: '" + url + "'.");
+        logger.info("Returned URL for the server: '" + url2 + "'.");
+        logger.info("Server resource name: '" + SERVER_NAME + "', resource number: '" + Misc.getResourceNumberFromURL(url) + "'.");
+        serverurl = PREFIX_URL + Misc.getResourceNumberFromURL(url) + "/" + SERVER_NAME;
+        logger.info("Server standard URL: "+ serverurl);
+            
+
+        // Creates an active object for the client
+        Client client = org.objectweb.proactive.api.PAActiveObject.newActive(Client.class, new Object[] {serverurl});
+        
+        client.init();
+        
+        boolean bb = client.sendMessageToServerAndCheckIt();
+        
+        if (bb==true){
+        	logger.info("All right!");
+        }else{
+        	logger.info("Something went wrong...");
+        }
+        
+        System.exit(0);
+    }
+     
+	
+	
 	/**
 	 * Starting point.
 	 * The arguments/parameters are specified in the file /resources/usage.txt
 	 * @return Nagios error code. */
-	public static void main(String[] args) throws Exception{
+	public static void main1(String[] args) throws Exception{
 		
 		PAMRProber.setLastStatuss("started, parsing arguments...");
 		
@@ -154,7 +210,7 @@ public class PAMRProber {
 		
 		/* Security policy procedure. */
 		logger.info("Setting security policies... ");
-		PAMRProber.createPolicyAndLoadIt();
+		Misc.createPolicyAndLoadIt();
 		logger.info("Done.");
 		
 		PAMRProber.setLastStatuss("security policy loaded, loading proactive configuration (if needed)...");
@@ -239,9 +295,9 @@ public class PAMRProber {
 		TimeTick timer = new TimeTick(); // We want to get time durations of each operation.
 		
 		/* We get connected to the Scheduler through this stub, later we submit a job, etc. */
-		PAMRStubProber rmstub; 
+		//PAMRStubProber rmstub; 
 		
-		rmstub = new PAMRStubProber();
+		//rmstub = new PAMRStubProber();
 		
 		double time_initializing = timer.tickSec();
 		
@@ -249,7 +305,7 @@ public class PAMRProber {
 		
 		logger.info("Connecting to Resource Manager... "); 	// Connecting to RM...
 
-		rmstub.init(url, user, pass); 						// Login procedure...
+		//rmstub.init(url, user, pass); 						// Login procedure...
 		PAMRProber.setLastStatuss("connected to RM, loading proactive configuration...");
 		
 		double time_connection = timer.tickSec();
@@ -272,23 +328,23 @@ public class PAMRProber {
 		PAMRProber.setLastStatuss("loaded proactive configuration, getting nodes...");
 		
 		logger.info("Getting nodes...");
-		NodeSet nodes = rmstub.getNodes(nodesRequired); 	// Request some nodes.
+		//NodeSet nodes = rmstub.getNodes(nodesRequired); 	// Request some nodes.
 		
 		
 		double time_getting_nodes = timer.tickSec();
 		
-		int obtainednodes = nodes.size();
+		//int obtainednodes = nodes.size();
 		logger.info("\tListing nodes...");					// List the nodes obtained.
-    	for(Node n:nodes){
-    		logger.info("\t - " + n.getNodeInformation().getName());
-    	}
+    	//for(Node n:nodes){
+    	//	logger.info("\t - " + n.getNodeInformation().getName());
+    	//}
     	logger.info("Done.");
     	
     	
     	PAMRProber.setLastStatuss("obtained nodes, releasing nodes...");
     	
     	logger.info("Releasing nodes...");					// Release the nodes obtained.
-    	rmstub.releaseNodes(nodes);
+    	//rmstub.releaseNodes(nodes);
     	logger.info("Done.");
     	
     	double time_releasing_nodes = timer.tickSec();		
@@ -296,74 +352,49 @@ public class PAMRProber {
     	PAMRProber.setLastStatuss("released nodes, disconnecting...");
     	
     	logger.info("Disconnecting...");					// Disconnecting from RM.
-    	rmstub.disconnect();
+    	//rmstub.disconnect();
     	logger.info("Done.");
     				
 		double time_disconn = timer.tickSec();
 		
 		double time_all = time_initializing+time_connection+time_getting_nodes+time_releasing_nodes+time_disconn;
 		
-		String timesummary =
-			"nodes_required=" + (nodesRequired) + " " +
-			"nodes_obtained=" + (obtainednodes) + " " +
-			"time_connection=" + String.format(Locale.ENGLISH, "%1.03f", time_connection)   + "s " +
-			"time_getting_nodes=" + String.format(Locale.ENGLISH, "%1.03f", time_getting_nodes) + "s " +
-			"time_releasing_nodes=" + String.format(Locale.ENGLISH, "%1.03f", time_releasing_nodes) + "s " +
-			"time_disconnection=" + String.format(Locale.ENGLISH, "%1.03f", time_disconn   )   + "s " +
-			"timeout_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutsec)   + "s " +
-			"time_all_warning_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutwarnsec)   + "s " +
-			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", time_all) + "s"; 
+//		String timesummary =
+//			"nodes_required=" + (nodesRequired) + " " +
+//			"nodes_obtained=" + (obtainednodes) + " " +
+//			"time_connection=" + String.format(Locale.ENGLISH, "%1.03f", time_connection)   + "s " +
+//			"time_getting_nodes=" + String.format(Locale.ENGLISH, "%1.03f", time_getting_nodes) + "s " +
+//			"time_releasing_nodes=" + String.format(Locale.ENGLISH, "%1.03f", time_releasing_nodes) + "s " +
+//			"time_disconnection=" + String.format(Locale.ENGLISH, "%1.03f", time_disconn   )   + "s " +
+//			"timeout_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutsec)   + "s " +
+//			"time_all_warning_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutwarnsec)   + "s " +
+//			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", time_all) + "s"; 
+//		
+		//String summary = "(obtained/required/critical/warning)=(" + obtainednodes + "/" + nodesRequired + "/" + nodesminimumcritical + "/" + nodesminimumwarning + ")";
 		
-		String summary = "(obtained/required/critical/warning)=(" + obtainednodes + "/" + nodesRequired + "/" + nodesminimumcritical + "/" + nodesminimumwarning + ")";
-		
-		if (obtainednodes < nodesminimumcritical){	// Else everything was okay.
-			output_to_return = PAMRProber.RESULT_CRITICAL;
-			output_to_print = 
-				NAG_OUTPUT_PREFIX + "CRITICAL STATE, TOO FEW NODES OBTAINED "+ summary + " | " + timesummary;
-		}else if (obtainednodes < nodesminimumwarning){		// Else everything was okay.
-			output_to_return = PAMRProber.RESULT_WARNING;
-			output_to_print = 
-				NAG_OUTPUT_PREFIX + "WARNING STATE, TOO FEW NODES OBTAINED "+ summary + " | " + timesummary;
-		}else if (time_all > timeoutwarnsec){						// If longer than timeoutwarnsec, warning message.
-			output_to_return = PAMRProber.RESULT_WARNING;
-			output_to_print = 
-				NAG_OUTPUT_PREFIX + "WARNING STATE, " + obtainednodes + " NODE/S OBTAINED TOO SLOWLY | " + timesummary;
-		}else{												// Else everything was okay.
-			output_to_return = PAMRProber.RESULT_OK;
-			output_to_print = 
-				NAG_OUTPUT_PREFIX + obtainednodes + " NODE/S OBTAINED OK | " + timesummary;
-		}
-	
+//		if (obtainednodes < nodesminimumcritical){	// Else everything was okay.
+//			output_to_return = PAMRProber.RESULT_CRITICAL;
+//			output_to_print = 
+//				NAG_OUTPUT_PREFIX + "CRITICAL STATE, TOO FEW NODES OBTAINED "+ summary + " | " + timesummary;
+//		}else if (obtainednodes < nodesminimumwarning){		// Else everything was okay.
+//			output_to_return = PAMRProber.RESULT_WARNING;
+//			output_to_print = 
+//				NAG_OUTPUT_PREFIX + "WARNING STATE, TOO FEW NODES OBTAINED "+ summary + " | " + timesummary;
+//		}else if (time_all > timeoutwarnsec){						// If longer than timeoutwarnsec, warning message.
+//			output_to_return = PAMRProber.RESULT_WARNING;
+//			output_to_print = 
+//				NAG_OUTPUT_PREFIX + "WARNING STATE, " + obtainednodes + " NODE/S OBTAINED TOO SLOWLY | " + timesummary;
+//		}else{												// Else everything was okay.
+//			output_to_return = PAMRProber.RESULT_OK;
+//			output_to_print = 
+//				NAG_OUTPUT_PREFIX + obtainednodes + " NODE/S OBTAINED OK | " + timesummary;
+//		}
+//	
 		Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
 		ret[0] = new Integer(output_to_return);
 		ret[1] = output_to_print;
 			
 		return ret;
-	}
-
-	/** 
-	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
-	public static void createPolicyAndLoadIt() throws Exception{
-		try{
-			
-			
-		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
-		    
-		    temp.deleteOnExit(); // Delete temp. file when program exits.
-
-		    // Write to temp file.
-		    BufferedWriter out = new BufferedWriter(new FileWriter(temp));
-		    String policycontent = "grant {permission java.security.AllPermission;};";
-		    out.write(policycontent);
-		    out.close();
-
-		    String policypath = temp.getAbsolutePath(); 
-		    
-		    System.setProperty("java.security.policy", policypath); // Load security policy.
-		    
-		}catch(Exception e){
-			throw new Exception("Error while creating the security policy file. " + e.getMessage());
-		}
 	}
 	
 	/** 
