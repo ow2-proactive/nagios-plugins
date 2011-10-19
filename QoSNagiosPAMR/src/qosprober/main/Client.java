@@ -4,12 +4,18 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
+import org.objectweb.proactive.core.config.ProActiveConfiguration;
+import org.objectweb.proactive.core.node.NodeException;
+
+import qosprober.misc.Misc;
 
 public class Client {
 	
     public static Logger logger = Logger.getLogger(Client.class.getName()); // Logger.
     private String serverHostName;
     private Server server;
+    
+    private static final String MY_MESSAGE = Misc.generateFibString(PAMRProber.MESSAGE_LENGTH);
     
     public Client() {}
 
@@ -36,8 +42,30 @@ public class Client {
     public boolean sendMessageToServerAndCheckIt(){
     	boolean ret = false;
     	logger.info("Putting message in server...");
-    	ret = server.putMessageAndCheckIt(PAMRProber.MESSAGE);
+    	ret = server.putMessageAndCheckIt(MY_MESSAGE);
+    	logger.info("Done.");
         return ret;
+    }
+    
+    public static void main(String args[]) throws Exception{
+    	
+    	TimeTick timing = new TimeTick();
+    	
+    	System.setProperty("proactive.configuration", Misc.getProActiveConfigurationFile());
+    	Misc.createPolicyAndLoadIt();
+    	String serverurl = args[0];
+    
+        Client client = org.objectweb.proactive.api.PAActiveObject.newActive(Client.class, new Object[] {serverurl});
+        //ProActiveConfiguration.load();
+            
+        client.init();
+        
+        
+        
+        timing.tickSec();
+        boolean bb = client.sendMessageToServerAndCheckIt();
+        System.out.println(" TOOK " + timing.tickSec() + " sec ");
+        System.exit(0);
     }
 
 

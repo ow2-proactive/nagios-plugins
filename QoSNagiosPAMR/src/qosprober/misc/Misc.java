@@ -93,20 +93,43 @@ public class Misc {
     }
     
     public static String generateRandomString(int length){
-    	
+    	System.out.println("Generating random string...");
     	char[] buffer = new char[length];
     	for(int i=0;i<length;i++){
-    		
     		buffer[i] = generateRandomChar();
     	}
-		return new String (buffer);
+		return new String(buffer);
     	
     }
     
     private static char generateRandomChar(){
-    	//char c = (char)(random.nextInt(50)+32);
-    	char c = ' ';
+    	char c = (char)(random.nextInt(50)+32);
+    	//char c = ' ';
     	return c;
     }
     
+    
+    public static String generateFibString(int length) { 
+	
+    	System.out.println("Generating Fibonacci...");
+		int f0 = 0; 
+		int f1 = 1; 
+		
+		char [] ret = new char[length];
+		
+		for (int i = 0; i < length; i++) { 
+			char c = (char)(f0 % 256);
+			
+			ret[i] = c;
+			
+			final int temp = f1; 
+			f1 += f0; 
+			f0 = temp; 
+		} 
+		return new String(ret);
+    }
+
+
+
+
 }

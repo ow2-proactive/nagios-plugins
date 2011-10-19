@@ -62,9 +62,9 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 	 * @param jobpath, path of the job descriptor file (xml). 
 	 * @return and ID of the submitted job in case of success. */
 	public String submitJob(String jobpath) throws IOException, NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException{
-		Job job = JobFactory.getFactory().createJob(jobpath);
-	
-		JobId ret = schedulerStub.submit(job);
+		Job job = JobFactory.getFactory().createJob(jobpath); 	// Create a new job based on the job descriptor file.
+		job.setPriority(JobProber.DEFAULT_JOB_PRIORITY); 		// Configure the priority of the probe job. 
+		JobId ret = schedulerStub.submit(job);					// Submit the job.
 		if (ret!=null){
 			return ret.value();
 		}else{
