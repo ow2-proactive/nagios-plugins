@@ -20,6 +20,8 @@ public class Server {
     private final static Logger logger = ProActiveLogger.getLogger(Loggers.EXAMPLES);
     protected String messageOfTheDay;
     protected java.util.ArrayList<Client> clients;
+    private final static String SERVER_NAME = "server";
+    private final static String PREFIX_URL = "pamr://";
 
 	/** 
 	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
@@ -65,25 +67,70 @@ public class Server {
         }
     }
 
+    
+    public static  String getResourceNumberFromURL(String url) throws Exception{
+    	// pamr://9607/Node1807777269
+    	
+    	if (!url.startsWith(PREFIX_URL)){
+    		throw new Exception("Expected '" + PREFIX_URL + "' at the beginning but found '" + url + "'.");
+    	}
+    	String rem = url.substring(PREFIX_URL.length());
+    	rem = rem.substring(0,rem.indexOf('/'));
+    	return rem;
+    }
+    
     public static void main(String[] args) throws Exception {
     	System.setProperty("proactive.configuration", Misc.getProActiveConfigurationFile());
     	Misc.createPolicyAndLoadIt();
-    	
-    	
-        //ProActiveConfiguration.load();
+    	String serverurl = null;	
         try {
             // Creates an active object for the server
-            Server theServer = org.objectweb.proactive.api.PAActiveObject.newActive(Server.class,
+            Server server = org.objectweb.proactive.api.PAActiveObject.newActive(Server.class,
                     new Object[] { "This is the first message" });
 
             ProActiveConfiguration.load();
             //Server theServer = (Server) org.objectweb.proactive.ProActive.newActive(Server.class.getName(), null, null);
             // Binds the server to a specific URL
-            org.objectweb.proactive.api.PAActiveObject.registerByName(theServer, "server");
-            String url = org.objectweb.proactive.api.PAActiveObject.getActiveObjectNodeUrl(theServer);
-            logger.info("Server is ready: '" + url + "'.");
+            org.objectweb.proactive.api.PAActiveObject.registerByName(server, SERVER_NAME);
+            String url = org.objectweb.proactive.api.PAActiveObject.getActiveObjectNodeUrl(server);
+            String url2 = org.objectweb.proactive.api.PAActiveObject.getUrl(server);
+            logger.info("Server is ready.");
+            logger.info("Returned URL for the ActiveObjectNode: '" + url + "'.");
+            logger.info("Returned URL for the server: '" + url2 + "'.");
+            logger.info("Server resource name: '" + SERVER_NAME + "', resource number: '" + getResourceNumberFromURL(url) + "'.");
+            serverurl = PREFIX_URL + getResourceNumberFromURL(url) + "/" + SERVER_NAME;
+            logger.info("Server standard URL: "+ serverurl);
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
+        
+        
+        
+        
+    
+        String clientName;
+        
+        
+        clientName = "client";
+        
+    
+
+        try {
+            // Creates an active object for the client
+            Client theClient = org.objectweb.proactive.api.PAActiveObject.newActive(Client.class,
+                    new Object[] {clientName, serverurl});
+            ProActiveConfiguration.load();
+            if (theClient.init()) {
+                Thread t = new Thread(new RunClient(theClient));
+                t.start();
+                t.join();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        System.exit(0);
     }
+     
 }

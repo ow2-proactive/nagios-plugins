@@ -30,7 +30,8 @@ public class Client {
 
     public boolean init() throws ActiveObjectCreationException {
         // Looks up for the server
-        String urlAsString = "//" + serverHostName + "/server";
+        //String urlAsString = "//" + serverHostName + "/server";
+    	String urlAsString = serverHostName;
         logger.info("Client " + myName + " is looking up server at " + urlAsString);
         try {
             this.theServer = org.objectweb.proactive.api.PAActiveObject.lookupActive(Server.class,
@@ -72,7 +73,7 @@ public class Client {
         String numberServer;
         
         clientName = "client";
-        numberServer = "8866";
+        numberServer = "9598";
     
 
         try {
@@ -92,26 +93,5 @@ public class Client {
         System.exit(0);
     }
 
-    private static class RunClient implements Runnable {
-        private Client client;
-        private boolean shouldRun = true;
-
-        public RunClient(Client client) {
-            this.client = client;
-        }
-
-        public void run() {
-            while (shouldRun) {
-                try {
-                    client.interactWithServer();
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                    }
-                } catch (Exception e) {
-                    shouldRun = false;
-                }
-            }
-        }
-    }
+    
 }

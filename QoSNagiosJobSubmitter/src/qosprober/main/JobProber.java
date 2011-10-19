@@ -302,7 +302,7 @@ public class JobProber {
 
 		schedulerjobs = schedulerstub.getAllCurrentJobsList(jobname);
 		if (schedulerjobs.size()!=0){
-			String output_to_print = NAG_OUTPUT_PREFIX + " ERROR (not possible to remove all previous probe jobs in the scheduler)";
+			String output_to_print = NAG_OUTPUT_PREFIX + " ERROR (not possible to remove all previous '"+jobname+"' probe jobs in the scheduler)";
 			int output_to_return = JobProber.RESULT_CRITICAL;
 			Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
 			ret[0] = new Integer(output_to_return);
