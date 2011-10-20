@@ -54,9 +54,8 @@ public class PAMRProber {
 	
 	public final static String SERVER_NAME = "server";
     public final static String PREFIX_URL = "pamr://";
-	//public final static String MESSAGE = Misc.generateRandomString(50 * 1024 * 1024);
-	//public final static String MESSAGE = Misc.generateRandomString(50 * 1024 * 1024);
-    public final static int MESSAGE_LENGTH = 1024 * 1;
+    
+    public final static int MESSAGE_LENGTH = 1024 * 1024 * 1;
     
 	private static String lastStatus;						// Holds a message representative of the current status of the test.
 															// It is used in case of TIMEOUT, to help the administrator guess
@@ -67,42 +66,41 @@ public class PAMRProber {
 	
 	public static void main(String[] args) throws Exception {
 		
+		
 		TimeTick timing = new TimeTick();
 		
+		logger.info("Loading ProActive configuration file...");
     	System.setProperty("proactive.configuration", args[0]);
-    	Misc.createPolicyAndLoadIt();
-    	String serverurl = null;
-    	    	
+    	logger.info("Done.");
     	
+    	logger.info("Setting up security policy...");
+    	Misc.createPolicyAndLoadIt();
+    	logger.info("Done.");
+    	
+    	String serverurl = null;
     	Server server = null;
     
         // Creates an active object for the server
+    	logger.info("Creating Server Active object...");
         server = org.objectweb.proactive.api.PAActiveObject.newActive(Server.class, null);
-
-        ProActiveConfiguration.load();
+        logger.info("Done.");
         
+        logger.info("Registering server...");
         org.objectweb.proactive.api.PAActiveObject.registerByName(server, SERVER_NAME);
         String url = org.objectweb.proactive.api.PAActiveObject.getActiveObjectNodeUrl(server);
-        String url2 = org.objectweb.proactive.api.PAActiveObject.getUrl(server);
+        logger.info("Done.");
         
-        logger.info("\n\n\nServer is ready.");
-        //logger.info("Returned URL for the ActiveObjectNode: '" + url + "'.");
-        //logger.info("Returned URL for the server: '" + url2 + "'.");
-        //logger.info("Server resource name: '" + SERVER_NAME + "', resource number: '" + Misc.getResourceNumberFromURL(url) + "'.");
+        
         serverurl = PREFIX_URL + Misc.getResourceNumberFromURL(url) + "/" + SERVER_NAME;
-        logger.info("Server standard URL: "+ serverurl);
+        logger.info(">>> Server standard URL: "+ serverurl);
             
         
-
-        Misc.runJava(Client.class.getName(), args[0] + " " + serverurl);
+        logger.info("Running the client...");
+        Misc.runNewJVM(Client.class.getName(), args[0] + " " + serverurl);
+        logger.info("Done.");
         
-        while(!server.didAll()){
-        	logger.info("Waiting...");
-        	Thread.sleep(1000);
-        }
-        logger.info("Did all...");
+        logger.info("Waiting for the client's message...");
         
-        System.exit(0);
     }
      
 	
@@ -119,14 +117,6 @@ public class PAMRProber {
 		CmdLineParser parser = new CmdLineParser();
 		
 		CmdLineParser.Option debugO = parser.addIntegerOption('v', "debug");
-		CmdLineParser.Option userO = parser.addStringOption('u', "user");
-		CmdLineParser.Option passO = parser.addStringOption('p', "pass");
-		//CmdLineParser.Option protocolO = parser.addStringOption("protocol");
-		//CmdLineParser.Option jobpathO = parser.addStringOption('j',"jobpath");
-		CmdLineParser.Option urlO = parser.addStringOption("url");
-		CmdLineParser.Option nodesrequiredO = parser.addIntegerOption('r', "nodes");
-		CmdLineParser.Option nodeswarningO = parser.addIntegerOption("nodeswarning");
-		CmdLineParser.Option nodescriticalO = parser.addIntegerOption("nodescritical");
 		CmdLineParser.Option timeoutsecO = parser.addIntegerOption('t', "timeout");
 		CmdLineParser.Option timeoutwarnsecO = parser.addIntegerOption('n', "timeoutwarning");
 		CmdLineParser.Option paconfO = parser.addStringOption('f', "paconf");
@@ -144,14 +134,6 @@ public class PAMRProber {
 		}
 		
 		final Integer debug = (Integer)parser.getOptionValue(debugO, 0); 				// If false, only Nagios output.
-		final String user = (String)parser.getOptionValue(userO);			 			// User.
-		final String pass = (String)parser.getOptionValue(passO); 						// Pass.
-		//final String protocol = (String)parser.getOptionValue(protocolO);			 	// Protocol, either REST or JAVAPA.
-		//final String jobpath = (String)parser.getOptionValue(jobpathO); 				// Path of the job descriptor (xml).
-		final String url = (String)parser.getOptionValue(urlO); 						// Url of the Scheduler/RM.
-		final Integer nodesrequired = (Integer)parser.getOptionValue(nodesrequiredO,1); // Amount of nodes to be asked to the Resource Manager.
-		final Integer nodeswarning = (Integer)parser.getOptionValue(nodeswarningO,0);   // Obtaining fewer nodes than this, a warning message will be thrown. 
-		final Integer nodescritical = (Integer)parser.getOptionValue(nodescriticalO,0); // Obtaining fewer nodes than this, a critical message will be thrown. 
 		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO); 		// Timeout in seconds for the job to be executed.
 		final Integer timeoutwarnsec = 
 			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 				// Timeout in seconds for the warning message to be thrown.
@@ -161,12 +143,10 @@ public class PAMRProber {
 		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
 		
 		
-		/*******************/
+		/* Validating the arguments. */
 		
 		String errorMessage = "";
 		Boolean errorParam = false;
-		if (user == null)		{errorParam=true; errorMessage+="'User' not defined... ";}
-		if (pass == null)		{errorParam=true; errorMessage+="'Pass' not defined... ";}
 		if (timeoutsec == null)	{errorParam=true; errorMessage+="'Timeout' (sec) not defined... ";}
 			
 		if (errorParam==true)
@@ -177,7 +157,6 @@ public class PAMRProber {
 		    System.exit(RESULT_CRITICAL);
 		}
 		
-		/*******************/
 		
 		log4jConfiguration(debug);
 		
@@ -187,12 +166,6 @@ public class PAMRProber {
 		logger.info(
 				"Configuration: \n" +
 				"\t debug              : " + debug + "\n" +
-				"\t user               : " + user + "\n" +
-				"\t pass               : " + pass + "\n" +
-				"\t url                : " + url + "\n" +
-				"\t nodes required     : " + nodesrequired + "\n" +
-				"\t min. nodes warning : " + nodeswarning + "\n" +
-				"\t min. nodes critical: " + nodescritical + "\n" +
 				"\t timeout            : " + timeoutsec + "\n" +
 				"\t warning timeout    : " + timeoutwarnsec + "\n" +
 				"\t paconf             : " + paconf + "\n" +
@@ -236,7 +209,7 @@ public class PAMRProber {
 		
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
 			public Object[] call() throws Exception {
-				return PAMRProber.probe(url, user, pass, timeoutsec, usepaconffile, timeoutwarnsec, nodesrequired, nodeswarning, nodescritical);
+				return PAMRProber.probe(timeoutsec, usepaconffile, timeoutwarnsec);
 			}
 		};
 
@@ -285,7 +258,7 @@ public class PAMRProber {
 	 * @throws RMException 
 	 * @throws LoginException 
 	 * @throws KeyException */	 
-	public static Object[] probe(String url, String user, String pass, int timeoutsec, Boolean usepaconffile, int timeoutwarnsec, int nodesRequired, int nodesminimumwarning, int nodesminimumcritical) throws KeyException, LoginException, RMException{
+	public static Object[] probe(int timeoutsec, Boolean usepaconffile, int timeoutwarnsec) throws KeyException, LoginException, RMException{
 		
 		TimeTick timer = new TimeTick(); // We want to get time durations of each operation.
 		
