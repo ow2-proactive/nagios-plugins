@@ -56,7 +56,7 @@ public class PAMRProber {
     public final static String PREFIX_URL = "pamr://";
 	//public final static String MESSAGE = Misc.generateRandomString(50 * 1024 * 1024);
 	//public final static String MESSAGE = Misc.generateRandomString(50 * 1024 * 1024);
-    public final static int MESSAGE_LENGTH = 1024 * 1024 * 25;
+    public final static int MESSAGE_LENGTH = 1024 * 1;
     
 	private static String lastStatus;						// Holds a message representative of the current status of the test.
 															// It is used in case of TIMEOUT, to help the administrator guess
@@ -85,30 +85,22 @@ public class PAMRProber {
         String url = org.objectweb.proactive.api.PAActiveObject.getActiveObjectNodeUrl(server);
         String url2 = org.objectweb.proactive.api.PAActiveObject.getUrl(server);
         
-        logger.info("Server is ready.");
-        logger.info("Returned URL for the ActiveObjectNode: '" + url + "'.");
-        logger.info("Returned URL for the server: '" + url2 + "'.");
-        logger.info("Server resource name: '" + SERVER_NAME + "', resource number: '" + Misc.getResourceNumberFromURL(url) + "'.");
+        logger.info("\n\n\nServer is ready.");
+        //logger.info("Returned URL for the ActiveObjectNode: '" + url + "'.");
+        //logger.info("Returned URL for the server: '" + url2 + "'.");
+        //logger.info("Server resource name: '" + SERVER_NAME + "', resource number: '" + Misc.getResourceNumberFromURL(url) + "'.");
         serverurl = PREFIX_URL + Misc.getResourceNumberFromURL(url) + "/" + SERVER_NAME;
         logger.info("Server standard URL: "+ serverurl);
             
+        
 
+        Misc.runJava(Client.class.getName(), args[0] + " " + serverurl);
         
-        
-        // Creates an active object for the client
-        Client client = org.objectweb.proactive.api.PAActiveObject.newActive(Client.class, new Object[] {serverurl});
-        
-        client.init();
-
-        timing.tickSec();
-        boolean bb = client.sendMessageToServerAndCheckIt();
-        System.out.println(" TOOK " + timing.tickSec() + " sec ");
-        
-        if (bb==true){
-        	logger.info("All right!");
-        }else{
-        	logger.info("Something went wrong...");
+        while(!server.didAll()){
+        	logger.info("Waiting...");
+        	Thread.sleep(1000);
         }
+        logger.info("Did all...");
         
         System.exit(0);
     }

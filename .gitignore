@@ -1,13 +1,8 @@
+*.swp
 *.class
 *.log
-/*/bin/resources/usage.txt
+/*/bin/resources/*.txt
 *.jar
 scheduler
 .metadata
 QoSNagiosJobSubmitter/test_job.xml.*
-QoSNagiosJobSubmitter/bin/resources/usage.txt
-/*/bin/resources/expectedoutput.txt
-/QoSNagiosJobSubmitter/bin/resources/expectedoutput.txt
-QoSNagiosJobSubmitter/bin/resources/usage.txt
-/QoSNagiosJobSubmitter/bin/resources/usage.txt
-usage.txt

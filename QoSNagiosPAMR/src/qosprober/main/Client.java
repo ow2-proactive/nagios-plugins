@@ -49,6 +49,8 @@ public class Client {
     
     public static void main(String args[]) throws Exception{
     	
+    	logger.info("Started Client...");
+    	
     	TimeTick timing = new TimeTick();
     	
     	System.setProperty("proactive.configuration", args[0]);
@@ -61,7 +63,7 @@ public class Client {
         client.init();
         
         
-        
+        logger.info("Sending message to '" + serverurl + "'...");
         timing.tickSec();
         boolean bb = client.sendMessageToServerAndCheckIt();
         System.out.println(" TOOK " + timing.tickSec() + " sec ");

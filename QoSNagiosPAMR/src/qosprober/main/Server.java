@@ -1,7 +1,6 @@
 package qosprober.main;
 
 import org.apache.log4j.Logger;
-import org.objectweb.proactive.core.config.ProActiveConfiguration;
 
 import qosprober.misc.Misc;
 
@@ -23,6 +22,7 @@ public class Server {
     	}else{
     		ret = true;
     		logger.info("Checking: OK");
+    		System.exit(0);
     		
     	}
     	
@@ -30,13 +30,11 @@ public class Server {
     	return ret;
     }
     
-    public boolean didAll(){
+    public synchronized boolean didAll(){
     	return done;
     }
     
     public static void main(String args[]) throws Exception{
-    	
-		
     	System.setProperty("proactive.configuration", args[0]);
     	Misc.createPolicyAndLoadIt();
     	String serverurl = null;
