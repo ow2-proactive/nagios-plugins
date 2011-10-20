@@ -55,7 +55,7 @@ public class PAMRProber {
 	public final static String SERVER_NAME = "server";
     public final static String PREFIX_URL = "pamr://";
     
-    public final static int MESSAGE_LENGTH = 1024 * 1024 * 1;
+    public final static int MESSAGE_LENGTH = 1024;
     
 	private static String lastStatus;						// Holds a message representative of the current status of the test.
 															// It is used in case of TIMEOUT, to help the administrator guess
@@ -65,7 +65,6 @@ public class PAMRProber {
 	
 	
 	public static void main(String[] args) throws Exception {
-		
 		
 		TimeTick timing = new TimeTick();
 		
@@ -100,6 +99,14 @@ public class PAMRProber {
         logger.info("Done.");
         
         logger.info("Waiting for the client's message...");
+    
+    
+    	while(server.isDone()==false){
+    		logger.info("Waiting...");
+    		Thread.sleep(500);
+    	}
+    	logger.info("Done!");
+    	System.exit(0);
         
     }
      

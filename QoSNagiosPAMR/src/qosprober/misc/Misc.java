@@ -159,7 +159,7 @@ public class Misc {
 		
 		properties.put("log4j.appender.rollingFile",				"org.apache.log4j.RollingFileAppender");
 		properties.put("log4j.appender.rollingFile.File",			"/tmp/output");
-		properties.put("log4j.appender.rollingFile.MaxFileSize",	"5MB");
+		properties.put("log4j.appender.rollingFile.MaxFileSize",	"1MB");
 		properties.put("log4j.appender.rollingFile.MaxBackupIndex",	"2");
 		properties.put("log4j.appender.rollingFile.layout",			"org.apache.log4j.PatternLayout");
 		properties.put("log4j.appender.rollingFile.layout.ConversionPattern",	"%p %t %c - %m%n");

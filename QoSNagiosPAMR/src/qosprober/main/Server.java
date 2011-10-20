@@ -23,17 +23,16 @@ public class Server {
     	}else{
     		ret = true;
     		logger.info("Checking: OK");
-    		System.exit(0);
-    		
     	}
     	
     	done = true;
     	return ret;
     }
     
-    public synchronized boolean didAll(){
+    public synchronized boolean isDone(){
     	return done;
     }
+    
     
     
 }
