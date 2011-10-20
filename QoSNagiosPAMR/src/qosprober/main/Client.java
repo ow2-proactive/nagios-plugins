@@ -51,9 +51,9 @@ public class Client {
     	
     	TimeTick timing = new TimeTick();
     	
-    	System.setProperty("proactive.configuration", Misc.getProActiveConfigurationFile());
+    	System.setProperty("proactive.configuration", args[0]);
     	Misc.createPolicyAndLoadIt();
-    	String serverurl = args[0];
+    	String serverurl = args[1];
     
         Client client = org.objectweb.proactive.api.PAActiveObject.newActive(Client.class, new Object[] {serverurl});
         //ProActiveConfiguration.load();

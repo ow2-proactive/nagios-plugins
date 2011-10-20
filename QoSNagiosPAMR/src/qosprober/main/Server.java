@@ -34,10 +34,10 @@ public class Server {
     	return done;
     }
     
-    public static void main(String arg[]) throws Exception{
+    public static void main(String args[]) throws Exception{
     	
 		
-    	System.setProperty("proactive.configuration", Misc.getProActiveConfigurationFile());
+    	System.setProperty("proactive.configuration", args[0]);
     	Misc.createPolicyAndLoadIt();
     	String serverurl = null;
     	    	

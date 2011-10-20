@@ -77,10 +77,6 @@ public class Misc {
 		}
 	}
     
-    public static String getProActiveConfigurationFile(){
-    	return "/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/workspace/QoSNagiosJobSubmitter/ProActiveConfiguration.xml";
-    }
-
     public static  String getResourceNumberFromURL(String url) throws Exception{
     	// Typical one is pamr://9607/Node1807777269
     	
@@ -128,8 +124,6 @@ public class Misc {
 		} 
 		return new String(ret);
     }
-
-
 
 
 }

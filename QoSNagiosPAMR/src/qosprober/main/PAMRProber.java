@@ -23,6 +23,7 @@ import org.apache.log4j.PropertyConfigurator;
 import org.objectweb.proactive.core.config.ProActiveConfiguration;
 import org.objectweb.proactive.core.node.Node;
 import org.ow2.proactive.resourcemanager.exception.RMException;
+import org.ow2.proactive.scheduler.common.job.Job;
 import org.ow2.proactive.utils.NodeSet;
 
 import qosprober.exceptions.ElementNotFoundException;
@@ -68,7 +69,7 @@ public class PAMRProber {
 		
 		TimeTick timing = new TimeTick();
 		
-    	System.setProperty("proactive.configuration", Misc.getProActiveConfigurationFile());
+    	System.setProperty("proactive.configuration", args[0]);
     	Misc.createPolicyAndLoadIt();
     	String serverurl = null;
     	    	
