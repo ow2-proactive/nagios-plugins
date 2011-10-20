@@ -14,14 +14,15 @@ import org.ow2.proactive.scheduler.common.exception.PermissionException;
 import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import org.ow2.proactive.scheduler.common.exception.SubmissionClosedException;
 import org.ow2.proactive.scheduler.common.exception.UnknownJobException;
+import org.ow2.proactive.scheduler.common.exception.UserException;
 import org.ow2.proactive.scheduler.common.job.*;
-import org.ow2.proactive.scheduler.common.job.factories.JobFactory;
+import org.ow2.proactive.scheduler.common.task.JavaTask;
 import org.ow2.proactive.scheduler.common.Scheduler;
 import org.ow2.proactive.authentication.crypto.CredData;
 import org.ow2.proactive.scheduler.common.SchedulerAuthenticationInterface;
+
 import java.io.IOException;
 import java.security.KeyException;
-import java.util.Date;
 import java.util.Vector;
 
 import org.ow2.proactive.authentication.crypto.Credentials;
@@ -30,8 +31,9 @@ import qosprober.exceptions.InvalidProtocolException;
 /** 
  * Class that connects the test with the real scheduler, works as a stub. 
  * This is our interface to the remote Scheduler.
- * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST. */
-public class SchedulerStubProberJava implements SchedulerStubProber{
+ * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST. 
+ * This class is specific for JAVAPA protocol. */
+public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
 	private static Logger logger = Logger.getLogger(SchedulerStubProberJava.class.getName()); 	// Logger.
 	private Scheduler schedulerStub; 														// Stub to the scheduler.
 	
@@ -47,24 +49,41 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 	 * @param pass, password to access the scheduler.
 	 * */
 	public void init(String protocolStr, String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, HttpException, IOException{
-		logger .info("Joining the scheduler...");
+		logger.info("Joining the scheduler...");
         SchedulerAuthenticationInterface auth = SchedulerConnection.join(url);
-        logger .info("Creating credentials...");
+        logger.info("Creating credentials...");
         Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
-        logger .info("Logging in...");
+        logger.info("Logging in...");
         schedulerStub = auth.login(cred);
         SchedulerEventsListener aa = PAActiveObject.newActive(SchedulerEventsListener.class, new Object[]{}); 
         schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
 	}
 	
+	
+	
 	/** 
 	 * Submit a job to the scheduler. 
-	 * @param jobpath, path of the job descriptor file (xml). 
-	 * @return and ID of the submitted job in case of success. */
-	public String submitJob(String jobpath) throws IOException, NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException{
-		Job job = JobFactory.getFactory().createJob(jobpath); 	// Create a new job based on the job descriptor file.
-		job.setPriority(JobProber.DEFAULT_JOB_PRIORITY); 		// Configure the priority of the probe job. 
-		JobId ret = schedulerStub.submit(job);					// Submit the job.
+	 * @param name, name which will be seen by the administrator regarding this job.
+	 * @param taskname, name of the class to be instantiated and executed as the task for this job. 
+	 * @return and ID of the submitted job in case of success. 
+	 */
+	public String submitJob(String name, String taskname) throws NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException, UserException{
+		// Configuration of the job.
+		TaskFlowJob job = new TaskFlowJob();
+        job.setName(name /*"nagios_probe_job"*/);
+        job.setPriority(
+        		JobProber.DEFAULT_JOB_PRIORITY);// Configure the priority of the probe job.
+        job.setCancelJobOnError(true);
+        job.setDescription("Nagios plugin probe job.");
+        JavaTask task = new JavaTask(); 		// Create the java task.
+        task.setName("task"); 					// Add the task to the job.
+        task.setExecutableClassName(taskname);	// Scpecify which class will be instantiated and executed as a task for this job.
+        task.setPreciousResult(true);			
+        job.addTask(task); 						// Add the task to the current job.
+        
+        // Submission of the job.
+		JobId ret = schedulerStub.submit(job);	// Submit the job to the scheduler.
+		
 		if (ret!=null){
 			return ret.value();
 		}else{
@@ -72,12 +91,12 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 		}
 	}
 	
+	
 	/**
 	 * Get the result of the job. 
 	 * @param jobId, the ID of the job. 
 	 * @return The raw output of the job. */
 	public String getJobResult(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{
-	
 		JobResult jr = schedulerStub.getJobResult(jobId);
 		if (jr != null){
 			return jr.toString();
@@ -88,59 +107,41 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 	
 	/** 
 	 * Wait for a job to finish. 
-	 * @param jobId, the ID of the job to wait. 
-	 * @param timeoutms, the maximum time in milliseconds to wait for this job. */
-	public void waitUntilJobFinishes(String jobId, int timeoutms) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{
-
-		long start = (new Date()).getTime();
-		long end;
-		boolean timeout;
-
+	 * @param jobId, the ID of the job to wait. */
+	public void waitUntilJobFinishes(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{
 		
 		do{
 			synchronized(SchedulerStubProberJava.class){
 				
 				try {
-					SchedulerStubProberJava.class.wait(timeoutms); // This thread is blocked until the SchedulerEventsListener notifies of a new finished job.
+					SchedulerStubProberJava.class.wait(); // This thread is blocked until the SchedulerEventsListener notifies of a new finished job.
 				} catch (InterruptedException e) {
 					logger.warn("Not supposed to happen...", e);
 				}
-				end = (new Date()).getTime(); 
-				timeout = (end-start>=timeoutms);
 			}
 			
-		}while(SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId)==false && timeout==false);
+		}while(SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId)==false);
 	}
 
-	
-	
 
 	/** 
 	 * Wait for a job to be cleaned (removed or finished). 
-	 * @param jobId, the ID of the job to wait for. 
-	 * @param timeoutms, the maximum time in milliseconds to wait for this job's removal. */
-	public void waitUntilJobIsCleaned(String jobId, int timeoutms) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{
-
-		long start = (new Date()).getTime();
-		long end;
-		boolean timeout;
-		
+	 * @param jobId, the ID of the job to wait for. */
+	public void waitUntilJobIsCleaned(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{		
 		do{
 			synchronized(SchedulerStubProberJava.class){
 				
 				try {
-					SchedulerStubProberJava.class.wait(timeoutms); // This thread is blocked until the SchedulerEventsListener notifies of a new removed job.
+					SchedulerStubProberJava.class.wait(); // This thread is blocked until the SchedulerEventsListener notifies of a new removed job.
 				} catch (InterruptedException e) {
 					logger.warn("Not supposed to happen...", e);
 				}
-				end = (new Date()).getTime(); 
-				timeout = (end-start>=timeoutms);
 			}
 			
 		}while(
 				SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId) == false    && 
-				SchedulerEventsListener.checkIfJobIdHasJustBeenRemoved(jobId) == false &&
-				timeout==false);
+				SchedulerEventsListener.checkIfJobIdHasJustBeenRemoved(jobId) == false
+				);
 	}
 
 	
@@ -153,13 +154,23 @@ public class SchedulerStubProberJava implements SchedulerStubProber{
 	}
 
 	/** 
-	 * Remove the job from the Scheduler. No leftovers of the job in the server.
+	 * Kill and remove the job from the Scheduler. No leftovers of the job in the server.
 	 * This is specially useful to delete the probe job, so we do not contaminate what the administrator sees.
 	 * @param jobId, the ID of the job. */
-	public void removeJob(String jobId) throws Exception, NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
+	public void forceJobKillingAndRemoval(String jobId) throws Exception, NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
 		schedulerStub.killJob(jobId);
 		schedulerStub.removeJob(jobId);
 	}
+	
+	
+	/** 
+	 * Remove the job from the Scheduler (only in case it is finished).
+	 * This is specially useful to delete the probe job, so we do not contaminate what the administrator sees.
+	 * @param jobId, the ID of the job. */
+	public void removeJob(String jobId) throws Exception, NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
+		schedulerStub.removeJob(jobId);
+	}
+	
 	
 	/** 
 	 * Disconnect from the Scheduler. */

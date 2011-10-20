@@ -33,10 +33,11 @@ public interface SchedulerStubProber{
 	public void init(String protocolStr, String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, HttpException, IOException;
 		
 	/** 
-	 * Submit a job to the scheduler. 
-	 * @param jobpath, path of the job descriptor file (xml). 
+	 * Submit a probe job to the scheduler. 
+	 * @param name, name of the job.
+	 * @param taskname, name of the class to be executed as the only task of the job. 
 	 * @return and ID of the submitted job in case of success. */
-	public String submitJob(String jobpath) throws IOException, NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException;
+	public String submitJob(String name, String taskname) throws NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException;
 		
 	/**
 	 * Get the result of the job. 

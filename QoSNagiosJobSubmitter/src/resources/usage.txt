@@ -1,12 +1,11 @@
 
 SYNOPSIS
-   java -jar jobsubmprobe.jar <url> <user> <pass> <protocol> <jobpath> [OPTIONS]
+   java -jar jobsubmprobe.jar <url> <user> <pass> <protocol> [OPTIONS]
 
 DESCRIPTION
 
 Nagios plugin to probe the responsiveness of a ProActive based scheduler grid.
-It uses a simple job probe submission to test a grid concerning its responsiveness, and status in general.  
-The output of the probe job is compared with a local copy of the correct output to make sure it is correctly executed. The output of the probe job (once executed the test) is written in a file whose path is exactly the same as the path of the job descriptor + '.out.tmp'. The correct output of the job should be put in a file whose path is exactly the same as the path of the job descriptor + '.out'. 
+It uses a simple job probe submission to test a grid concerning its responsiveness, and status in general.   
    
 Mandatory arguments to long options are mandatory for short options too.
    
@@ -21,9 +20,6 @@ Mandatory arguments to long options are mandatory for short options too.
       
    --protocol=PROTOCOL
       Protocol to get connected to the Scheduler. For example JAVAPA or REST.
-      
-   -j, --jobpath=JOBPATH
-      Full path of the job descriptor (xml file) to be used as a probe.
       
    --url=URL
       URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
@@ -60,7 +56,7 @@ NAGIOS OUTPUT INTERPRETATION
 EXECUTION EXAMPLE
 
    Case for a local Scheduler/RM running
-      java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ --user=demo --pass=demo --protocol=JAVAPA --jobpath=/tmp/job.xml 
-      java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ -u demo      -p demo    --protocol=JAVAPA -j /tmp/job.xml
+      java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ --user=demo --pass=demo --protocol=JAVAPA  
+      java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ -u demo      -p demo    --protocol=JAVAPA 
    General cases
-      java -jar jobsubmprobe.jar --user=u --pass=u --jobpath=/tmp/job.xml --protocol=JAVAPA --url=pamr://1 --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml
+      java -jar jobsubmprobe.jar --user=u --pass=u --protocol=JAVAPA --url=pamr://1 --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml

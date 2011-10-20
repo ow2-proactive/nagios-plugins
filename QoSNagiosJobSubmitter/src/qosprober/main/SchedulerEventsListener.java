@@ -93,7 +93,8 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 
 	
 	public void jobStateUpdatedEvent(NotificationData<JobInfo> info) {
-		logger.info(">> Event " + info.getData().getJobId().value() + " " + info.getEventType().toString());
+		String name = info.getData().getJobId().getReadableName();
+		logger.info(">> Event " + name + ":" +  info.getData().getJobId().value() + " -> " + info.getEventType().toString());
 		
 		if (info.getEventType().equals(SchedulerEvent.JOB_RUNNING_TO_FINISHED)){
 			/* If we receive a running-to-finished event for a job, we add this job to the 

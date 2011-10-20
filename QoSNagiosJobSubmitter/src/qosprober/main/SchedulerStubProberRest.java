@@ -40,7 +40,8 @@ import com.google.gson.InstanceCreator;
 /** 
  * Class that connects the test with the real scheduler, works as a stub. 
  * This is our interface to the remote Scheduler.
- * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST. */
+ * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST. 
+ * This class is specific for REST protocol. */
 public class SchedulerStubProberRest implements SchedulerStubProber{
 	
 	private static Logger logger = Logger.getLogger(SchedulerStubProberRest.class.getName()); 	// Logger.
@@ -52,7 +53,9 @@ public class SchedulerStubProberRest implements SchedulerStubProber{
 	
 	/**
 	 * Constructor method. */
-	public SchedulerStubProberRest(){}
+	public SchedulerStubProberRest() throws Exception{
+		throw new Exception("Not usable!! Out of date.");
+	}
 	
 	/** 
 	 * Initialize the connection/session with the scheduler.
@@ -193,6 +196,14 @@ public class SchedulerStubProberRest implements SchedulerStubProber{
 			UnknownJobException, HttpException, IOException {
 		throw new RuntimeException("Not implemented yet");
 		
+	}
+
+	@Override
+	public String submitJob(String name, String taskname)
+			throws NotConnectedException, PermissionException,
+			SubmissionClosedException, JobCreationException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
 
