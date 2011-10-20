@@ -47,7 +47,7 @@ public class Client {
     	String paconffile = args[0];
     	String serverurl = args[1];
     	
-    	Misc.log4jConfiguration2();
+    	//Misc.log4jConfiguration2();
     	
     	logger.info("Started PAMR client-side probe...");
     	

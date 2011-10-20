@@ -20,8 +20,10 @@ import javax.security.auth.login.LoginException;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.core.config.ProActiveConfiguration;
 import org.objectweb.proactive.core.node.Node;
+import org.objectweb.proactive.core.node.NodeException;
 import org.ow2.proactive.resourcemanager.exception.RMException;
 import org.ow2.proactive.scheduler.common.job.Job;
 import org.ow2.proactive.utils.NodeSet;
@@ -63,60 +65,14 @@ public class PAMRProber {
 	
 	public static Logger logger = Logger.getLogger(PAMRProber.class.getName()); // Logger.
 	
-	
-	public static void main(String[] args) throws Exception {
-		
-		TimeTick timing = new TimeTick();
-		
-		logger.info("Loading ProActive configuration file...");
-    	System.setProperty("proactive.configuration", args[0]);
-    	logger.info("Done.");
-    	
-    	logger.info("Setting up security policy...");
-    	Misc.createPolicyAndLoadIt();
-    	logger.info("Done.");
-    	
-    	String serverurl = null;
-    	Server server = null;
-    
-        // Creates an active object for the server
-    	logger.info("Creating Server Active object...");
-        server = org.objectweb.proactive.api.PAActiveObject.newActive(Server.class, null);
-        logger.info("Done.");
-        
-        logger.info("Registering server...");
-        org.objectweb.proactive.api.PAActiveObject.registerByName(server, SERVER_NAME);
-        String url = org.objectweb.proactive.api.PAActiveObject.getActiveObjectNodeUrl(server);
-        logger.info("Done.");
-        
-        
-        serverurl = PREFIX_URL + Misc.getResourceNumberFromURL(url) + "/" + SERVER_NAME;
-        logger.info(">>> Server standard URL: "+ serverurl);
-            
-        
-        logger.info("Running the client...");
-        Misc.runNewJVM(Client.class.getName(), args[0] + " " + serverurl);
-        logger.info("Done.");
-        
-        logger.info("Waiting for the client's message...");
-    
-    
-    	while(server.isDone()==false){
-    		logger.info("Waiting...");
-    		Thread.sleep(500);
-    	}
-    	logger.info("Done!");
-    	System.exit(0);
-        
-    }
-     
+	 
 	
 	
 	/**
 	 * Starting point.
 	 * The arguments/parameters are specified in the file /resources/usage.txt
 	 * @return Nagios error code. */
-	public static void main1(String[] args) throws Exception{
+	public static void main(String[] args) throws Exception{
 		
 		PAMRProber.setLastStatuss("started, parsing arguments...");
 		
@@ -205,8 +161,6 @@ public class PAMRProber {
 		
 		PAMRProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		
-		final Boolean usepaconffile = usepaconffilee;
-		
 		/* No need of other arguments. */
 		//String[] otherArgs = parser.getRemainingArgs();
 		
@@ -216,7 +170,7 @@ public class PAMRProber {
 		
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
 			public Object[] call() throws Exception {
-				return PAMRProber.probe(timeoutsec, usepaconffile, timeoutwarnsec);
+				return PAMRProber.probe(timeoutsec, paconf, timeoutwarnsec);
 			}
 		};
 
@@ -264,106 +218,86 @@ public class PAMRProber {
 	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. 
 	 * @throws RMException 
 	 * @throws LoginException 
-	 * @throws KeyException */	 
-	public static Object[] probe(int timeoutsec, Boolean usepaconffile, int timeoutwarnsec) throws KeyException, LoginException, RMException{
+	 * @throws KeyException 
+	 * @throws IOException 
+	 * @throws NodeException, Exception 
+	 * @throws ActiveObjectCreationException */	 
+	public static Object[] probe(int timeoutsec, String paconffile, int timeoutwarnsec) throws KeyException, LoginException, RMException, IOException, ActiveObjectCreationException, NodeException, Exception{
 		
-		TimeTick timer = new TimeTick(); // We want to get time durations of each operation.
+		TimeTick timing = new TimeTick();
 		
-		/* We get connected to the Scheduler through this stub, later we submit a job, etc. */
-		//PAMRStubProber rmstub; 
+    	String serverurl = null;
+    	Server server = null;
+    
+    	PAMRProber.setLastStatuss(".");
+    	
+        // Creates an active object for the server
+    	logger.info("Creating Server Active object...");
+        server = org.objectweb.proactive.api.PAActiveObject.newActive(Server.class, null);
+        logger.info("Done.");
+        
+        double time_initializing = timing.tickSec();
+        
+        PAMRProber.setLastStatuss(".");
+        
+        logger.info("Registering server...");
+        org.objectweb.proactive.api.PAActiveObject.registerByName(server, SERVER_NAME);
+        String url = org.objectweb.proactive.api.PAActiveObject.getActiveObjectNodeUrl(server);
+        logger.info("Done.");
+        
+        PAMRProber.setLastStatuss(".");
+        
+        serverurl = PREFIX_URL + Misc.getResourceNumberFromURL(url) + "/" + SERVER_NAME;
+        logger.info(">>> Server standard URL: "+ serverurl);
+            
+        PAMRProber.setLastStatuss(".");
+        double time_registering_server = timing.tickSec();
+        
+        logger.info("Running the client...");
+        Misc.runNewJVM(Client.class.getName(), paconffile + " " + serverurl);
+        logger.info("Done.");
+        
+        double time_executing_client = timing.tickSec();
+        PAMRProber.setLastStatuss(".");
+        
+        logger.info("Waiting for the client's message...");
+    
+    
+    	while(server.isDone()==false){
+    		logger.info("Waiting...");
+    		Thread.sleep(500);
+    	}
+    	
+    	double time_waiting_message = timing.tickSec();
+    	logger.info("Done!");
+    	
+    	
+		/****************/
 		
-		//rmstub = new PAMRStubProber();
+		int output_to_return;
+		String output_to_print = null;
 		
-		double time_initializing = timer.tickSec();
+		double time_all = time_initializing+time_registering_server+time_executing_client+time_waiting_message;
 		
-		PAMRProber.setLastStatuss("RM stub created, connecting to RM...");
+		String timesummary =
+			"time_initializing=" + String.format(Locale.ENGLISH, "%1.03f", time_initializing)   + "s " +
+			"time_registering_server=" + String.format(Locale.ENGLISH, "%1.03f", time_registering_server) + "s " +
+			"time_executing_client=" + String.format(Locale.ENGLISH, "%1.03f", time_executing_client) + "s " +
+			"time_waiting_message=" + String.format(Locale.ENGLISH, "%1.03f", time_waiting_message   )   + "s " +
+			"timeout_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutsec)   + "s " +
+			"time_all_warning_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutwarnsec)   + "s " +
+			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", time_all) + "s"; 
 		
-		logger.info("Connecting to Resource Manager... "); 	// Connecting to RM...
 
-		//rmstub.init(url, user, pass); 						// Login procedure...
-		PAMRProber.setLastStatuss("connected to RM, loading proactive configuration...");
-		
-		double time_connection = timer.tickSec();
-		
-		if (usepaconffile==true){
-			logger.info("\tLoading ProActive configuration (xml) file... ");
-			ProActiveConfiguration.load(); 					// Load the ProActive configuration file.
-			logger.info("\tDone.");
-		}else{
-			logger.info("\tAvoiding ProActive configuration (xml) file... ");
+		if (time_all > timeoutwarnsec){						// If longer than timeoutwarnsec, warning message.
+			output_to_return = PAMRProber.RESULT_WARNING;
+			output_to_print = 
+				NAG_OUTPUT_PREFIX + "WARNING STATE, SLOW PROBE | " + timesummary;
+		}else{												// Else everything was okay.
+			output_to_return = PAMRProber.RESULT_OK;
+			output_to_print = 
+				NAG_OUTPUT_PREFIX + "OK | " + timesummary;
 		}
-		
-		logger.info("Done.");
-		
-				
-		int output_to_return = PAMRProber.RESULT_CRITICAL; 
-		String output_to_print = 
-			NAG_OUTPUT_PREFIX + "NO TEST PERFORMED"; 		// Default output (for Nagios).
-		
-		PAMRProber.setLastStatuss("loaded proactive configuration, getting nodes...");
-		
-		logger.info("Getting nodes...");
-		//NodeSet nodes = rmstub.getNodes(nodesRequired); 	// Request some nodes.
-		
-		
-		double time_getting_nodes = timer.tickSec();
-		
-		//int obtainednodes = nodes.size();
-		logger.info("\tListing nodes...");					// List the nodes obtained.
-    	//for(Node n:nodes){
-    	//	logger.info("\t - " + n.getNodeInformation().getName());
-    	//}
-    	logger.info("Done.");
-    	
-    	
-    	PAMRProber.setLastStatuss("obtained nodes, releasing nodes...");
-    	
-    	logger.info("Releasing nodes...");					// Release the nodes obtained.
-    	//rmstub.releaseNodes(nodes);
-    	logger.info("Done.");
-    	
-    	double time_releasing_nodes = timer.tickSec();		
-    	
-    	PAMRProber.setLastStatuss("released nodes, disconnecting...");
-    	
-    	logger.info("Disconnecting...");					// Disconnecting from RM.
-    	//rmstub.disconnect();
-    	logger.info("Done.");
-    				
-		double time_disconn = timer.tickSec();
-		
-		double time_all = time_initializing+time_connection+time_getting_nodes+time_releasing_nodes+time_disconn;
-		
-//		String timesummary =
-//			"nodes_required=" + (nodesRequired) + " " +
-//			"nodes_obtained=" + (obtainednodes) + " " +
-//			"time_connection=" + String.format(Locale.ENGLISH, "%1.03f", time_connection)   + "s " +
-//			"time_getting_nodes=" + String.format(Locale.ENGLISH, "%1.03f", time_getting_nodes) + "s " +
-//			"time_releasing_nodes=" + String.format(Locale.ENGLISH, "%1.03f", time_releasing_nodes) + "s " +
-//			"time_disconnection=" + String.format(Locale.ENGLISH, "%1.03f", time_disconn   )   + "s " +
-//			"timeout_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutsec)   + "s " +
-//			"time_all_warning_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutwarnsec)   + "s " +
-//			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", time_all) + "s"; 
-//		
-		//String summary = "(obtained/required/critical/warning)=(" + obtainednodes + "/" + nodesRequired + "/" + nodesminimumcritical + "/" + nodesminimumwarning + ")";
-		
-//		if (obtainednodes < nodesminimumcritical){	// Else everything was okay.
-//			output_to_return = PAMRProber.RESULT_CRITICAL;
-//			output_to_print = 
-//				NAG_OUTPUT_PREFIX + "CRITICAL STATE, TOO FEW NODES OBTAINED "+ summary + " | " + timesummary;
-//		}else if (obtainednodes < nodesminimumwarning){		// Else everything was okay.
-//			output_to_return = PAMRProber.RESULT_WARNING;
-//			output_to_print = 
-//				NAG_OUTPUT_PREFIX + "WARNING STATE, TOO FEW NODES OBTAINED "+ summary + " | " + timesummary;
-//		}else if (time_all > timeoutwarnsec){						// If longer than timeoutwarnsec, warning message.
-//			output_to_return = PAMRProber.RESULT_WARNING;
-//			output_to_print = 
-//				NAG_OUTPUT_PREFIX + "WARNING STATE, " + obtainednodes + " NODE/S OBTAINED TOO SLOWLY | " + timesummary;
-//		}else{												// Else everything was okay.
-//			output_to_return = PAMRProber.RESULT_OK;
-//			output_to_print = 
-//				NAG_OUTPUT_PREFIX + obtainednodes + " NODE/S OBTAINED OK | " + timesummary;
-//		}
 //	
 		Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
 		ret[0] = new Integer(output_to_return);
