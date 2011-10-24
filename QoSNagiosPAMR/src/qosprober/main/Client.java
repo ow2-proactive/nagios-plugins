@@ -13,7 +13,7 @@ import qosprober.misc.Misc;
  * go through the PAMR router (so we check its service is up). If the server receives correctly this message, 
  * then we can say that the PAMR router service is up. */
 public class Client {
-	
+	public static boolean booleanvalue;										// Value returned by the client. We get it to make sure no optimizations will be done during the communication.
     public static Logger logger = Logger.getLogger(Client.class.getName()); // Logger.
     private String serverURL; 												// URL of the server, we want to contact it to send a message.
     private Server server;													// Stub of the server. 
@@ -80,7 +80,7 @@ public class Client {
         logger.info("Done.");
         
         logger.info("Sending message to '" + serverurl + "'...");
-        boolean bb = client.sendMessageToServer();
+        booleanvalue = client.sendMessageToServer();
         logger.info("Done.");
         
         System.exit(0);

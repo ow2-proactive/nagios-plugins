@@ -34,8 +34,11 @@ import qosprober.exceptions.InvalidProtocolException;
  * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST. 
  * This class is specific for JAVAPA protocol. */
 public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
-	private static Logger logger = Logger.getLogger(SchedulerStubProberJava.class.getName()); 	// Logger.
-	private Scheduler schedulerStub; 														// Stub to the scheduler.
+	private static boolean POLLING = false;
+	private static int POLLING_PERIOD_MS = 200;							// Polling period time (if polling is activated).
+	private static Logger logger =
+			Logger.getLogger(SchedulerStubProberJava.class.getName()); 	// Logger.
+	private Scheduler schedulerStub; 									// Stub to the scheduler.
 	
 	/**
 	 * Constructor method. */
@@ -56,7 +59,9 @@ public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
         logger.info("Logging in...");
         schedulerStub = auth.login(cred);
         SchedulerEventsListener aa = PAActiveObject.newActive(SchedulerEventsListener.class, new Object[]{}); 
-        schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
+        if (SchedulerStubProberJava.POLLING == false){
+	        schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
+        }
 	}
 	
 	
@@ -107,41 +112,66 @@ public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
 	
 	/** 
 	 * Wait for a job to finish. 
-	 * @param jobId, the ID of the job to wait. */
-	public void waitUntilJobFinishes(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{
-		
-		do{
-			synchronized(SchedulerStubProberJava.class){
+	 * @param jobId, the ID of the job to wait. 
+	 * @throws InterruptedException */
+	public void waitUntilJobFinishes(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException, InterruptedException{
+		if (POLLING == false){
+			do{
+				synchronized(SchedulerStubProberJava.class){
 				
-				try {
-					SchedulerStubProberJava.class.wait(); // This thread is blocked until the SchedulerEventsListener notifies of a new finished job.
-				} catch (InterruptedException e) {
-					logger.warn("Not supposed to happen...", e);
+					try {
+						SchedulerStubProberJava.class.wait(); // This thread is blocked until the SchedulerEventsListener notifies of a new finished job.
+					} catch (InterruptedException e) {
+						logger.warn("Not supposed to happen...", e);
+					}
 				}
-			}
 			
-		}while(SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId)==false);
+			}while(SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId)==false);
+		}else{
+			boolean finished = false;
+			do{
+				Thread.sleep(POLLING_PERIOD_MS);
+				JobStatus status = schedulerStub.getJobState(jobId).getStatus();
+				logger.info("Waiting 'Finished' status for '" + status + "'.");
+				finished = (status.equals(JobStatus.FINISHED));
+			}while(finished == false);	
+		}
 	}
 
 
 	/** 
 	 * Wait for a job to be cleaned (removed or finished). 
-	 * @param jobId, the ID of the job to wait for. */
-	public void waitUntilJobIsCleaned(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{		
-		do{
-			synchronized(SchedulerStubProberJava.class){
-				
-				try {
-					SchedulerStubProberJava.class.wait(); // This thread is blocked until the SchedulerEventsListener notifies of a new removed job.
-				} catch (InterruptedException e) {
-					logger.warn("Not supposed to happen...", e);
+	 * @param jobId, the ID of the job to wait for. 
+	 * @throws InterruptedException */
+	public void waitUntilJobIsCleaned(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException, InterruptedException{
+		if (POLLING == false){
+			do{
+				synchronized(SchedulerStubProberJava.class){
+					
+					try {
+						SchedulerStubProberJava.class.wait(); // This thread is blocked until the SchedulerEventsListener notifies of a new removed job.
+					} catch (InterruptedException e) {
+						logger.warn("Not supposed to happen...", e);
+					}
 				}
-			}
-			
-		}while(
-				SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId) == false    && 
-				SchedulerEventsListener.checkIfJobIdHasJustBeenRemoved(jobId) == false
-				);
+				
+			}while(
+					SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId) == false    && 
+					SchedulerEventsListener.checkIfJobIdHasJustBeenRemoved(jobId) == false
+					);
+		}else{
+			boolean cleaned = false;
+			do{
+				Thread.sleep(POLLING_PERIOD_MS);
+				JobStatus status;
+				try{
+					status = schedulerStub.getJobState(jobId).getStatus();
+					logger.info("Waiting 'Cleaned' status for '" + status + "'.");
+				}catch(UnknownJobException e){
+					cleaned = true;
+				}
+			}while(cleaned == false);
+		}
 	}
 
 	
@@ -151,9 +181,7 @@ public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
 	 * @return the status of the job. */
 	public JobStatus getJobStatus(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{
 		return schedulerStub.getJobState(jobId).getStatus();
-	}
-
-	/** 
+	} /** 
 	 * Kill and remove the job from the Scheduler. No leftovers of the job in the server.
 	 * This is specially useful to delete the probe job, so we do not contaminate what the administrator sees.
 	 * @param jobId, the ID of the job. */

@@ -294,7 +294,9 @@ public class JobProber {
 				logger.info("\tRemoving same-name old job '" + JOB_NAME + "' with JobId " + jobb + "...");
 				JobProber.setLastStatuss("proactive configuration loaded, removing old job (jobid " + jobb + ")...");
 				schedulerstub.forceJobKillingAndRemoval(jobb);
+				logger.info("\tWaiting until cleaned...");
 				schedulerstub.waitUntilJobIsCleaned(jobb); // Wait until either job's end or removal.
+				logger.info("\tDone.");
 			}
 		}else{
 			logger.info("\tThere are no same-name old jobs...");
