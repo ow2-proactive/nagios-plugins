@@ -95,7 +95,8 @@ public class JobProber {
 		    System.exit(RESULT_CRITICAL);
 		}
 		
-		final Integer debug = (Integer)parser.getOptionValue(debugO, 0); 				// Level of verbosity.
+		final Integer debug = 
+				(Integer)parser.getOptionValue(debugO, JobProber.DEBUG_LEVEL_1EXTENDED);// Level of verbosity.
 		final String user = (String)parser.getOptionValue(userO);			 			// User.
 		final String pass = (String)parser.getOptionValue(passO); 						// Pass.
 		final String protocol = (String)parser.getOptionValue(protocolO);			 	// Protocol, either REST or JAVAPA.
@@ -286,8 +287,8 @@ public class JobProber {
 		
 		logger.info("Removing same-name old jobs...");
 		Vector<String> schedulerjobs;
-		schedulerjobs = schedulerstub.getAllCurrentJobsList(JOB_NAME);
-		
+		schedulerjobs = schedulerstub.getAllCurrentJobsList(JOB_NAME);	// Get all jobs with the same name as this probe job.
+																		// We want to delete them.
 		if (schedulerjobs.size()>0){
 			logger.info("\tThere are same-name old jobs...");
 			for(String jobb:schedulerjobs){
@@ -315,7 +316,6 @@ public class JobProber {
 		
 		double time_removing_old_jobs = timer.tickSec();
 		JobProber.setLastStatuss("removed old jobs, submitting job...");
-		
 		
 		int output_to_return = JobProber.RESULT_CRITICAL; 
 		String output_to_print = 

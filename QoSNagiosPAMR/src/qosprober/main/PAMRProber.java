@@ -78,7 +78,8 @@ public class PAMRProber {
 		    System.exit(RESULT_CRITICAL);
 		}
 		
-		final Integer debug = (Integer)parser.getOptionValue(debugO, 0); 				// If false, only Nagios output.
+		final Integer debug = 
+			(Integer)parser.getOptionValue(debugO, PAMRProber.DEBUG_LEVEL_1EXTENDED); 	// Level of verbosity.  
 		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO); 		// Timeout in seconds for the job to be executed.
 		final Integer timeoutwarnsec = 
 			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 				// Timeout in seconds for the warning message to be thrown.

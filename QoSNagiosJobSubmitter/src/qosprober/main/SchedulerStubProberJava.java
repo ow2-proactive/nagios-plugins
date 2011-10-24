@@ -232,7 +232,7 @@ public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
 		for(JobState j: vector){
 			logger.debug("\tcomparing " + jobname + " with " + j.getName() + "...");
 			
-			if (j.getName().equals(jobname)){
+			if (j.getName().equals(jobname) || jobname.equals("*")){
 				jobs.add(j.getId().value());
 				logger.debug("\t\tyes!");
 			}else{

@@ -10,7 +10,7 @@ It uses a simple job probe submission to test a grid concerning its responsivene
 Mandatory arguments to long options are mandatory for short options too.
    
    -v, --debug=LEVELOFVERBOSITY
-      Verbose debugging mode level. Value 3: the plugin will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
+      Verbose debugging mode level. The default value is 1. Value 3: the plugin will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
        
    -u, --user=USER
       Username to get connected to the Scheduler.
@@ -60,3 +60,5 @@ EXECUTION EXAMPLE
       java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ -u demo      -p demo    --protocol=JAVAPA 
    General cases
       java -jar jobsubmprobe.jar --user=u --pass=u --protocol=JAVAPA --url=pamr://1 --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml
+
+Updated on Mon Oct 24 15:02:33 CEST 2011

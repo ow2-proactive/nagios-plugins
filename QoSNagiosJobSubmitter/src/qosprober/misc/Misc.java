@@ -29,11 +29,11 @@ public class Misc {
 
     /* Get a descriptive string from the given object. 
      * Particularly useful if the argument is an ArrayList, or just an array. */
-	@SuppressWarnings("unchecked")
 	public static String getDescriptiveString(Object o){
         String output = "";
         if (o instanceof ArrayList){
-            ArrayList a = (ArrayList) o;
+            @SuppressWarnings("rawtypes")
+			ArrayList a = (ArrayList) o;
             for(Object i:a){
                 output = output + i.toString() + " ";
             }

@@ -70,8 +70,6 @@ public class RMProber {
 		CmdLineParser.Option debugO = parser.addIntegerOption('v', "debug");
 		CmdLineParser.Option userO = parser.addStringOption('u', "user");
 		CmdLineParser.Option passO = parser.addStringOption('p', "pass");
-		//CmdLineParser.Option protocolO = parser.addStringOption("protocol");
-		//CmdLineParser.Option jobpathO = parser.addStringOption('j',"jobpath");
 		CmdLineParser.Option urlO = parser.addStringOption("url");
 		CmdLineParser.Option nodesrequiredO = parser.addIntegerOption('r', "nodes");
 		CmdLineParser.Option nodeswarningO = parser.addIntegerOption("nodeswarning");
@@ -92,11 +90,10 @@ public class RMProber {
 		    System.exit(RESULT_CRITICAL);
 		}
 		
-		final Integer debug = (Integer)parser.getOptionValue(debugO, 0); 				// If false, only Nagios output.
+		final Integer debug =
+			(Integer)parser.getOptionValue(debugO, RMProber.DEBUG_LEVEL_1EXTENDED); 	// Level of verbosity.
 		final String user = (String)parser.getOptionValue(userO);			 			// User.
 		final String pass = (String)parser.getOptionValue(passO); 						// Pass.
-		//final String protocol = (String)parser.getOptionValue(protocolO);			 	// Protocol, either REST or JAVAPA.
-		//final String jobpath = (String)parser.getOptionValue(jobpathO); 				// Path of the job descriptor (xml).
 		final String url = (String)parser.getOptionValue(urlO); 						// Url of the Scheduler/RM.
 		final Integer nodesrequired = (Integer)parser.getOptionValue(nodesrequiredO,1); // Amount of nodes to be asked to the Resource Manager.
 		final Integer nodeswarning = (Integer)parser.getOptionValue(nodeswarningO,0);   // Obtaining fewer nodes than this, a warning message will be thrown. 
