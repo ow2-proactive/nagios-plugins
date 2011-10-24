@@ -90,7 +90,7 @@ public class JobProber {
 		    parser.parse(args);
 		} catch ( CmdLineParser.OptionException e ) {
 			/* In case something is not expected, print usage and exit. */
-		    System.err.println(e.getMessage());
+		    System.out.println(e.getMessage());
 		    Misc.printUsage();
 		    System.exit(RESULT_CRITICAL);
 		}

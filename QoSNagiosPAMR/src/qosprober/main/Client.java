@@ -7,42 +7,54 @@ import org.objectweb.proactive.ActiveObjectCreationException;
 
 import qosprober.misc.Misc;
 
+/** 
+ * Client class.
+ * It receives the url of the server, later it contacts the server, and sends to it a message that goes
+ * go through the PAMR router (so we check its service is up). If the server receives correctly this message, 
+ * then we can say that the PAMR router service is up. */
 public class Client {
 	
     public static Logger logger = Logger.getLogger(Client.class.getName()); // Logger.
-    private String serverHostName;
-    private Server server;
+    private String serverURL; 												// URL of the server, we want to contact it to send a message.
+    private Server server;													// Stub of the server. 
     
-    private static final String MY_MESSAGE = Misc.generateFibString(PAMRProber.MESSAGE_LENGTH);
+    private static final String MY_MESSAGE = 
+    		Misc.generateFibString(PAMRProber.MESSAGE_LENGTH);				// Message to send to the server.
     
-    public Client() {}
+    public Client() {}														// Empty constructor. ProActive needs it.
 
-    public Client(String serverHostName) throws Exception {
-        this.serverHostName = serverHostName;
+    /**
+     * Constructor of the client. It requires the URL of the server to contact. */
+    public Client(String serverURL) throws Exception {
+        this.serverURL = serverURL;
     }
 
+    /** 
+     * Initialize the client. Captures also the registered server to contact it. */
     public void init() throws ActiveObjectCreationException {
-    	String urlAsString = serverHostName;
+    	String urlAsString = serverURL;
         logger.info("Client is looking up server at " + urlAsString);
         try {
             server = org.objectweb.proactive.api.PAActiveObject.lookupActive(Server.class,
-                    urlAsString);
-            logger.info("Client successfully found the server");
-            // Registers myself with the server
+                    urlAsString);											// Connect with the server.
+            logger.info("Client successfully found the server.");
         } catch (IOException e) {
             logger.error("Server not found at " + urlAsString);
-            
         }
     }
     
-    public boolean sendMessageToServerAndCheckIt(){
+    /** 
+     * Send a message to the server, and ask it to check the message. */
+    public boolean sendMessageToServer(){
     	boolean ret = false;
     	logger.info("Putting message in server...");
-    	ret = server.putMessageAndCheckIt(MY_MESSAGE);
+    	ret = server.putMessageAndCheckIt(MY_MESSAGE); 						// Send a message to the server (call one of its methods).
     	logger.info("Done.");
         return ret;
     }
     
+    /**
+     * Start the client. */
     public static void main(String args[]) throws Exception{
     	String paconffile = args[0];
     	String serverurl = args[1];
@@ -67,14 +79,10 @@ public class Client {
         client.init();
         logger.info("Done.");
         
-        
         logger.info("Sending message to '" + serverurl + "'...");
-        boolean bb = client.sendMessageToServerAndCheckIt();
+        boolean bb = client.sendMessageToServer();
         logger.info("Done.");
         
         System.exit(0);
     }
-
-
-    
 }

@@ -1,6 +1,6 @@
 
 SYNOPSIS
-   java -jar nodegetprobe.jar <url> <user> <pass> <timeout> [OPTIONS]
+   java -jar pamrrouterprobe.jar <paconf> <timeout> [OPTIONS]
 
 DESCRIPTION
 
@@ -12,24 +12,6 @@ Mandatory arguments to long options are mandatory for short options too.
    -v, --debug=LEVELOFVERBOSITY
       Verbose debugging mode level. Value 3: it will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
        
-   -u, --user=USER
-      Username to get connected to the RM.
-      
-   -p, --pass=PASS
-      Password to get connected to the RM.
-      
-   --url=URL
-      URL to get connected to the RM. Can be 'pamr://0' if already specified the RM in the ProActive configuration file.
-           
-   -r, --nodes=AMOUNT_OF_NODES_TO_ASK_FOR
-      Amount of nodes that will be requested to the Resource Manager.
-
-   --nodeswarning=NODESWARNING
-      If the amount of nodes obtained is strictly smaller than NODESWARNING, then a warning message will be told to Nagios.
-
-   --nodescritical=NODESCRITICAL
-      If the amount of nodes obtained is strictly smaller than NODESCRITICAL, then a critical message will be told to Nagios.
-
    -t, --timeout=TIMEOUT
       Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
        
@@ -59,10 +41,7 @@ NAGIOS OUTPUT INTERPRETATION
 	
 EXECUTION EXAMPLE
 
-   Case for a local Scheduler/RM running
-      java -jar nodegetprobe.jar --url=rmi://shainese.inria.fr:1099/ --user=demo --pass=demo --timeout=10
-      java -jar nodegetprobe.jar --url=rmi://shainese.inria.fr:1099/ -u demo     -p demo     -t 10
    General cases
-      java -jar nodegetprobe.jar --url=pamr://0 --user=d --pass=p --timeout=100 --paconf=/tmp/ProActiveConfiguration.xml 
+      java -jar pamrrouterprobe.jar --paconf=/tmp/ProActiveConfiguration.xml --timeout=100
        
 
