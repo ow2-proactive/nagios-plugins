@@ -1,8 +1,10 @@
 package qosprober.misc;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +21,7 @@ import org.ow2.proactive.scheduler.common.job.Job;
 import org.ow2.proactive.scheduler.common.job.factories.JobFactory;
 
 import qosprober.exceptions.ElementNotFoundException;
+import qosprober.main.RMProber;
 
 
 /** This class is supposed to have multiple minor functionalities. */
@@ -35,7 +38,8 @@ public class Misc {
 	public static String getDescriptiveString(Object o){
         String output = "";
         if (o instanceof ArrayList){
-            ArrayList a = (ArrayList) o;
+            @SuppressWarnings("rawtypes")
+			ArrayList a = (ArrayList) o;
             for(Object i:a){
                 output = output + i.toString() + " ";
             }
@@ -302,4 +306,49 @@ public class Misc {
     	return job.getName();
     }
     
+	/** 
+	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
+	public static void createPolicyAndLoadIt() throws Exception{
+		try{
+			
+			
+		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
+		    
+		    temp.deleteOnExit(); // Delete temp. file when program exits.
+
+		    // Write to temp file.
+		    BufferedWriter out = new BufferedWriter(new FileWriter(temp));
+		    String policycontent = "grant {permission java.security.AllPermission;};";
+		    out.write(policycontent);
+		    out.close();
+
+		    String policypath = temp.getAbsolutePath(); 
+		    
+		    System.setProperty("java.security.policy", policypath); // Load security policy.
+		    
+		}catch(Exception e){
+			throw new Exception("Error while creating the security policy file. " + e.getMessage());
+		}
+	}
+	
+	/**
+	 * Used when a parameter given by the user is wrong. 
+	 * Print a message, then the usage of the application, and the exits the application. */
+	public static void printMessageUsageAndExit(String mainmessage){
+		System.out.println(mainmessage);
+	    Misc.printUsage();
+	    System.exit(RMProber.RESULT_CRITICAL);
+	}
+	
+	/**
+	 * Print the usage of the application. */
+	public static void printUsage(){
+		String usage = null;
+		try {
+			usage = Misc.readAllTextResource("/resources/usage.txt");
+			System.err.println(usage);
+		} catch (IOException e) {
+			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
+		}
+	}
 }

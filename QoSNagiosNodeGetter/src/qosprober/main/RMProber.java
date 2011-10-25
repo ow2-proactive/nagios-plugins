@@ -1,10 +1,7 @@
 package qosprober.main;
 
 import jargs.gnu.CmdLineParser;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.security.KeyException;
 import java.util.Locale;
 import java.util.Properties;
@@ -15,25 +12,20 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import javax.security.auth.login.LoginException;
-
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.objectweb.proactive.core.config.ProActiveConfiguration;
 import org.objectweb.proactive.core.node.Node;
 import org.ow2.proactive.resourcemanager.exception.RMException;
 import org.ow2.proactive.utils.NodeSet;
-
-import qosprober.exceptions.ElementNotFoundException;
 import qosprober.misc.Misc;
 
 
 /** 
- * This is a general Nagios plugin class that performs a test on the scheduler, by doing:
- *    -Job submission
- *    -Job result retrieval
- *    -Job result comparison 
+ * This is a general Nagios plugin class that performs a test on the RM, by doing:
+ *    -Node obtaining
+ *    -Node retrieval 
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
 public class RMProber {
 
@@ -50,6 +42,8 @@ public class RMProber {
 	public static final int DEBUG_LEVEL_2VERBOSE	= 2;	// Debug level, similar to the previous one.
 	public static final int DEBUG_LEVEL_3USER		= 3;	// Debug level, debugging only.
 	
+	public static final String COMMUNICATION_PROTOCOL =
+			"pamr";											// Default protocol to be used to get connected to the RM. 
 	private static String lastStatus;						// Holds a message representative of the current status of the test.
 															// It is used in case of TIMEOUT, to help the administrator guess
 															// where the problem is.
@@ -62,11 +56,12 @@ public class RMProber {
 	 * @return Nagios error code. */
 	public static void main(String[] args) throws Exception{
 		
-		RMProber.setLastStatuss("started, parsing arguments...");
+		RMProber.setLastStatuss("started, parsing arguments and basic initialization...");
 		
 		/* Parsing of arguments. */
 		CmdLineParser parser = new CmdLineParser();
-		
+	
+		/* Defining the command line parameters interpretation. */
 		CmdLineParser.Option debugO = parser.addIntegerOption('v', "debug");
 		CmdLineParser.Option userO = parser.addStringOption('u', "user");
 		CmdLineParser.Option passO = parser.addStringOption('p', "pass");
@@ -78,6 +73,7 @@ public class RMProber {
 		CmdLineParser.Option timeoutwarnsecO = parser.addIntegerOption('n', "timeoutwarning");
 		CmdLineParser.Option paconfO = parser.addStringOption('f', "paconf");
 		CmdLineParser.Option hostO = parser.addStringOption('H', "hostname");
+		CmdLineParser.Option portO = parser.addStringOption("port");
 		CmdLineParser.Option warningO = parser.addStringOption('w', "warning");
 		CmdLineParser.Option criticalO = parser.addStringOption('c', "critical");
 
@@ -85,9 +81,7 @@ public class RMProber {
 		    parser.parse(args);
 		} catch ( CmdLineParser.OptionException e ) {
 			/* In case something is not expected, print usage and exit. */
-		    System.out.println(e.getMessage());
-		    RMProber.printUsage();
-		    System.exit(RESULT_CRITICAL);
+		    Misc.printMessageUsageAndExit(e.getMessage());
 		}
 		
 		final Integer debug =
@@ -96,38 +90,33 @@ public class RMProber {
 		final String pass = (String)parser.getOptionValue(passO); 						// Pass.
 		final String url = (String)parser.getOptionValue(urlO); 						// Url of the Scheduler/RM.
 		final Integer nodesrequired = (Integer)parser.getOptionValue(nodesrequiredO,1); // Amount of nodes to be asked to the Resource Manager.
-		final Integer nodeswarning = (Integer)parser.getOptionValue(nodeswarningO,0);   // Obtaining fewer nodes than this, a warning message will be thrown. 
-		final Integer nodescritical = (Integer)parser.getOptionValue(nodescriticalO,0); // Obtaining fewer nodes than this, a critical message will be thrown. 
+		final Integer nodeswarning =
+				(Integer)parser.getOptionValue(nodeswarningO,nodesrequired);   			// Obtaining fewer nodes than this, a warning message will be thrown. 
+		final Integer nodescritical =
+				(Integer)parser.getOptionValue(nodescriticalO,nodesrequired); 			// Obtaining fewer nodes than this, a critical message will be thrown. 
 		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO); 		// Timeout in seconds for the job to be executed.
 		final Integer timeoutwarnsec = 
 			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 				// Timeout in seconds for the warning message to be thrown.
 		final String paconf = (String)parser.getOptionValue(paconfO); 					// Path of the ProActive xml configuration file.
-		final String host = (String)parser.getOptionValue(hostO); 						// Host to be tested. Ignored.
+		final String host = (String)parser.getOptionValue(hostO);			 			// Host to be tested. 
+		final String port = (String)parser.getOptionValue(portO);						// Port of the host to be tested. 
 		final String warning = (String)parser.getOptionValue(warningO, "ignored");		// Warning level. Ignored.
 		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
 		
 		
-		/*******************/
-		
+		/* Checking if the mandatory parameters are provided. */
 		String errorMessage = "";
 		Boolean errorParam = false;
-		if (user == null)		{errorParam=true; errorMessage+="'User' not defined... ";}
-		if (pass == null)		{errorParam=true; errorMessage+="'Pass' not defined... ";}
-		if (timeoutsec == null)	{errorParam=true; errorMessage+="'Timeout' (sec) not defined... ";}
-			
-		if (errorParam==true)
-		{
+		if (user == null)		{errorParam=true; errorMessage+="'user' not defined... ";}
+		if (pass == null)		{errorParam=true; errorMessage+="'pass' not defined... ";}
+		if (timeoutsec == null)	{errorParam=true; errorMessage+="'timeout' (sec) not defined... ";}
+		if (errorParam==true) {
 			/* In case something is not expected, print usage and exit. */
-		    System.out.println("There are some missing mandatory parameters: " + errorMessage);
-		    RMProber.printUsage();
-		    System.exit(RESULT_CRITICAL);
+			Misc.printMessageUsageAndExit("There are some missing mandatory parameters: " + errorMessage);
 		}
 		
-		/*******************/
-		
+		/* Loading log4j configuration. */
 		log4jConfiguration(debug);
-		
-		RMProber.setLastStatuss("parameters parsed, doing log4j configuration...");
 		
 		/* Show all the arguments considered. */
 		logger.info(
@@ -143,46 +132,52 @@ public class RMProber {
 				"\t warning timeout    : " + timeoutwarnsec + "\n" +
 				"\t paconf             : " + paconf + "\n" +
 				"\t host               : " + host + "\n" +
+				"\t port               : " + port + "\n" +
 				"\t warning            : " + warning  + "\n" +
 				"\t critical           : " + critical + "\n" 
 				);
 		
-		RMProber.setLastStatuss("log4j configuration done, loading security policy...");
+		RMProber.setLastStatuss("basic initialization done, loading security policy...");
 		
 		/* Security policy procedure. */
 		logger.info("Setting security policies... ");
-		RMProber.createPolicyAndLoadIt();
+		Misc.createPolicyAndLoadIt();
 		logger.info("Done.");
 		
 		RMProber.setLastStatuss("security policy loaded, loading proactive configuration (if needed)...");
 		
+		/* Load ProActive configuration. */
+		boolean usepaconffilee = false;
 		/* Check whether to use or not the ProActive configuration file. */
-		Boolean usepaconffilee = false;
 		if (paconf!=null){
 			/* A ProActiveConf.xml file was given. If we find it, we use it. */
-			if (new File(paconf).exists()==false){
-				String msg = "The ProActive configuration file '"+paconf+"' was not found.";
-				logger.fatal(msg);
-				throw new ElementNotFoundException(msg);
+			if (new File(paconf).exists()==true){
+				System.setProperty("proactive.configuration", paconf);
+				usepaconffilee = true;
+			}else{
+				logger.warn("The ProActive configuration file '"+paconf+"' was not found. Using default configuration.");
 			}
-			System.setProperty("proactive.configuration", paconf);
-			usepaconffilee = true;
 		}
 		
+		if (usepaconffilee == false){
+			logger.info("Avoiding ProActive configuration file...");
+			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
+			pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
+			if (host==null || port==null){
+				Misc.printMessageUsageAndExit("Parameters 'hostname' and 'port' must be given.\n");
+			}
+			pac.setProperty("proactive.net.router.address", host, false);
+			pac.setProperty("proactive.net.router.port", port, false);
+		}
 		RMProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		
-		final Boolean usepaconffile = usepaconffilee;
-		
-		/* No need of other arguments. */
-		//String[] otherArgs = parser.getRemainingArgs();
-		
-		/* We prepare our probe to run it in a different thread. */
+		/* Now we prepare our probe to run it in a different thread. */
 		/* The probe consists in a node obtaining done from the Resource Manager. */
 		ExecutorService executor = Executors.newFixedThreadPool(1);
 		
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
 			public Object[] call() throws Exception {
-				return RMProber.probe(url, user, pass, timeoutsec, usepaconffile, timeoutwarnsec, nodesrequired, nodeswarning, nodescritical);
+				return RMProber.probe(url, user, pass, timeoutsec, timeoutwarnsec, nodesrequired, nodeswarning, nodescritical);
 			}
 		};
 
@@ -231,7 +226,7 @@ public class RMProber {
 	 * @throws RMException 
 	 * @throws LoginException 
 	 * @throws KeyException */	 
-	public static Object[] probe(String url, String user, String pass, int timeoutsec, Boolean usepaconffile, int timeoutwarnsec, int nodesRequired, int nodesminimumwarning, int nodesminimumcritical) throws KeyException, LoginException, RMException{
+	public static Object[] probe(String url, String user, String pass, int timeoutsec, int timeoutwarnsec, int nodesRequired, int nodesminimumwarning, int nodesminimumcritical) throws KeyException, LoginException, RMException{
 		
 		TimeTick timer = new TimeTick(); // We want to get time durations of each operation.
 		
@@ -243,30 +238,18 @@ public class RMProber {
 		double time_initializing = timer.tickSec();
 		
 		RMProber.setLastStatuss("RM stub created, connecting to RM...");
-		
 		logger.info("Connecting to Resource Manager... "); 	// Connecting to RM...
-
 		rmstub.init(url, user, pass); 						// Login procedure...
-		RMProber.setLastStatuss("connected to RM, loading proactive configuration...");
+		logger.info("Done.");
+	
+		RMProber.setLastStatuss("connected to RM, getting nodes...");
 		
 		double time_connection = timer.tickSec();
 		
-		if (usepaconffile==true){
-			logger.info("\tLoading ProActive configuration (xml) file... ");
-			ProActiveConfiguration.load(); 					// Load the ProActive configuration file.
-			logger.info("\tDone.");
-		}else{
-			logger.info("\tAvoiding ProActive configuration (xml) file... ");
-		}
-		
-		logger.info("Done.");
-		
-				
 		int output_to_return = RMProber.RESULT_CRITICAL; 
 		String output_to_print = 
 			NAG_OUTPUT_PREFIX + "NO TEST PERFORMED"; 		// Default output (for Nagios).
 		
-		RMProber.setLastStatuss("loaded proactive configuration, getting nodes...");
 		
 		logger.info("Getting nodes...");
 		NodeSet nodes = rmstub.getNodes(nodesRequired); 	// Request some nodes.
@@ -337,31 +320,6 @@ public class RMProber {
 			
 		return ret;
 	}
-
-	/** 
-	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
-	public static void createPolicyAndLoadIt() throws Exception{
-		try{
-			
-			
-		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
-		    
-		    temp.deleteOnExit(); // Delete temp. file when program exits.
-
-		    // Write to temp file.
-		    BufferedWriter out = new BufferedWriter(new FileWriter(temp));
-		    String policycontent = "grant {permission java.security.AllPermission;};";
-		    out.write(policycontent);
-		    out.close();
-
-		    String policypath = temp.getAbsolutePath(); 
-		    
-		    System.setProperty("java.security.policy", policypath); // Load security policy.
-		    
-		}catch(Exception e){
-			throw new Exception("Error while creating the security policy file. " + e.getMessage());
-		}
-	}
 	
 	/** 
 	 * Save a message regarding the last status of the probe. 
@@ -403,18 +361,6 @@ public class RMProber {
 		}
     	System.exit(ret);
     }
-	
-	/**
-	 * Print the usage of the application. */
-	public static void printUsage(){
-		String usage = null;
-		try {
-			usage = Misc.readAllTextResource("/resources/usage.txt");
-			System.err.println(usage);
-		} catch (IOException e) {
-			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
-		}
-	}
 	
 	/**
 	 * Creates a default set of properties for the log4j logging module. */

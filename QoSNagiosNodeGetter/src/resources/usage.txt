@@ -40,7 +40,10 @@ Mandatory arguments to long options are mandatory for short options too.
       ProActive configuration file (usually ProActiveConfiguration.xml).
       
    -H, --hostname=HOSTNAME
-      Nagios compatibility. Hostname to be tested. Ignored because this information is given in the ProActive configuration file.
+      Hostname to be tested. By default 'localhost'. Ignored if a ProActive configuration file is provided. 
+      
+   --port=PORT
+      Port to be used to get connected to the RM. Ignored if a ProActive configuration file is provided. 
       
    -w, --warning=WARNING
       Nagios compatibility. Warning level to be used.
