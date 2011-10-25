@@ -261,7 +261,7 @@ public class JobProber {
 //		}
 //		
 		
-		SchedulerStubProberJava schedulerstub = new SchedulerStubProberJava();
+		SchedulerStubProberJava schedulerstub = new SchedulerStubProberJava();		// We create directly the stub prober.
 		double time_initializing = timer.tickSec();
 		
 		JobProber.setLastStatuss("scheduler stub created, connecting to shceduler...");

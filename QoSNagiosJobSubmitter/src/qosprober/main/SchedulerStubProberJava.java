@@ -29,9 +29,8 @@ import qosprober.exceptions.InvalidProtocolException;
 /** 
  * Class that connects the test with the real scheduler, works as a stub. 
  * This is our interface to the remote Scheduler.
- * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST. 
  * This class is specific for JAVAPA protocol. */
-public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
+public class SchedulerStubProberJava {
 	private static boolean POLLING = false;								// Waiting through polling mechanism? (otherwise event based).
 	private static int POLLING_PERIOD_MS = 200;							// Polling period time (if polling is activated).
 	private static Logger logger =
