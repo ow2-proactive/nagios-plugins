@@ -161,7 +161,7 @@ public class JobProber {
 		
 		JobProber.setLastStatuss("loaded expected output, loading proactive configuration (if needed)...");
 		
-				/* Load ProActive configuration. */
+		/* Load ProActive configuration. */
 		boolean usepaconffilee = false;
 		/* Check whether to use or not the ProActive configuration file. */
 		if (paconf!=null){

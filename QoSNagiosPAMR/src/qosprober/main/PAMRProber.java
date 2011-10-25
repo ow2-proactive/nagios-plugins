@@ -15,9 +15,9 @@ import java.util.concurrent.TimeoutException;
 import javax.security.auth.login.LoginException;
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
+import org.objectweb.proactive.core.config.ProActiveConfiguration;
 import org.objectweb.proactive.core.node.NodeException;
 import org.ow2.proactive.resourcemanager.exception.RMException;
-import qosprober.exceptions.ElementNotFoundException;
 import qosprober.misc.Misc;
 
 
@@ -37,6 +37,9 @@ public class PAMRProber {
 	public static final int DEBUG_LEVEL_1EXTENDED 	= 1;	// Debug level, more than silent mode. Shows backtraces if error. 
 	public static final int DEBUG_LEVEL_2VERBOSE	= 2;	// Debug level, similar to the previous one.
 	public static final int DEBUG_LEVEL_3USER		= 3;	// Debug level, debugging only.
+	
+	public static final String COMMUNICATION_PROTOCOL =
+			"pamr";											// Default protocol to be used to get connected to the RM.
 	
 	public final static String SERVER_NAME = "server";		// Name that the server will use to register itself.
     public final static String PREFIX_URL = "pamr://";		// Prefix that is expected in a URL given by the registered server.
@@ -66,6 +69,7 @@ public class PAMRProber {
 		CmdLineParser.Option timeoutwarnsecO = parser.addIntegerOption('n', "timeoutwarning");
 		CmdLineParser.Option paconfO = parser.addStringOption('f', "paconf");
 		CmdLineParser.Option hostO = parser.addStringOption('H', "hostname");
+		CmdLineParser.Option portO = parser.addStringOption("port");
 		CmdLineParser.Option warningO = parser.addStringOption('w', "warning");
 		CmdLineParser.Option criticalO = parser.addStringOption('c', "critical");
 
@@ -73,9 +77,7 @@ public class PAMRProber {
 		    parser.parse(args);
 		} catch ( CmdLineParser.OptionException e ) {
 			/* In case something is not expected, print usage and exit. */
-		    System.out.println(e.getMessage());
-		    Misc.printUsage();
-		    System.exit(RESULT_CRITICAL);
+		    Misc.printMessageUsageAndExit(e.getMessage());
 		}
 		
 		final Integer debug = 
@@ -85,6 +87,7 @@ public class PAMRProber {
 			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 				// Timeout in seconds for the warning message to be thrown.
 		final String paconf = (String)parser.getOptionValue(paconfO); 					// Path of the ProActive xml configuration file.
 		final String host = (String)parser.getOptionValue(hostO); 						// Host to be tested. Ignored.
+		final String port = (String)parser.getOptionValue(portO);						// Port of the host to be tested. 
 		final String warning = (String)parser.getOptionValue(warningO, "ignored");		// Warning level. Ignored.
 		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
 		
@@ -93,17 +96,14 @@ public class PAMRProber {
 		
 		String errorMessage = "";
 		Boolean errorParam = false;
-		if (timeoutsec == null)	{errorParam=true; errorMessage+="'Timeout' (sec) not defined... ";}
-		if (paconf == null)		{errorParam=true; errorMessage+="'ProActiveConfiguration path' not defined... ";}	
+		if (timeoutsec == null)	{errorParam=true; errorMessage+="'timeout' (sec) not defined... ";}
 		if (errorParam==true)
 		{
 			/* In case something is not expected, print usage and exit. */
-		    System.out.println("There are some missing mandatory parameters: " + errorMessage);
-		    Misc.printUsage();
-		    System.exit(RESULT_CRITICAL);
+			Misc.printMessageUsageAndExit("There are some missing mandatory parameters: " + errorMessage);
 		}
 		
-		
+		/* Loading log4j configuration. */
 		Misc.log4jConfiguration(debug);							// Load log4j configuration file.
 		
 		PAMRProber.setLastStatuss("parameters parsed, doing log4j configuration...");
@@ -116,6 +116,7 @@ public class PAMRProber {
 				"\t warning timeout    : " + timeoutwarnsec + "\n" +
 				"\t paconf             : " + paconf + "\n" +
 				"\t host               : " + host + "\n" +
+				"\t port               : " + port + "\n" +
 				"\t warning            : " + warning  + "\n" +
 				"\t critical           : " + critical + "\n" 
 				);
@@ -129,15 +130,28 @@ public class PAMRProber {
 		
 		PAMRProber.setLastStatuss("security policy loaded, loading proactive configuration (if needed)...");
 		
+		/* Load ProActive configuration. */
+		boolean usepaconffilee = false;
 		/* Check whether to use or not the ProActive configuration file. */
 		if (paconf!=null){
 			/* A ProActiveConf.xml file was given. If we find it, we use it. */
-			if (new File(paconf).exists()==false){
-				String msg = "The ProActive configuration file '"+paconf+"' was not found.";
-				logger.fatal(msg);
-				throw new ElementNotFoundException(msg);
+			if (new File(paconf).exists()==true){
+				System.setProperty("proactive.configuration", paconf);
+				usepaconffilee = true;
+			}else{
+				logger.warn("The ProActive configuration file '"+paconf+"' was not found. Using default configuration.");
 			}
-			System.setProperty("proactive.configuration", paconf);
+		}
+		
+		if (usepaconffilee == false){
+			logger.info("Avoiding ProActive configuration file...");
+			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
+			pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
+			if (host==null || port==null){
+				Misc.printMessageUsageAndExit("Parameters 'hostname' and 'port' must be given.\n");
+			}
+			pac.setProperty("proactive.net.router.address", host, false);
+			pac.setProperty("proactive.net.router.port", port, false);
 		}
 		
 		PAMRProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
@@ -148,10 +162,10 @@ public class PAMRProber {
 		/* We prepare our probe to run it in a different thread. */
 		/* The probe consists in a node obtaining done from the Resource Manager. */
 		ExecutorService executor = Executors.newFixedThreadPool(1);
-		
+		final boolean usepaconffileee = usepaconffilee;
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
 			public Object[] call() throws Exception {
-				return PAMRProber.probe(timeoutsec, paconf, timeoutwarnsec);
+				return PAMRProber.probe(timeoutsec, paconf, timeoutwarnsec, usepaconffileee, host, port);
 			}
 		};
 
@@ -202,7 +216,7 @@ public class PAMRProber {
 	 * @throws IOException 
 	 * @throws NodeException, Exception 
 	 * @throws ActiveObjectCreationException */	 
-	public static Object[] probe(int timeoutsec, String paconffile, int timeoutwarnsec) throws KeyException, LoginException, RMException, IOException, ActiveObjectCreationException, NodeException, Exception{
+	public static Object[] probe(int timeoutsec, String paconffile, int timeoutwarnsec, boolean usepaconffile, String host, String port) throws KeyException, LoginException, RMException, IOException, ActiveObjectCreationException, NodeException, Exception{
 		// This is done.
 		TimeTick timing = new TimeTick();
 		
@@ -232,7 +246,12 @@ public class PAMRProber {
         double time_registering_server = timing.tickSec();
         
         logger.info("Running the client...");
-        Misc.runNewJVM(Client.class.getName(), paconffile + " " + serverurl);
+        if (usepaconffile == true){		// Depending on whether there is a ProActive configuration file, these are
+        								// the parameters that we send to the client to get connected to the same router.
+	        Misc.runNewJVM(Client.class.getName(), serverurl + " " + paconffile);
+        }else{
+        	Misc.runNewJVM(Client.class.getName(), serverurl + " " + host + " " + port);
+        }
         logger.info("Done.");
         
         double time_executing_client = timing.tickSec();

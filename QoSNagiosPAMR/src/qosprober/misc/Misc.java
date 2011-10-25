@@ -10,11 +10,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Properties;
-import java.util.Random;
-
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-
 import qosprober.main.PAMRProber;
 
 
@@ -22,7 +19,6 @@ import qosprober.main.PAMRProber;
 public class Misc {
 	 
 	private static Logger logger = Logger.getLogger(Misc.class.getName()); // Logger.
-	private static Random random = new Random();
     private Misc(){}
 
     /* Print the classpath (used for debug only). */
@@ -41,7 +37,6 @@ public class Misc {
         return ret;
     }
     
-    
     /* Read all the content of a resource file. */
     public static String readAllTextResource(String resource) throws IOException{
 		InputStream is = Misc.class.getResourceAsStream(resource);
@@ -57,8 +52,6 @@ public class Misc {
 	    is.close();
 	    return ret;
 	}
-    
-   
     
     public static void createPolicyAndLoadIt() throws Exception{
 		try{
@@ -158,7 +151,7 @@ public class Misc {
 		properties.put("log4j.appender.NULL",			"org.apache.log4j.varia.NullAppender");
 		
 		properties.put("log4j.appender.rollingFile",				"org.apache.log4j.RollingFileAppender");
-		properties.put("log4j.appender.rollingFile.File",			"/tmp/output");
+		properties.put("log4j.appender.rollingFile.File",			"output");
 		properties.put("log4j.appender.rollingFile.MaxFileSize",	"1MB");
 		properties.put("log4j.appender.rollingFile.MaxBackupIndex",	"2");
 		properties.put("log4j.appender.rollingFile.layout",			"org.apache.log4j.PatternLayout");
@@ -181,8 +174,6 @@ public class Misc {
 		}
 	}
 
-	
-	
 	public static void log4jConfiguration2(){
 		System.setProperty("log4j.configuration", "");
 		/* We do the log4j configuration on the fly. */
@@ -191,7 +182,7 @@ public class Misc {
 	
 	}
 
-/**
+	/**
 	 * Print the usage of the application. */
 	public static void printUsage(){
 		String usage = null;
@@ -203,5 +194,13 @@ public class Misc {
 		}
 	}
 	
-
+	/**
+	 * Used when a parameter given by the user is wrong. 
+	 * Print a message, then the usage of the application, and the exits the application. */
+	public static void printMessageUsageAndExit(String mainmessage){
+		System.out.println(mainmessage);
+	    Misc.printUsage();
+	    System.exit(PAMRProber.RESULT_CRITICAL);
+	}
+	
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
+import org.objectweb.proactive.core.config.ProActiveConfiguration;
 
 import qosprober.misc.Misc;
 
@@ -13,6 +14,9 @@ import qosprober.misc.Misc;
  * go through the PAMR router (so we check its service is up). If the server receives correctly this message, 
  * then we can say that the PAMR router service is up. */
 public class Client {
+	
+	public static final String COMMUNICATION_PROTOCOL =
+			"pamr";															// Default protocol to be used to get connected to the RM.
 	public static boolean booleanvalue;										// Value returned by the client. We get it to make sure no optimizations will be done during the communication.
     public static Logger logger = Logger.getLogger(Client.class.getName()); // Logger.
     private String serverURL; 												// URL of the server, we want to contact it to send a message.
@@ -56,15 +60,26 @@ public class Client {
     /**
      * Start the client. */
     public static void main(String args[]) throws Exception{
-    	String paconffile = args[0];
-    	String serverurl = args[1];
     	
     	//Misc.log4jConfiguration2();
     	
     	logger.info("Started PAMR client-side probe...");
     	
-    	logger.info("Loading ProActive configuration file...");
-    	System.setProperty("proactive.configuration", paconffile);
+		String serverurl = args[0];
+    	if (args.length == 2){									// Specific way to communicate either ProActive conf. file or host&port.
+	    	logger.info("Loading ProActive configuration file...");
+	    	String paconffile = args[1];
+	    	System.setProperty("proactive.configuration", paconffile);
+    	}else{
+    		logger.info("Avoiding ProActive configuration file...");
+    		String host = args[1];
+    		String port = args[2];	
+			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
+			pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
+			pac.setProperty("proactive.net.router.address", host, false);
+			pac.setProperty("proactive.net.router.port", port, false);
+    	}
+    	
     	logger.info("Done.");
     	
     	logger.info("Setting up security policy...");
