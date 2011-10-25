@@ -77,7 +77,6 @@ public class JobProber {
 		CmdLineParser.Option debugO = parser.addIntegerOption('v', "debug");
 		CmdLineParser.Option userO = parser.addStringOption('u', "user");
 		CmdLineParser.Option passO = parser.addStringOption('p', "pass");
-		CmdLineParser.Option protocolO = parser.addStringOption("protocol");
 		CmdLineParser.Option urlO = parser.addStringOption("url");
 		CmdLineParser.Option timeoutsecO = parser.addIntegerOption('t', "timeout");
 		CmdLineParser.Option timeoutwarnsecO = parser.addIntegerOption('n', "timeoutwarning");
@@ -100,7 +99,6 @@ public class JobProber {
 				(Integer)parser.getOptionValue(debugO, JobProber.DEBUG_LEVEL_1EXTENDED);	// Level of verbosity.
 		final String user = (String)parser.getOptionValue(userO);			 				// User.
 		final String pass = (String)parser.getOptionValue(passO); 							// Pass.
-		final String protocol = (String)parser.getOptionValue(protocolO);			 		// Protocol, either REST or JAVAPA.
 		final String url = (String)parser.getOptionValue(urlO); 							// Url of the Scheduler/RM.
 		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO);				// Timeout in seconds for the job to be executed.
 		final Integer timeoutwarnsec = 
@@ -119,7 +117,6 @@ public class JobProber {
 		Boolean errorParam = false;
 		if (user == null)		{errorParam=true; errorMessage+="'User' not defined... ";}
 		if (pass == null)		{errorParam=true; errorMessage+="'Pass' not defined... ";}
-		if (protocol == null) 	{errorParam=true; errorMessage+="'Protocol' not defined... ";}
 		if (timeoutsec == null)	{errorParam=true; errorMessage+="'Timeout' (sec) not defined... ";}
 			
 		if (errorParam==true)
@@ -138,7 +135,6 @@ public class JobProber {
 				"\t debug           : " + debug + "\n" +
 				"\t user            : " + user + "\n" +
 				"\t pass            : " + pass + "\n" +
-				"\t prot            : " + protocol + "\n" +
 				"\t url             : " + url + "\n" +
 				"\t timeout         : " + timeoutsec + "\n" +
 				"\t warning timeout : " + timeoutwarnsec + "\n" +
@@ -196,7 +192,7 @@ public class JobProber {
 		
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
 			public Object[] call() throws Exception {
-				return JobProber.probe(url, user, pass, protocol, timeoutsec, timeoutwarnsec, deleteallold, jobname);
+				return JobProber.probe(url, user, pass, timeoutsec, timeoutwarnsec, deleteallold, jobname);
 			}
 		};
 
@@ -250,23 +246,11 @@ public class JobProber {
 	 *  After a correct disconnection call, the output of the job is compared with a 
 	 *  given correct output, and the result of the test is told. 
 	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
-	public static Object[] probe(String url, String user, String pass, String protocol, int timeoutsec, int timeoutwarnsec, boolean deleteallold, String jobname) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
+	public static Object[] probe(String url, String user, String pass, int timeoutsec, int timeoutwarnsec, boolean deleteallold, String jobname) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		
 		TimeTick timer = new TimeTick(); // We want to get time durations.
 		
 		/* We get connected to the Scheduler through this stub, later we submit a job, etc. */
-//		SchedulerStubProber schedulerstub; 
-//		
-//		ProActiveProxyProtocol papp = ProActiveProxyProtocol.parseProtocol(protocol);
-//		
-//		if (papp.equals(ProActiveProxyProtocol.JAVAPA)){
-//			schedulerstub = new SchedulerStubProberJava();
-//		}else if (papp.equals(ProActiveProxyProtocol.REST)){
-//			schedulerstub = new SchedulerStubProberRest();
-//		}else{
-//			throw new InvalidProtocolException("Unknown protocol '" + protocol + "'");
-//		}
-//		
 		
 		SchedulerStubProberJava schedulerstub = new SchedulerStubProberJava();		// We create directly the stub prober.
 		double time_initializing = timer.tickSec();
@@ -277,7 +261,7 @@ public class JobProber {
 		
 		logger.info("Connecting... "); 										// Connecting to the Scheduler...
 
-		schedulerstub.init(protocol, url, user, pass); 						// Login procedure...
+		schedulerstub.init(url, user, pass);		 						// Login procedure...
 		JobProber.setLastStatuss("connected to scheduler, removing old jobs...");
 		
 		double time_connection = timer.tickSec();

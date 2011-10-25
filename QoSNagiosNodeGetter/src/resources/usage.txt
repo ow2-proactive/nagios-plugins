@@ -62,9 +62,6 @@ NAGIOS OUTPUT INTERPRETATION
 	
 EXECUTION EXAMPLE
 
-   Case for a local Scheduler/RM running
-      java -jar nodegetprobe.jar --url=rmi://shainese.inria.fr:1099/ --user=demo --pass=demo --timeout=10
-      java -jar nodegetprobe.jar --url=rmi://shainese.inria.fr:1099/ -u demo     -p demo     -t 10
    General cases
       java -jar nodegetprobe.jar --url=pamr://0 --user=d --pass=p --timeout=100 --paconf=/tmp/ProActiveConfiguration.xml 
 

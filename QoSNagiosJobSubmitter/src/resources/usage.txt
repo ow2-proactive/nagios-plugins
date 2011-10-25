@@ -18,9 +18,6 @@ Mandatory arguments to long options are mandatory for short options too.
    -p, --pass=PASS
       Password to get connected to the Scheduler.
       
-   --protocol=PROTOCOL
-      Protocol to get connected to the Scheduler. For example JAVAPA or REST.
-      
    --url=URL
       URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
       It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA and 'http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' for REST.     
@@ -35,13 +32,16 @@ Mandatory arguments to long options are mandatory for short options too.
       ProActive configuration file (usually ProActiveConfiguration.xml).
       
    -H, --hostname=HOSTNAME
-      Nagios compatibility. Hostname to be tested. Ignored because this information is given in the ProActive configuration file.
+      Hostname to be tested. By default 'localhost'. Ignored if a ProActive configuration file is provided. 
+      
+   --port=PORT
+      Port to be used to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
       
    -w, --warning=WARNING
-      Nagios compatibility. Warning level to be used.
+      Ignored. Nagios compatibility. Warning level to be used.
       
    -c, --critical=CRITICAL
-      Nagios compatibility. Critical level to be used.
+      Ignored. Nagios compatibility. Critical level to be used.
       
    --deleteallold
       Delete all old jobs of this user, no matter their name. For testing purposes.
@@ -57,10 +57,7 @@ NAGIOS OUTPUT INTERPRETATION
 	
 EXECUTION EXAMPLE
 
-   Case for a local Scheduler/RM running
-      java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ --user=demo --pass=demo --protocol=JAVAPA  
-      java -jar jobsubmprobe.jar --url=rmi://localhost:1099/ -u demo      -p demo    --protocol=JAVAPA 
    General cases
-      java -jar jobsubmprobe.jar --user=u --pass=u --protocol=JAVAPA --url=pamr://1 --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml
+      java -jar jobsubmprobe.jar --user=u --pass=u --url=pamr://1 --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml
 
 Updated on Mon Oct 24 16:39:03 CEST 2011
