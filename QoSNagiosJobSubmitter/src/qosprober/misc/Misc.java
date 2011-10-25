@@ -186,4 +186,12 @@ public class Misc {
 	}
 
 	
+	/**
+	 * Used when a parameter given by the user is wrong. 
+	 * Print a message, then the usage of the application, and the exits the application. */
+	public static void printMessageUsageAndExit(String mainmessage){
+		System.out.println(mainmessage);
+	    Misc.printUsage();
+	    System.exit(JobProber.RESULT_CRITICAL);
+	}
 }

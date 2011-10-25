@@ -13,18 +13,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import javax.security.auth.login.LoginException;
 import qosprober.misc.Misc;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
+import org.objectweb.proactive.core.config.ProActiveConfiguration;
 import org.objectweb.proactive.core.node.NodeException;
 import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import org.ow2.proactive.scheduler.common.job.JobPriority;
 import org.ow2.proactive.scheduler.examples.WaitAndPrint;
-
-import qosprober.exceptions.ElementNotFoundException;
 import qosprober.exceptions.InvalidProtocolException;
 
 /** 
@@ -47,7 +45,10 @@ public class JobProber {
 	public static final int DEBUG_LEVEL_2VERBOSE	= 2;	// Debug level, similar to the previous one.
 	public static final int DEBUG_LEVEL_3USER		= 3;	// Debug level, debugging only.
 	
-	public static final String JOB_NAME = 
+	public static final String COMMUNICATION_PROTOCOL =
+			"pamr";											// Default protocol to be used to get connected to the RM.
+	
+	public static final String JOB_NAME_DEFAULT = 
 		"nagios_plugin_probe_job";							// Name of the probe job in the Scheduler, as the administrator will see it.
 	public static final String TASK_CLASS_NAME = 
 		WaitAndPrint.class.getName();						// Class to be instantiated and executed as a task in the Scheduler.
@@ -68,7 +69,7 @@ public class JobProber {
 	 * @return Nagios error code. */
 	public static void main(String[] args) throws Exception{
 	
-		JobProber.setLastStatuss("started, parsing arguments...");
+		JobProber.setLastStatuss("started, parsing arguments and basic initialization...");
 		
 		/* Parsing of arguments. */
 		CmdLineParser parser = new CmdLineParser();
@@ -82,17 +83,17 @@ public class JobProber {
 		CmdLineParser.Option timeoutwarnsecO = parser.addIntegerOption('n', "timeoutwarning");
 		CmdLineParser.Option paconfO = parser.addStringOption('f', "paconf");
 		CmdLineParser.Option hostO = parser.addStringOption('H', "hostname");
+		CmdLineParser.Option portO = parser.addStringOption("port");
 		CmdLineParser.Option warningO = parser.addStringOption('w', "warning");
 		CmdLineParser.Option criticalO = parser.addStringOption('c', "critical");
+		CmdLineParser.Option jobnameO = parser.addStringOption("jobname");
 		CmdLineParser.Option deletealloldO = parser.addBooleanOption("deleteallold");
 
 		try {
 		    parser.parse(args);
 		} catch ( CmdLineParser.OptionException e ) {
 			/* In case something is not expected, print usage and exit. */
-		    System.out.println(e.getMessage());
-		    Misc.printUsage();
-		    System.exit(RESULT_CRITICAL);
+		    Misc.printMessageUsageAndExit(e.getMessage());
 		}
 		
 		final Integer debug = 
@@ -106,11 +107,14 @@ public class JobProber {
 			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 					// Timeout in seconds for the warning message to be thrown.
 		final String paconf = (String)parser.getOptionValue(paconfO); 						// Path of the ProActive xml configuration file.
 		final String host = (String)parser.getOptionValue(hostO); 							// Host to be tested. Ignored.
+		final String port = (String)parser.getOptionValue(portO);							// Port of the host to be tested. 
 		final String warning = (String)parser.getOptionValue(warningO, "ignored");			// Warning level. Ignored.
 		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 		// Critical level. Ignored. 
+		final String jobname  =
+				(String)parser.getOptionValue(jobnameO, JobProber.JOB_NAME_DEFAULT); 		// Critical level. Ignored. 
 		final Boolean deleteallold = (Boolean)parser.getOptionValue(deletealloldO, false);	// Delete all old jobs, not only the ones with the name of the current probe job.
+
 		/* Check that all the mandatory parameters are given. */
-		
 		String errorMessage = "";
 		Boolean errorParam = false;
 		if (user == null)		{errorParam=true; errorMessage+="'User' not defined... ";}
@@ -121,16 +125,12 @@ public class JobProber {
 		if (errorParam==true)
 		{
 			/* In case something is not expected, print usage and exit. */
-		    System.out.println("There are some missing mandatory parameters: " + errorMessage);
-		    Misc.printUsage();
-		    System.exit(RESULT_CRITICAL);
+			Misc.printMessageUsageAndExit("There are some missing mandatory parameters: " + errorMessage);
 		}
 		
+		/* Loading log4j configuration. */
 		Misc.log4jConfiguration(debug);
 		
-		
-		
-		JobProber.setLastStatuss("parameters parsed, doing log4j configuration...");
 		
 		/* Show all the arguments considered. */
 		logger.info(
@@ -144,11 +144,13 @@ public class JobProber {
 				"\t warning timeout : " + timeoutwarnsec + "\n" +
 				"\t paconf          : " + paconf + "\n" +
 				"\t host            : " + host + "\n" +
+				"\t port            : " + port + "\n" +
 				"\t warning         : " + warning  + "\n" +
-				"\t critical        : " + critical + "\n" 
+				"\t critical        : " + critical + "\n" + 
+				"\t jobname         : " + jobname  + "\n" 
 				);
 		
-		JobProber.setLastStatuss("log4j configuration done, loading security policy...");
+		JobProber.setLastStatuss("basic initialization done, loading security policy...");
 		
 		/* Security policy procedure. */
 		logger.info("Setting security policies... ");
@@ -163,33 +165,38 @@ public class JobProber {
 		
 		JobProber.setLastStatuss("loaded expected output, loading proactive configuration (if needed)...");
 		
+				/* Load ProActive configuration. */
+		boolean usepaconffilee = false;
 		/* Check whether to use or not the ProActive configuration file. */
-		Boolean usepaconffilee = false;
 		if (paconf!=null){
 			/* A ProActiveConf.xml file was given. If we find it, we use it. */
-			if (new File(paconf).exists()==false){
-				String msg = "The ProActive configuration file '"+paconf+"' was not found.";
-				logger.fatal(msg);
-				throw new ElementNotFoundException(msg);
+			if (new File(paconf).exists()==true){
+				System.setProperty("proactive.configuration", paconf);
+				usepaconffilee = true;
+			}else{
+				logger.warn("The ProActive configuration file '"+paconf+"' was not found. Using default configuration.");
 			}
-			System.setProperty("proactive.configuration", paconf);
-			usepaconffilee = true;
 		}
 		
+		if (usepaconffilee == false){
+			logger.info("Avoiding ProActive configuration file...");
+			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
+			pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
+			if (host==null || port==null){
+				Misc.printMessageUsageAndExit("Parameters 'hostname' and 'port' must be given.\n");
+			}
+			pac.setProperty("proactive.net.router.address", host, false);
+			pac.setProperty("proactive.net.router.port", port, false);
+		}
 		JobProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		
-		final Boolean usepaconffile = usepaconffilee;
-		
-		/* No need of other arguments. */
-		//String[] otherArgs = parser.getRemainingArgs();
-		
-		/* We prepare our probe to run it in a different thread. */
+		/* We prepare now our probe to run it in a different thread. */
 		/* The probe consists in a job submission done to the Scheduler. */
 		ExecutorService executor = Executors.newFixedThreadPool(1);
 		
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
 			public Object[] call() throws Exception {
-				return JobProber.probe(url, user, pass, protocol, timeoutsec, usepaconffile, timeoutwarnsec, deleteallold);
+				return JobProber.probe(url, user, pass, protocol, timeoutsec, timeoutwarnsec, deleteallold, jobname);
 			}
 		};
 
@@ -243,7 +250,7 @@ public class JobProber {
 	 *  After a correct disconnection call, the output of the job is compared with a 
 	 *  given correct output, and the result of the test is told. 
 	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
-	public static Object[] probe(String url, String user, String pass, String protocol, int timeoutsec, Boolean usepaconffile, int timeoutwarnsec, boolean deleteallold) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
+	public static Object[] probe(String url, String user, String pass, String protocol, int timeoutsec, int timeoutwarnsec, boolean deleteallold, String jobname) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		
 		TimeTick timer = new TimeTick(); // We want to get time durations.
 		
@@ -275,7 +282,7 @@ public class JobProber {
 		
 		double time_connection = timer.tickSec();
 		
-		logger.info("Probe job's name: '"+JOB_NAME+"'");
+		logger.info("Probe job's name: '"+jobname+"'");
 	
 		// Removal of old probe jobs. 
 		
@@ -285,7 +292,7 @@ public class JobProber {
 			schedulerjobs = schedulerstub.getAllCurrentJobsList("*");		// Get ALL jobs (no matter their name).
 		}else{
 			logger.info("Removing same-name old jobs...");
-			schedulerjobs = schedulerstub.getAllCurrentJobsList(JOB_NAME);	// Get all jobs with the same name as this probe job.
+			schedulerjobs = schedulerstub.getAllCurrentJobsList(jobname);	// Get all jobs with the same name as this probe job.
 		}
 		
 		if (schedulerjobs.size()>0){
@@ -303,9 +310,9 @@ public class JobProber {
 		}
 		logger.info("Done.");
 
-		schedulerjobs = schedulerstub.getAllCurrentJobsList(JOB_NAME);
+		schedulerjobs = schedulerstub.getAllCurrentJobsList(jobname);
 		if (schedulerjobs.size()!=0){
-			String output_to_print = NAG_OUTPUT_PREFIX + " ERROR (not possible to remove all previous '"+JOB_NAME+"' probe jobs in the scheduler)";
+			String output_to_print = NAG_OUTPUT_PREFIX + " ERROR (not possible to remove all previous '"+jobname+"' probe jobs in the scheduler)";
 			int output_to_return = JobProber.RESULT_CRITICAL;
 			Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
 			ret[0] = new Integer(output_to_return);
@@ -322,16 +329,16 @@ public class JobProber {
 		String output_to_print = 
 			NAG_OUTPUT_PREFIX + "NO TEST PERFORMED"; 			// Default output (for Nagios).
 		
-		logger.info("Submitting '" + JOB_NAME + "' job...");
+		logger.info("Submitting '" + jobname + "' job...");
 		String jobId = schedulerstub.submitJob(
-				JOB_NAME, JobProber.TASK_CLASS_NAME); 			// Submission of the job.
+				jobname, JobProber.TASK_CLASS_NAME); 			// Submission of the job.
 		logger.info("Done.");
 		
 		JobProber.setLastStatuss("job "+jobId+" submitted, waiting for it...");
 		
 		double time_submission = timer.tickSec();
 		
-		logger.info("Waiting for " + JOB_NAME + ":" + jobId + " job...");
+		logger.info("Waiting for " + jobname + ":" + jobId + " job...");
 		schedulerstub.waitUntilJobFinishes(jobId); 				// Wait for the job to finish.
 		logger.info("Done.");
 		
@@ -347,7 +354,7 @@ public class JobProber {
 	
 		// Removal of the probe job from the scheduler. 
 		
-		logger.info("Removing job "+ JOB_NAME + ":" + jobId + "...");
+		logger.info("Removing job "+ jobname + ":" + jobId + "...");
 		schedulerstub.removeJob(jobId);							// Job removed from the list of jobs in the Scheduler.
 		logger.info("Done.");
 		
@@ -382,12 +389,12 @@ public class JobProber {
 		
 		logger.info("Checking output...");
 		if (jresult==null){ 		// No job result obtained... It must never happen, but we check just in case.
-			logger.info("Finished job  " + JOB_NAME + ":" + jobId + ". Result: NOT FINISHED");
+			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
 			output_to_print = 
 				NAG_OUTPUT_PREFIX + "JOBID " + jobId + " ERROR (no job result obtained)";
 			output_to_return = JobProber.RESULT_CRITICAL;
 		}else{ 						// Non-timeout case. Result obtained.
-			logger.info("Finished job  " + JOB_NAME + ":" + jobId + ". Result: '" + jresult.toString() + "'.");
+			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: '" + jresult.toString() + "'.");
 			
 //			try { 
 //				/* To have a better checking of the output of the job, just remove the extension '.tmp' of this output, (remaining a '.out' file).
