@@ -20,11 +20,9 @@ import org.ow2.proactive.scheduler.common.task.JavaTask;
 import org.ow2.proactive.scheduler.common.Scheduler;
 import org.ow2.proactive.authentication.crypto.CredData;
 import org.ow2.proactive.scheduler.common.SchedulerAuthenticationInterface;
-
 import java.io.IOException;
 import java.security.KeyException;
 import java.util.Vector;
-
 import org.ow2.proactive.authentication.crypto.Credentials;
 import qosprober.exceptions.InvalidProtocolException;
 
@@ -34,7 +32,7 @@ import qosprober.exceptions.InvalidProtocolException;
  * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST. 
  * This class is specific for JAVAPA protocol. */
 public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
-	private static boolean POLLING = false;
+	private static boolean POLLING = false;								// Waiting through polling mechanism? (otherwise event based).
 	private static int POLLING_PERIOD_MS = 200;							// Polling period time (if polling is activated).
 	private static Logger logger =
 			Logger.getLogger(SchedulerStubProberJava.class.getName()); 	// Logger.
@@ -65,7 +63,6 @@ public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
 	}
 	
 	
-	
 	/** 
 	 * Submit a job to the scheduler. 
 	 * @param name, name which will be seen by the administrator regarding this job.
@@ -75,7 +72,7 @@ public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
 	public String submitJob(String name, String taskname) throws NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException, UserException{
 		// Configuration of the job.
 		TaskFlowJob job = new TaskFlowJob();
-        job.setName(name /*"nagios_probe_job"*/);
+        job.setName(name);
         job.setPriority(
         		JobProber.DEFAULT_JOB_PRIORITY);// Configure the priority of the probe job.
         job.setCancelJobOnError(true);
@@ -226,8 +223,6 @@ public class SchedulerStubProberJava /*implements SchedulerStubProber*/{
 		vector.addAll(st.getFinishedJobs());
 		
 		Vector<String> jobs = new Vector<String>(); 
-		
-		
 		
 		for(JobState j: vector){
 			logger.debug("\tcomparing " + jobname + " with " + j.getName() + "...");

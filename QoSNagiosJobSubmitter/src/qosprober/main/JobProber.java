@@ -19,7 +19,6 @@ import qosprober.misc.Misc;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
-import org.objectweb.proactive.core.config.ProActiveConfiguration;
 import org.objectweb.proactive.core.node.NodeException;
 import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import org.ow2.proactive.scheduler.common.job.JobPriority;
@@ -85,6 +84,7 @@ public class JobProber {
 		CmdLineParser.Option hostO = parser.addStringOption('H', "hostname");
 		CmdLineParser.Option warningO = parser.addStringOption('w', "warning");
 		CmdLineParser.Option criticalO = parser.addStringOption('c', "critical");
+		CmdLineParser.Option deletealloldO = parser.addBooleanOption("deleteallold");
 
 		try {
 		    parser.parse(args);
@@ -96,19 +96,19 @@ public class JobProber {
 		}
 		
 		final Integer debug = 
-				(Integer)parser.getOptionValue(debugO, JobProber.DEBUG_LEVEL_1EXTENDED);// Level of verbosity.
-		final String user = (String)parser.getOptionValue(userO);			 			// User.
-		final String pass = (String)parser.getOptionValue(passO); 						// Pass.
-		final String protocol = (String)parser.getOptionValue(protocolO);			 	// Protocol, either REST or JAVAPA.
-		final String url = (String)parser.getOptionValue(urlO); 						// Url of the Scheduler/RM.
-		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO);			// Timeout in seconds for the job to be executed.
+				(Integer)parser.getOptionValue(debugO, JobProber.DEBUG_LEVEL_1EXTENDED);	// Level of verbosity.
+		final String user = (String)parser.getOptionValue(userO);			 				// User.
+		final String pass = (String)parser.getOptionValue(passO); 							// Pass.
+		final String protocol = (String)parser.getOptionValue(protocolO);			 		// Protocol, either REST or JAVAPA.
+		final String url = (String)parser.getOptionValue(urlO); 							// Url of the Scheduler/RM.
+		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO);				// Timeout in seconds for the job to be executed.
 		final Integer timeoutwarnsec = 
-			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 				// Timeout in seconds for the warning message to be thrown.
-		final String paconf = (String)parser.getOptionValue(paconfO); 					// Path of the ProActive xml configuration file.
-		final String host = (String)parser.getOptionValue(hostO); 						// Host to be tested. Ignored.
-		final String warning = (String)parser.getOptionValue(warningO, "ignored");		// Warning level. Ignored.
-		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
-		
+			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 					// Timeout in seconds for the warning message to be thrown.
+		final String paconf = (String)parser.getOptionValue(paconfO); 						// Path of the ProActive xml configuration file.
+		final String host = (String)parser.getOptionValue(hostO); 							// Host to be tested. Ignored.
+		final String warning = (String)parser.getOptionValue(warningO, "ignored");			// Warning level. Ignored.
+		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 		// Critical level. Ignored. 
+		final Boolean deleteallold = (Boolean)parser.getOptionValue(deletealloldO, false);	// Delete all old jobs, not only the ones with the name of the current probe job.
 		/* Check that all the mandatory parameters are given. */
 		
 		String errorMessage = "";
@@ -189,7 +189,7 @@ public class JobProber {
 		
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
 			public Object[] call() throws Exception {
-				return JobProber.probe(url, user, pass, protocol, timeoutsec, usepaconffile, timeoutwarnsec);
+				return JobProber.probe(url, user, pass, protocol, timeoutsec, usepaconffile, timeoutwarnsec, deleteallold);
 			}
 		};
 
@@ -234,15 +234,16 @@ public class JobProber {
 	 * Probe the scheduler
 	 * Several calls are done against the scheduler:
 	 *   - join
+	 *   - remove old jobs
 	 *   - submit job
-	 *   - get job status (or event registering, depends on the protocol chosen)
+	 *   - get job status (based on polling or in events, depends on the protocol chosen)
 	 *   - get job result
 	 *   - remove job
 	 *   - disconnect
 	 *  After a correct disconnection call, the output of the job is compared with a 
 	 *  given correct output, and the result of the test is told. 
 	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
-	public static Object[] probe(String url, String user, String pass, String protocol, int timeoutsec, Boolean usepaconffile, int timeoutwarnsec) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
+	public static Object[] probe(String url, String user, String pass, String protocol, int timeoutsec, Boolean usepaconffile, int timeoutwarnsec, boolean deleteallold) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		
 		TimeTick timer = new TimeTick(); // We want to get time durations.
 		
@@ -265,34 +266,32 @@ public class JobProber {
 		
 		JobProber.setLastStatuss("scheduler stub created, connecting to shceduler...");
 		
-		logger.info("Connecting... "); 					// Connecting to the Scheduler...
+		// Connection with the scheduler. 
+		
+		logger.info("Connecting... "); 										// Connecting to the Scheduler...
 
-		schedulerstub.init(protocol, url, user, pass); 	// Login procedure...
-		JobProber.setLastStatuss("connected to scheduler, loading proactive configuration...");
+		schedulerstub.init(protocol, url, user, pass); 						// Login procedure...
+		JobProber.setLastStatuss("connected to scheduler, removing old jobs...");
 		
 		double time_connection = timer.tickSec();
 		
-		
-		if (usepaconffile==true){
-			logger.info("Loading ProActive configuration (xml) file... ");
-			ProActiveConfiguration.load(); // Load the ProActive configuration file.
-		}else{
-			logger.info("Avoiding ProActive configuration (xml) file... ");
-		}
-		logger.info("Done.");
-		
 		logger.info("Probe job's name: '"+JOB_NAME+"'");
+	
+		// Removal of old probe jobs. 
 		
-		JobProber.setLastStatuss("proactive configuration loaded, removing old jobs...");
-		
-		logger.info("Removing same-name old jobs...");
 		Vector<String> schedulerjobs;
-		schedulerjobs = schedulerstub.getAllCurrentJobsList(JOB_NAME);	// Get all jobs with the same name as this probe job.
-																		// We want to delete them.
+		if (deleteallold==true){
+			logger.info("Removing ALL old jobs (that belong to this user)...");
+			schedulerjobs = schedulerstub.getAllCurrentJobsList("*");		// Get ALL jobs (no matter their name).
+		}else{
+			logger.info("Removing same-name old jobs...");
+			schedulerjobs = schedulerstub.getAllCurrentJobsList(JOB_NAME);	// Get all jobs with the same name as this probe job.
+		}
+		
 		if (schedulerjobs.size()>0){
-			logger.info("\tThere are same-name old jobs...");
+			logger.info("\tThere are old jobs...");
 			for(String jobb:schedulerjobs){
-				logger.info("\tRemoving same-name old job '" + JOB_NAME + "' with JobId " + jobb + "...");
+				logger.info("\tRemoving old job with JobId " + jobb + "...");
 				JobProber.setLastStatuss("proactive configuration loaded, removing old job (jobid " + jobb + ")...");
 				schedulerstub.forceJobKillingAndRemoval(jobb);
 				logger.info("\tWaiting until cleaned...");
@@ -300,7 +299,7 @@ public class JobProber {
 				logger.info("\tDone.");
 			}
 		}else{
-			logger.info("\tThere are no same-name old jobs...");
+			logger.info("\tThere are no old jobs...");
 		}
 		logger.info("Done.");
 
@@ -316,6 +315,8 @@ public class JobProber {
 		
 		double time_removing_old_jobs = timer.tickSec();
 		JobProber.setLastStatuss("removed old jobs, submitting job...");
+	
+		// Job submission, wait for execution, and output retrieval. 
 		
 		int output_to_return = JobProber.RESULT_CRITICAL; 
 		String output_to_print = 
@@ -343,6 +344,8 @@ public class JobProber {
 		JobProber.setLastStatuss("job "+jobId+" result retrieved, removing job from scheduler...");
 		
 		double time_retrieval = timer.tickSec();
+	
+		// Removal of the probe job from the scheduler. 
 		
 		logger.info("Removing job "+ JOB_NAME + ":" + jobId + "...");
 		schedulerstub.removeJob(jobId);							// Job removed from the list of jobs in the Scheduler.
@@ -351,6 +354,8 @@ public class JobProber {
 		double time_removal = timer.tickSec();
 		
 		JobProber.setLastStatuss("job "+jobId+" removed from scheduler, disconnecting...");
+	
+		// Disconnection from the scheduler. 
 		
 		logger.info("Disconnecting...");
 		schedulerstub.disconnect();								// Getting disconnected from the Scheduler.

@@ -43,7 +43,9 @@ Mandatory arguments to long options are mandatory for short options too.
    -c, --critical=CRITICAL
       Nagios compatibility. Critical level to be used.
       
-
+   --deleteallold
+      Delete all old jobs of this user, no matter their name. For testing purposes.
+      
 NAGIOS OUTPUT INTERPRETATION
 
    SERVICE STATUS: JOBID <jobid> <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
@@ -61,4 +63,4 @@ EXECUTION EXAMPLE
    General cases
       java -jar jobsubmprobe.jar --user=u --pass=u --protocol=JAVAPA --url=pamr://1 --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml
 
-Updated on Mon Oct 24 15:02:33 CEST 2011
+Updated on Mon Oct 24 16:39:03 CEST 2011
