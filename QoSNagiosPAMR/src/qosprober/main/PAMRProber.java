@@ -60,7 +60,7 @@ public class PAMRProber {
 		
 		PAMRProber.setLastStatuss("started, parsing arguments...");
 		
-		/* Parsing of arguments. */
+		// Parsing of arguments. 
 		CmdLineParser parser = new CmdLineParser();
 		
 		CmdLineParser.Option debugO = parser.addIntegerOption('v', "debug");			// Debug mode, 0 is silent, 3 is verbose (log4j file loaded).
@@ -75,7 +75,7 @@ public class PAMRProber {
 		try {
 		    parser.parse(args);
 		} catch ( CmdLineParser.OptionException e ) {
-			/* In case something is not expected, print usage and exit. */
+			// In case something is not expected, print usage and exit. 
 		    Misc.printMessageUsageAndExit(e.getMessage());
 		}
 		
@@ -91,22 +91,22 @@ public class PAMRProber {
 		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
 		
 		
-		/* Validating the arguments. */
+		// Validating the arguments. 
 		String errorMessage = "";
 		Boolean errorParam = false;
 		if (timeoutsec == null)	{errorParam=true; errorMessage+="'timeout' (sec) not defined... ";}
 		if (errorParam==true)
 		{
-			/* In case something is not expected, print usage and exit. */
+			// In case something is not expected, print usage and exit. 
 			Misc.printMessageUsageAndExit("There are some missing mandatory parameters: " + errorMessage);
 		}
 		
-		/* Loading log4j configuration. */
+		// Loading log4j configuration. 
 		Misc.log4jConfiguration(debug);							// Load log4j configuration file.
 		
 		PAMRProber.setLastStatuss("parameters parsed, doing log4j configuration...");
 		
-		/* Show all the arguments considered. */
+		// Show all the arguments considered. 
 		logger.info(
 				"Configuration: \n" +
 				"\t debug              : " + debug + "\n" +
@@ -121,18 +121,18 @@ public class PAMRProber {
 		
 		PAMRProber.setLastStatuss("log4j configuration done, loading security policy...");
 		
-		/* Security policy procedure. */
+		// Security policy procedure. 
 		logger.info("Setting security policies... ");
 		Misc.createPolicyAndLoadIt();
 		logger.info("Done.");
 		
 		PAMRProber.setLastStatuss("security policy loaded, loading proactive configuration (if needed)...");
 		
-		/* Load ProActive configuration. */
+		// Load ProActive configuration. 
 		boolean usepaconffilee = false;
-		/* Check whether to use or not the ProActive configuration file. */
+		// Check whether to use or not the ProActive configuration file. 
 		if (paconf!=null){
-			/* A ProActiveConf.xml file was given. If we find it, we use it. */
+			// A ProActiveConf.xml file was given. If we find it, we use it. 
 			if (new File(paconf).exists()==true){
 				System.setProperty("proactive.configuration", paconf);
 				usepaconffilee = true;
@@ -154,8 +154,8 @@ public class PAMRProber {
 		
 		PAMRProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		
-		/* We prepare our probe to run it in a different thread. */
-		/* The probe consists in a node obtaining done from the Resource Manager. */
+		// We prepare our probe to run it in a different thread. 
+		// The probe consists in a node obtaining done from the Resource Manager. 
 		ExecutorService executor = Executors.newFixedThreadPool(1);
 		final boolean usepaconffileee = usepaconffilee;
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
@@ -164,30 +164,30 @@ public class PAMRProber {
 			}
 		};
 
-		/* We submit to the executor the prober activity. */
+		// We submit to the executor the prober activity. 
 		Future<Object[]> proberFuture = executor.submit(proberCallable); // We ask to execute the probe.
 		
 		try{
-			/* We execute the future using a timeout. */
+			// We execute the future using a timeout. 
 			Object[] res = proberFuture.get(timeoutsec, TimeUnit.SECONDS);
-			/* At this point all went okay. */ 
+			// At this point all went okay.  
 			PAMRProber.printAndExit((Integer)res[0], (String)res[1]);
 		}catch(TimeoutException e){
-			/* The execution took more time than expected. */
+			// The execution took more time than expected. 
 			PAMRProber.printAndExit(
 					PAMRProber.RESULT_CRITICAL, 
 					NAG_OUTPUT_PREFIX + "TIMEOUT OF "+timeoutsec+ "s (last status was '" + PAMRProber.getLastStatus() + "')", 
 					debug, 
 					e);
 		}catch(ExecutionException e){
-			/* There was an unexpected problem with the execution of the prober. */
+			// There was an unexpected problem with the execution of the prober. 
 			PAMRProber.printAndExit(
 					PAMRProber.RESULT_CRITICAL, 
 					NAG_OUTPUT_PREFIX + "FAILURE: " + e.getMessage(), 
 					debug, 
 					e);
 		}catch(Exception e){
-			/* There was an unexpected critical exception not captured. */
+			// There was an unexpected critical exception not captured. 
 			PAMRProber.printAndExit(
 					PAMRProber.RESULT_CRITICAL, 
 					NAG_OUTPUT_PREFIX + "CRITICAL ERROR: " + e.getMessage(), 
@@ -211,8 +211,7 @@ public class PAMRProber {
 	 * @throws IOException 
 	 * @throws NodeException, Exception 
 	 * @throws ActiveObjectCreationException */	 
-	public static Object[] probe(
-			int timeoutsec, String paconffile, int timeoutwarnsec, boolean usepaconffile, String hostpamr, String portpamr) throws KeyException, LoginException, RMException, IOException, ActiveObjectCreationException, NodeException, Exception{
+	public static Object[] probe(int timeoutsec, String paconffile, int timeoutwarnsec, boolean usepaconffile, String hostpamr, String portpamr) throws KeyException, LoginException, RMException, IOException, ActiveObjectCreationException, NodeException, Exception{
 		// This is done.
 		TimeTick timing = new TimeTick();
 		
@@ -285,7 +284,6 @@ public class PAMRProber {
 			"timeout_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutsec)   + "s " +
 			"time_all_warning_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutwarnsec)   + "s " +
 			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", time_all) + "s";	// Timing summary. 
-		
 
 		if (time_all > timeoutwarnsec){						// If it took longer than timeoutwarnsec, throw a warning message.
 			output_to_return = PAMRProber.RESULT_WARNING;
@@ -330,7 +328,7 @@ public class PAMRProber {
     
 	/** 
 	 * Print a message in the stdout (for Nagios to use it) and return with the given error code. 
-	 * Print a back-trace only if the debug-level is appropriate. */
+	 * Print a back-trace later only if the debug-level is appropriate. */
 	public synchronized static void printAndExit(Integer ret, String str, int debuglevel, Throwable e){
 		switch(debuglevel){
 			case PAMRProber.DEBUG_LEVEL_0SILENT:
@@ -340,7 +338,6 @@ public class PAMRProber {
 				System.out.println(str);
 				e.printStackTrace(System.out);
 				break;
-			
 		}
     	System.exit(ret);
     }
