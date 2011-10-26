@@ -103,7 +103,6 @@ public class RMProber {
 		final String warning = (String)parser.getOptionValue(warningO, "ignored");		// Warning level. Ignored.
 		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
 		
-		
 		/* Checking if the mandatory parameters are provided. */
 		String errorMessage = "";
 		Boolean errorParam = false;
@@ -162,13 +161,15 @@ public class RMProber {
 		if (usepaconffilee == false){
 			logger.info("Avoiding ProActive configuration file...");
 			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
-			pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
-			if (host==null || port==null){
-				Misc.printMessageUsageAndExit("Parameters 'hostname' and 'port' must be given.\n");
+			if (host!=null && port!=null){
+				pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
+				pac.setProperty("proactive.net.router.address", host, false);
+				pac.setProperty("proactive.net.router.port", port, false);
+				logger.info("Using 'hostname' and 'port' provided...");
 			}
-			pac.setProperty("proactive.net.router.address", host, false);
-			pac.setProperty("proactive.net.router.port", port, false);
+			logger.info("Avoiding 'hostname' and 'port' provided...");
 		}
+		
 		RMProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		
 		/* Now we prepare our probe to run it in a different thread. */
@@ -249,7 +250,6 @@ public class RMProber {
 		int output_to_return = RMProber.RESULT_CRITICAL; 
 		String output_to_print = 
 			NAG_OUTPUT_PREFIX + "NO TEST PERFORMED"; 		// Default output (for Nagios).
-		
 		
 		logger.info("Getting nodes...");
 		NodeSet nodes = rmstub.getNodes(nodesRequired); 	// Request some nodes.
@@ -393,6 +393,5 @@ public class RMProber {
 			PropertyConfigurator.configure(properties);
 		}
 	}
-	
 }
 

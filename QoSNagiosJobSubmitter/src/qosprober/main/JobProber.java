@@ -177,12 +177,13 @@ public class JobProber {
 		if (usepaconffilee == false){
 			logger.info("Avoiding ProActive configuration file...");
 			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
-			pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
-			if (host==null || port==null){
-				Misc.printMessageUsageAndExit("Parameters 'hostname' and 'port' must be given.\n");
+			if (host!=null && port!=null){
+				pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
+				pac.setProperty("proactive.net.router.address", host, false);
+				pac.setProperty("proactive.net.router.port", port, false);
+				logger.info("Using 'hostname' and 'port' provided...");
 			}
-			pac.setProperty("proactive.net.router.address", host, false);
-			pac.setProperty("proactive.net.router.port", port, false);
+			logger.info("Avoiding 'hostname' and 'port' provided...");
 		}
 		JobProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		

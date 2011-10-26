@@ -51,7 +51,6 @@ public class PAMRProber {
 															// where the problem is.
 	public static Logger logger = Logger.getLogger(PAMRProber.class.getName()); // Logger.
 	
-	
 	/**
 	 * Starting point.
 	 * The arguments/parameters are specified in the file /resources/usage.txt
@@ -89,7 +88,6 @@ public class PAMRProber {
 		final String port = (String)parser.getOptionValue(portO);						// Port of the host to be tested. 
 		final String warning = (String)parser.getOptionValue(warningO, "ignored");		// Warning level. Ignored.
 		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
-		
 		
 		// Validating the arguments. 
 		String errorMessage = "";
@@ -144,12 +142,13 @@ public class PAMRProber {
 		if (usepaconffilee == false){
 			logger.info("Avoiding ProActive configuration file...");
 			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
-			pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
-			if (host==null || port==null){
-				Misc.printMessageUsageAndExit("Parameters 'hostname' and 'port' must be given.\n");
+			if (host!=null && port!=null){
+				pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
+				pac.setProperty("proactive.net.router.address", host, false);
+				pac.setProperty("proactive.net.router.port", port, false);
+				logger.info("Using 'hostname' and 'port' provided...");
 			}
-			pac.setProperty("proactive.net.router.address", host, false);
-			pac.setProperty("proactive.net.router.port", port, false);
+			logger.info("Avoiding 'hostname' and 'port' provided...");
 		}
 		
 		PAMRProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
