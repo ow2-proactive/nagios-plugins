@@ -6,8 +6,9 @@ import qosprober.misc.Misc;
 
 /**
  * Server class. It is instantiated as an Active object within the plugin process. Then a secondary 
- * process having a client is launched, and it will contact the server sending a predefined message.
- * If that message is okay, then the server (and the plugin) tells that the PAMR router behaved
+ * process having a client is launched. Both client and server contact the same PAMR router to become Active objects.
+ * Then the client will contact the server sending a predefined message.
+ * If that message is okay, then the server (and consequently the plugin in which it is embedded) tell that the PAMR router behaved
  * correctly during this process. */
 public class Server {
     

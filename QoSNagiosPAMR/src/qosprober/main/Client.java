@@ -10,9 +10,10 @@ import qosprober.misc.Misc;
 
 /** 
  * Client class.
- * It receives the url of the server, later it contacts the server, and sends to it a message that goes
- * go through the PAMR router (so we check its service is up). If the server receives correctly this message, 
- * then we can say that the PAMR router service is up. */
+ * It is executed by the server, which gives to this client all what it needs to become an Active object connected to the 
+ * same PAMR router as the server, and contact the server afterwards. 
+ * This client sends to the server a message that goes through the PAMR router (so we can check if its service is up). 
+ * If the server receives correctly this message, then we can say that the PAMR router service for incoming connections is up. */
 public class Client {
 	
 	public static final String COMMUNICATION_PROTOCOL =
@@ -52,7 +53,7 @@ public class Client {
     public boolean sendMessageToServer(){
     	boolean ret = false;
     	logger.info("Putting message in server...");
-    	ret = server.putMessageAndCheckIt(MY_MESSAGE); 						// Send a message to the server (call one of its methods).
+    	ret = server.putMessageAndCheckIt(MY_MESSAGE); 			// Send a message to the server (call one of its methods).
     	logger.info("Done.");
         return ret;
     }
@@ -61,9 +62,13 @@ public class Client {
      * Start the client. */
     public static void main(String args[]) throws Exception{
     	
-    	//Misc.log4jConfiguration2();
+    	//Misc.log4jConfiguration2();							// Use in case you want to see what happened with the client (dumps in file 'output'). 
     	
     	logger.info("Started PAMR client-side probe...");
+    	
+    	// Two possible argument-format for this module:
+    	// SERVERURL PACONFIGURATIONFILE				(2 arguments, assume PA conf. file is given).
+    	// SERVERURL PAMRADDRESS PAMRPORT				(3 arguments, assume server address and port are given).
     	
 		String serverurl = args[0];
     	if (args.length == 2){									// Specific way to communicate either ProActive conf. file or host&port.
@@ -72,12 +77,12 @@ public class Client {
 	    	System.setProperty("proactive.configuration", paconffile);
     	}else{
     		logger.info("Avoiding ProActive configuration file...");
-    		String host = args[1];
-    		String port = args[2];	
+    		String pamrhost = args[1];
+    		String pamrport = args[2];	
 			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
 			pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
-			pac.setProperty("proactive.net.router.address", host, false);
-			pac.setProperty("proactive.net.router.port", port, false);
+			pac.setProperty("proactive.net.router.address", pamrhost, false);
+			pac.setProperty("proactive.net.router.port", pamrport, false);
     	}
     	
     	logger.info("Done.");
@@ -86,7 +91,7 @@ public class Client {
     	Misc.createPolicyAndLoadIt();
     	logger.info("Done.");
     	
-        logger.info("Creating Client Active object...");
+        logger.info("Creating Client Active object..."); 		// We create the client telling about the server url.
     	Client client = org.objectweb.proactive.api.PAActiveObject.newActive(Client.class, new Object[] {serverurl});
         logger.info("Done.");
     	

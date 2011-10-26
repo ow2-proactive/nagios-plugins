@@ -49,7 +49,6 @@ public class PAMRProber {
 	private static String lastStatus;						// Holds a message representative of the current status of the test.
 															// It is used in case of TIMEOUT, to help the administrator guess
 															// where the problem is.
-	
 	public static Logger logger = Logger.getLogger(PAMRProber.class.getName()); // Logger.
 	
 	
@@ -93,7 +92,6 @@ public class PAMRProber {
 		
 		
 		/* Validating the arguments. */
-		
 		String errorMessage = "";
 		Boolean errorParam = false;
 		if (timeoutsec == null)	{errorParam=true; errorMessage+="'timeout' (sec) not defined... ";}
@@ -156,9 +154,6 @@ public class PAMRProber {
 		
 		PAMRProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		
-		/* No need of other arguments. */
-		//String[] otherArgs = parser.getRemainingArgs();
-		
 		/* We prepare our probe to run it in a different thread. */
 		/* The probe consists in a node obtaining done from the Resource Manager. */
 		ExecutorService executor = Executors.newFixedThreadPool(1);
@@ -216,7 +211,8 @@ public class PAMRProber {
 	 * @throws IOException 
 	 * @throws NodeException, Exception 
 	 * @throws ActiveObjectCreationException */	 
-	public static Object[] probe(int timeoutsec, String paconffile, int timeoutwarnsec, boolean usepaconffile, String host, String port) throws KeyException, LoginException, RMException, IOException, ActiveObjectCreationException, NodeException, Exception{
+	public static Object[] probe(
+			int timeoutsec, String paconffile, int timeoutwarnsec, boolean usepaconffile, String hostpamr, String portpamr) throws KeyException, LoginException, RMException, IOException, ActiveObjectCreationException, NodeException, Exception{
 		// This is done.
 		TimeTick timing = new TimeTick();
 		
@@ -244,13 +240,19 @@ public class PAMRProber {
         
         PAMRProber.setLastStatuss("registered the server, running the client...");
         double time_registering_server = timing.tickSec();
-        
+       
+        // Now we are ready to run the client. It needs to get connected to the same PAMR router, and afterwards contact
+        // this just initialized server. About the initialization of the client, there are 2 possible argument-format 
+        // for this module:
+    	// SERVERURL PACONFIGURATIONFILE				(2 arguments, assume PA conf. file is given).
+    	// SERVERURL PAMRADDRESS PAMRPORT				(3 arguments, assume server address and port are given).
+    	
         logger.info("Running the client...");
         if (usepaconffile == true){		// Depending on whether there is a ProActive configuration file, these are
         								// the parameters that we send to the client to get connected to the same router.
 	        Misc.runNewJVM(Client.class.getName(), serverurl + " " + paconffile);
         }else{
-        	Misc.runNewJVM(Client.class.getName(), serverurl + " " + host + " " + port);
+        	Misc.runNewJVM(Client.class.getName(), serverurl + " " + hostpamr + " " + portpamr);
         }
         logger.info("Done.");
         
@@ -260,7 +262,7 @@ public class PAMRProber {
         
         PAMRProber.setLastStatuss("executed the client, waiting for its message...");
    
-    	while(server.isDone()==false){
+    	while(server.isDone()==false){	// Wait for the client's call...
     		Thread.sleep(300);
     	}
     
@@ -269,7 +271,7 @@ public class PAMRProber {
     	double time_waiting_message = timing.tickSec();
     	logger.info("Done!");
     	
-    	
+    	// Time processing section.
 		int output_to_return;
 		String output_to_print = null;
 		
@@ -282,20 +284,20 @@ public class PAMRProber {
 			"time_waiting_message=" + String.format(Locale.ENGLISH, "%1.03f", time_waiting_message   )   + "s " +
 			"timeout_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutsec)   + "s " +
 			"time_all_warning_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutwarnsec)   + "s " +
-			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", time_all) + "s"; 
+			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", time_all) + "s";	// Timing summary. 
 		
 
-		if (time_all > timeoutwarnsec){						// If longer than timeoutwarnsec, warning message.
+		if (time_all > timeoutwarnsec){						// If it took longer than timeoutwarnsec, throw a warning message.
 			output_to_return = PAMRProber.RESULT_WARNING;
 			output_to_print = 
 				NAG_OUTPUT_PREFIX + "WARNING STATE, SLOW PROBE | " + timesummary;
-		}else{												// Else everything was okay.
+		}else{												// Else, we consider that everything went okay.
 			output_to_return = PAMRProber.RESULT_OK;
 			output_to_print = 
 				NAG_OUTPUT_PREFIX + "OK | " + timesummary;
 		}
 		
-		Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
+		Object [] ret = new Object[2];						// Both, error code and message are returned to be shown.
 		ret[0] = new Integer(output_to_return);
 		ret[1] = output_to_print;
 			
@@ -328,7 +330,7 @@ public class PAMRProber {
     
 	/** 
 	 * Print a message in the stdout (for Nagios to use it) and return with the given error code. 
-	 * Print a backtrace only if the debuglevel is appropriate. */
+	 * Print a back-trace only if the debug-level is appropriate. */
 	public synchronized static void printAndExit(Integer ret, String str, int debuglevel, Throwable e){
 		switch(debuglevel){
 			case PAMRProber.DEBUG_LEVEL_0SILENT:
