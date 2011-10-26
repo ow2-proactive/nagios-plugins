@@ -1,6 +1,6 @@
 
 SYNOPSIS
-   java -jar pamrrouterprobe.jar <paconf> <timeout> [OPTIONS]
+   java -jar pamrrouterprobe.jar <timeout> [OPTIONS]
 
 DESCRIPTION
 

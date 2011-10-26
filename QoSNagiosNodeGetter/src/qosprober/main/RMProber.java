@@ -108,6 +108,7 @@ public class RMProber {
 		Boolean errorParam = false;
 		if (user == null)		{errorParam=true; errorMessage+="'user' not defined... ";}
 		if (pass == null)		{errorParam=true; errorMessage+="'pass' not defined... ";}
+		if (url == null)		{errorParam=true; errorMessage+="'url' not defined... ";}
 		if (timeoutsec == null)	{errorParam=true; errorMessage+="'timeout' (sec) not defined... ";}
 		if (errorParam==true) {
 			/* In case something is not expected, print usage and exit. */
