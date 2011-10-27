@@ -10,7 +10,6 @@ while ischar(tline)
     if (length(output11)==0)
     else
         output = convline(output11);
-        output
         if (length(array)==0)
             array = output;
         else
@@ -23,9 +22,15 @@ end
 
 fclose(fid);
 
-plot(array');
-legend('initi','connec','clean','submis','execu','retriev','removal', 'disconn', 'timeout', 'warning', 'timeall'); grid
+array = array';
 
+array = [array(:,1:8) array(:,11)];
 
+plot(array);
+legend('initi','connec','clean','submis','execu','retriev','removal', 'disconn', 'timeall'); grid
+axis([1 size(array,1) 0 max(array(:,9))]);
+
+xlabel('Attemp (in time)');
+ylabel('Time [sec]');
 
 
