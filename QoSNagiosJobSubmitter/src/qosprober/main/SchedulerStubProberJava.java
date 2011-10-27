@@ -31,7 +31,7 @@ import qosprober.exceptions.InvalidProtocolException;
  * This is our interface to the remote Scheduler.
  * This class is specific for JAVAPA protocol. */
 public class SchedulerStubProberJava {
-	private static boolean POLLING = false;								// Waiting through polling mechanism? (otherwise event based).
+	private boolean usePolling = false;									// Waiting through polling mechanism? (otherwise event based).
 	private static int POLLING_PERIOD_MS = 200;							// Polling period time (if polling is activated).
 	private static Logger logger =
 			Logger.getLogger(SchedulerStubProberJava.class.getName()); 	// Logger.
@@ -48,7 +48,7 @@ public class SchedulerStubProberJava {
 	 * @param user, username to access the scheduler.
 	 * @param pass, password to access the scheduler.
 	 * */
-	public void init(String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, HttpException, IOException{
+	public void init(String url, String user, String pass, boolean polling) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, HttpException, IOException{
 		logger.info("Joining the scheduler...");
         SchedulerAuthenticationInterface auth = SchedulerConnection.join(url);
         logger.info("Creating credentials...");
@@ -56,7 +56,8 @@ public class SchedulerStubProberJava {
         logger.info("Logging in...");
         schedulerStub = auth.login(cred);
         SchedulerEventsListener aa = PAActiveObject.newActive(SchedulerEventsListener.class, new Object[]{}); 
-        if (SchedulerStubProberJava.POLLING == false){
+        usePolling = polling;
+        if (usePolling == false){
 	        schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
         }
 	}
@@ -111,7 +112,7 @@ public class SchedulerStubProberJava {
 	 * @param jobId, the ID of the job to wait. 
 	 * @throws InterruptedException */
 	public void waitUntilJobFinishes(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException, InterruptedException{
-		if (POLLING == false){
+		if (usePolling == false){
 			do{
 				synchronized(SchedulerStubProberJava.class){
 				
@@ -140,17 +141,15 @@ public class SchedulerStubProberJava {
 	 * @param jobId, the ID of the job to wait for. 
 	 * @throws InterruptedException */
 	public void waitUntilJobIsCleaned(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException, InterruptedException{
-		if (POLLING == false){
+		if (usePolling == false){
 			do{
 				synchronized(SchedulerStubProberJava.class){
-					
 					try {
 						SchedulerStubProberJava.class.wait(); // This thread is blocked until the SchedulerEventsListener notifies of a new removed job.
 					} catch (InterruptedException e) {
 						logger.warn("Not supposed to happen...", e);
 					}
 				}
-				
 			}while(
 					SchedulerEventsListener.checkIfJobIdHasJustFinished(jobId) == false    && 
 					SchedulerEventsListener.checkIfJobIdHasJustBeenRemoved(jobId) == false
@@ -170,7 +169,6 @@ public class SchedulerStubProberJava {
 		}
 	}
 
-	
 	/** 
 	 * Return the status of the job (running, finished, etc.). 
 	 * @param jobId, the ID of the job. 
@@ -233,8 +231,6 @@ public class SchedulerStubProberJava {
 				logger.debug("\t\tno...");
 			}
 		}
-		
 		return jobs;
-		
 	}
 }

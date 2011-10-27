@@ -45,7 +45,13 @@ Mandatory arguments to long options are mandatory for short options too.
       
    --deleteallold
       Delete all old jobs of this user, no matter their name. For testing purposes.
+   
+   --jobname=JOBNAME
+      Changes the default name of the probe job. For testing purposes. 
       
+   --polling 
+      Wait for the events like job finish and job removal by doing polling (and not using an event based mechanism). 
+       
 NAGIOS OUTPUT INTERPRETATION
 
    SERVICE STATUS: JOBID <jobid> <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s

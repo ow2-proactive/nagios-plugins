@@ -87,6 +87,7 @@ public class JobProber {
 		CmdLineParser.Option criticalO = parser.addStringOption('c', "critical");
 		CmdLineParser.Option jobnameO = parser.addStringOption("jobname");
 		CmdLineParser.Option deletealloldO = parser.addBooleanOption("deleteallold");
+		CmdLineParser.Option pollingO = parser.addBooleanOption("polling");
 
 		try {
 		    parser.parse(args);
@@ -111,6 +112,7 @@ public class JobProber {
 		final String jobname  =
 				(String)parser.getOptionValue(jobnameO, JobProber.JOB_NAME_DEFAULT); 		// Critical level. Ignored. 
 		final Boolean deleteallold = (Boolean)parser.getOptionValue(deletealloldO, false);	// Delete all old jobs, not only the ones with the name of the current probe job.
+		final Boolean polling = (Boolean)parser.getOptionValue(pollingO, false);			// Delete all old jobs, not only the ones with the name of the current probe job.
 
 		/* Check that all the mandatory parameters are given. */
 		String errorMessage = "";
@@ -143,7 +145,8 @@ public class JobProber {
 				"\t port            : " + port + "\n" +
 				"\t warning         : " + warning  + "\n" +
 				"\t critical        : " + critical + "\n" + 
-				"\t jobname         : " + jobname  + "\n" 
+				"\t jobname         : " + jobname  + "\n" + 
+				"\t polling         : " + polling  + "\n" 
 				);
 		
 		JobProber.setLastStatuss("basic initialization done, loading security policy...");
@@ -182,8 +185,9 @@ public class JobProber {
 				pac.setProperty("proactive.net.router.address", host, false);
 				pac.setProperty("proactive.net.router.port", port, false);
 				logger.info("Using 'hostname' and 'port' provided...");
+			}else{
+				logger.info("Avoiding 'hostname' and 'port' provided...");
 			}
-			logger.info("Avoiding 'hostname' and 'port' provided...");
 		}
 		JobProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
 		
@@ -193,7 +197,7 @@ public class JobProber {
 		
 		Callable<Object[]> proberCallable = new Callable<Object[]>(){
 			public Object[] call() throws Exception {
-				return JobProber.probe(url, user, pass, timeoutsec, timeoutwarnsec, deleteallold, jobname);
+				return JobProber.probe(url, user, pass, timeoutsec, timeoutwarnsec, deleteallold, jobname, polling);
 			}
 		};
 
@@ -247,7 +251,7 @@ public class JobProber {
 	 *  After a correct disconnection call, the output of the job is compared with a 
 	 *  given correct output, and the result of the test is told. 
 	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
-	public static Object[] probe(String url, String user, String pass, int timeoutsec, int timeoutwarnsec, boolean deleteallold, String jobname) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
+	public static Object[] probe(String url, String user, String pass, int timeoutsec, int timeoutwarnsec, boolean deleteallold, String jobname, boolean polling) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		
 		TimeTick timer = new TimeTick(); // We want to get time durations.
 		
@@ -262,7 +266,7 @@ public class JobProber {
 		
 		logger.info("Connecting... "); 										// Connecting to the Scheduler...
 
-		schedulerstub.init(url, user, pass);		 						// Login procedure...
+		schedulerstub.init(url, user, pass, polling);						// Login procedure...
 		JobProber.setLastStatuss("connected to scheduler, removing old jobs...");
 		
 		double time_connection = timer.tickSec();
