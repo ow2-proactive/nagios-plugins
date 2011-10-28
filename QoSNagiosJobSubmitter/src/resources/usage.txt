@@ -69,4 +69,3 @@ EXECUTION EXAMPLE
    General cases
       java -jar jobsubmprobe.jar --url=pamr://1 --user=demo --pass=demo --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml
 
-Updated on Mon Oct 24 16:39:03 CEST 2011

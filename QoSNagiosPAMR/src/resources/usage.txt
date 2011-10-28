@@ -1,6 +1,7 @@
 
 SYNOPSIS
-   java -jar pamrrouterprobe.jar <timeout> [OPTIONS]
+
+   java -jar pamrrouterprobe.jar --timeout=TIMEOUT (--paconf=PACONF | --hostname=HOST --port=PORT) [OPTIONS]
 
 DESCRIPTION
 
@@ -34,7 +35,9 @@ Mandatory arguments to long options are mandatory for short options too.
    -c, --critical=CRITICAL
       Ignored. Nagios compatibility. Critical level to be used.
       
-
+   -V, --version
+      Print the version of the plugin. 
+      
 NAGIOS OUTPUT INTERPRETATION
 
    SERVICE STATUS: <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
@@ -48,4 +51,3 @@ EXECUTION EXAMPLE
    General cases
       java -jar pamrrouterprobe.jar --paconf=/tmp/ProActiveConfiguration.xml --timeout=100
  
-Updated on Mon Oct 24 15:03:21 CEST 2011

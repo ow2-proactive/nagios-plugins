@@ -76,6 +76,7 @@ public class RMProber {
 		CmdLineParser.Option portO = parser.addStringOption("port");
 		CmdLineParser.Option warningO = parser.addStringOption('w', "warning");
 		CmdLineParser.Option criticalO = parser.addStringOption('c', "critical");
+		CmdLineParser.Option versionO = parser.addBooleanOption('V', "version");
 
 		try {
 		    parser.parse(args);
@@ -102,7 +103,11 @@ public class RMProber {
 		final String port = (String)parser.getOptionValue(portO);						// Port of the host to be tested. 
 		final String warning = (String)parser.getOptionValue(warningO, "ignored");		// Warning level. Ignored.
 		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
+		final Boolean version = (Boolean)parser.getOptionValue(versionO, false);			// Prints the version of the plugin.
 		
+		if (version == true){
+			Misc.printVersionAndExit();
+		}
 		/* Checking if the mandatory parameters are provided. */
 		String errorMessage = "";
 		Boolean errorParam = false;

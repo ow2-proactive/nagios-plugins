@@ -1,1 +1,2 @@
-Plugin date: $Format:%cd$ 
+Plugin version: 0.9a
+Updated on Fri Oct 28 14:09:37 CEST 2011

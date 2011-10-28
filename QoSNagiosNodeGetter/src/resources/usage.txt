@@ -1,6 +1,7 @@
 
 SYNOPSIS
-   java -jar nodegetprobe.jar <url> <user> <pass> <timeout> [OPTIONS]
+
+   java -jar nodegetprobe.jar --url=URL --user=USER --pass=PASS --timeout=TIMEOUT (--paconf=PACONF | --hostname=HOST --port=PORT) [OPTIONS]
 
 DESCRIPTION
 
@@ -51,6 +52,8 @@ Mandatory arguments to long options are mandatory for short options too.
    -c, --critical=CRITICAL
       Nagios compatibility. Critical level to be used.
       
+   -V, --version
+      Print the version of the plugin. 
 
 NAGIOS OUTPUT INTERPRETATION
 
@@ -65,4 +68,3 @@ EXECUTION EXAMPLE
    General cases
       java -jar nodegetprobe.jar --url=pamr://0 --user=d --pass=p --timeout=100 --paconf=/tmp/ProActiveConfiguration.xml 
 
-Updated on Mon Oct 24 15:02:53 CEST 2011

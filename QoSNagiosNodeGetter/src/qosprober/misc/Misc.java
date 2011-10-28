@@ -351,4 +351,17 @@ public class Misc {
 			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
 		}
 	}
+
+	/**
+	 * Print the version of the plugin and the exits the application. */
+	public static void printVersionAndExit(){
+		String usage = null;
+		try {
+			usage = Misc.readAllTextResource("/resources/version.txt");
+			System.err.println(usage);
+		} catch (IOException e) {
+			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
+		}
+	    System.exit(RMProber.RESULT_OK);
+	}
 }
