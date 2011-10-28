@@ -1,1 +1,1 @@
-Plugin version: $Id$
+Plugin date: $Format:%cd$ 
