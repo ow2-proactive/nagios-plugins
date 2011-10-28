@@ -1,6 +1,6 @@
 
 SYNOPSIS
-   java -jar jobsubmprobe.jar <url> <user> <pass> <protocol> [OPTIONS]
+   java -jar jobsubmprobe.jar --url=URL --user=USER --pass=PASS --timeout=TIMEOUT (--paconf=PACONF | --hostname=HOST --port=PORT) [OPTIONS]
 
 DESCRIPTION
 
@@ -20,7 +20,7 @@ Mandatory arguments to long options are mandatory for short options too.
       
    --url=URL
       URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
-      It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA and 'http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' for REST.     
+      It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA     
        
    -t, --timeout=TIMEOUT
       Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
@@ -52,6 +52,9 @@ Mandatory arguments to long options are mandatory for short options too.
    --polling 
       Wait for the events like job finish and job removal by doing polling (and not using an event based mechanism). 
        
+   -V, --version
+      Print the version of the plugin. 
+      
 NAGIOS OUTPUT INTERPRETATION
 
    SERVICE STATUS: JOBID <jobid> <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
@@ -64,6 +67,6 @@ NAGIOS OUTPUT INTERPRETATION
 EXECUTION EXAMPLE
 
    General cases
-      java -jar jobsubmprobe.jar --user=u --pass=u --url=pamr://1 --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml
+      java -jar jobsubmprobe.jar --url=pamr://1 --user=demo --pass=demo --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml
 
 Updated on Mon Oct 24 16:39:03 CEST 2011

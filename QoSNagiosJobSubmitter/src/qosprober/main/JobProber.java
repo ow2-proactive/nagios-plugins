@@ -88,6 +88,7 @@ public class JobProber {
 		CmdLineParser.Option jobnameO = parser.addStringOption("jobname");
 		CmdLineParser.Option deletealloldO = parser.addBooleanOption("deleteallold");
 		CmdLineParser.Option pollingO = parser.addBooleanOption("polling");
+		CmdLineParser.Option versionO = parser.addBooleanOption('V', "version");
 
 		try {
 		    parser.parse(args);
@@ -113,7 +114,12 @@ public class JobProber {
 				(String)parser.getOptionValue(jobnameO, JobProber.JOB_NAME_DEFAULT); 		// Critical level. Ignored. 
 		final Boolean deleteallold = (Boolean)parser.getOptionValue(deletealloldO, false);	// Delete all old jobs, not only the ones with the name of the current probe job.
 		final Boolean polling = (Boolean)parser.getOptionValue(pollingO, false);			// Delete all old jobs, not only the ones with the name of the current probe job.
+		final Boolean version = (Boolean)parser.getOptionValue(versionO, false);			// Prints the version of the plugin.
 
+		if (version == true){
+			Misc.printVersionAndExit();
+		}
+		
 		/* Check that all the mandatory parameters are given. */
 		String errorMessage = "";
 		Boolean errorParam = false;

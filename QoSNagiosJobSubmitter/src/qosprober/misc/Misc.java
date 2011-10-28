@@ -194,4 +194,17 @@ public class Misc {
 	    Misc.printUsage();
 	    System.exit(JobProber.RESULT_CRITICAL);
 	}
+	
+	/**
+	 * Print the version of the plugin and the exits the application. */
+	public static void printVersionAndExit(){
+		String usage = null;
+		try {
+			usage = Misc.readAllTextResource("/resources/version.txt");
+			System.err.println(usage);
+		} catch (IOException e) {
+			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
+		}
+	    System.exit(JobProber.RESULT_OK);
+	}
 }
