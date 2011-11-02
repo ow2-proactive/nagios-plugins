@@ -1,6 +1,4 @@
 function array = readfile(file)
-
-
 fid = fopen(file);
 array = [];
 index = 1;
@@ -10,7 +8,6 @@ while ischar(tline)
     if (length(output11)==0)
     else
         output = output11;
-        array;
         if (length(array)==0)
             array = output;
         else
@@ -41,7 +38,7 @@ plot(gca, xtime,array);
 legend('initi','connec','clean','submis','execu','retriev','removal', 'disconn', 'timeall');
 grid;
 %axis([1 size(array,1) 0 max(array(:,9))]);
-axis([1 size(array,1) 0 150]);
+axis([1 size(array,1) 0 60]);
 xlabel('Attemp (in time) [min x 10]');
 ylabel('Time [sec]');
 titless = strrep(file, '_', ' ');
@@ -55,3 +52,6 @@ for ii=first'
 	end
 	index = index + 1;	
 end
+
+
+saveas(gcf, file, 'fig');
