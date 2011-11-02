@@ -294,7 +294,7 @@ public class JobProber {
 			logger.info("\tThere are old jobs...");
 			for(String jobb:schedulerjobs){
 				logger.info("\tRemoving old job with JobId " + jobb + "...");
-				JobProber.setLastStatuss("proactive configuration loaded, removing old job (jobid " + jobb + ")...");
+				JobProber.setLastStatuss("connected to scheduler, removing old job (jobid " + jobb + ")...");
 				schedulerstub.forceJobKillingAndRemoval(jobb);
 				logger.info("\tWaiting until cleaned...");
 				schedulerstub.waitUntilJobIsCleaned(jobb); // Wait until either job's end or removal.
@@ -367,7 +367,7 @@ public class JobProber {
 		
 		double time_disconn = timer.tickSec();
 		
-		double time_all = time_initializing+time_connection+time_submission+time_execution+time_retrieval+time_removal+time_disconn;
+		double time_all = time_initializing+time_connection+time_removing_old_jobs+time_submission+time_execution+time_retrieval+time_removal+time_disconn;
 		
 		String timesummary =
 			"time_initialization=" + String.format(Locale.ENGLISH, "%1.03f", time_initializing) + "s " +

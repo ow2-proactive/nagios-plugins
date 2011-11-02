@@ -26,21 +26,31 @@ array = [array(:,1:8) array(:,11)];
 figure;
 
 nsamples = size(array,1);
+ncurves  = size(array,2);
+
 xtime = 1:nsamples;
+compresionfactor = 144;
+timeoffset = 16 * 60 + 20; % In days' long.
+timeoffset = timeoffset / (60 * 24);
+xtime = xtime / compresionfactor; % Now the unit is a day long.
+xtime = xtime + timeoffset*ones(1,length(xtime)); 
+
+
 
 ColorSet = [1 0.02 0.02; 0.02 1 0.02; 0.02 0.02 1; 1 0.5 0.5; 1 0.02 1; 0.02 1 1; 0.5 0.5 0.02; 0.5 0.02 0.5; 0.02 0.5 0.5];
 set(gca, 'ColorOrder', ColorSet);
 
 hold all;
 
-plot(gca, xtime,array);
 
-legend('initi','connec','clean','submis','execu','retriev','removal', 'disconn', 'timeall');
+plot(xtime,array);
+
+legend('initialization','connection','clean old jobs','submission','execution','output retrieval','removal', 'disconnection', 'total time');
 grid;
-%axis([1 size(array,1) 0 max(array(:,9))]);
-axis([1 size(array,1) 0 60]);
-xlabel('Attemp (in time) [min x 10]');
-ylabel('Time [sec]');
+
+axis([0 timeoffset+size(array,1)/compresionfactor 0 60]);
+xlabel('Time [days]');
+ylabel('nTime [sec]');
 titless = strrep(file, '_', ' ');
 title(titless);
 
@@ -48,7 +58,7 @@ first = array(:,1); % Any of them will be infinite if something went wrong. We p
 index = 1;
 for ii=first'
 	if ii==inf
-		plot(index,0,'ro');
+		plot(timeoffset + index/compresionfactor,0,'ro', 'LineWidth',3);
 	end
 	index = index + 1;	
 end

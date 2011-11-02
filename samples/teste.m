@@ -4,3 +4,5 @@ readfile('test_performance_nodem_polling');
 readfile('test_performance_nodem_events');
 
 saveaspdfall();
+
+close all;
