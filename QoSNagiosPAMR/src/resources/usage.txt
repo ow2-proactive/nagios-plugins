@@ -1,7 +1,7 @@
 
 SYNOPSIS
 
-   java -jar pamrrouterprobe.jar --timeout=TIMEOUT (--paconf=PACONF | --hostname=HOST --port=PORT) [OPTIONS]
+   java -jar pamrrouterprobe.jar --timeout TIMEOUT (--paconf PACONF | --hostname HOST --port PORT) [OPTIONS]
 
 DESCRIPTION
 
@@ -11,33 +11,36 @@ If the connection with the PAMR router is not possible, or this message exchange
    
 Mandatory arguments to long options are mandatory for short options too.
    
-   -v, --debug=LEVELOFVERBOSITY
+   -v, --debug LEVELOFVERBOSITY
       Verbose debugging mode level. Default value is 1. Value 3: it will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
        
-   -t, --timeout=TIMEOUT
+   -t, --timeout TIMEOUT
       Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
        
-   -n, --timeoutwarning=TIMEOUT_FOR_WARNING_MESSAGE
+   -n, --timeoutwarning TIMEOUT_FOR_WARNING_MESSAGE
       In seconds. If the overall test time exceeds this value, then the plugin will tell to Nagios a warning status.  
       
-   -f, --paconf=PACONF
+   -f, --paconf PACONF
       ProActive configuration file (usually ProActiveConfiguration.xml).
       
-   -H, --hostname=HOSTNAME
+   -H, --hostname HOSTNAME
       Hostname to be tested. Ignored if a ProActive configuration file is provided. 
       
-   --port=PORT
+   -x, --port PORT
       Port to be used to get connected to the RM. Ignored if a ProActive configuration file is provided. 
       
-   -w, --warning=WARNING
+   -w, --warning WARNING
       Ignored. Nagios compatibility. Warning level to be used.
       
-   -c, --critical=CRITICAL
+   -c, --critical CRITICAL
       Ignored. Nagios compatibility. Critical level to be used.
       
    -V, --version
       Print the version of the plugin. 
       
+   -h, --help
+      Print this message.
+
 NAGIOS OUTPUT INTERPRETATION
 
    SERVICE STATUS: <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
@@ -49,5 +52,5 @@ NAGIOS OUTPUT INTERPRETATION
 EXECUTION EXAMPLE
 
    General cases
-      java -jar pamrrouterprobe.jar --paconf=/tmp/ProActiveConfiguration.xml --timeout=100
+      java -jar pamrrouterprobe.jar --paconf /tmp/ProActiveConfiguration.xml --timeout 100
  

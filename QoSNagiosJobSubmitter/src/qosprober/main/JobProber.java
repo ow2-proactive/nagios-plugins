@@ -23,8 +23,6 @@ import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import org.ow2.proactive.scheduler.common.job.JobPriority;
 import org.ow2.proactive.scheduler.examples.WaitAndPrint;
 import qosprober.exceptions.InvalidProtocolException;
-
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.Parser;
@@ -76,6 +74,8 @@ public class JobProber {
 	 * @return Nagios error code. */
 	public static void main(String[] args) throws Exception{
 	
+		JobProber.setLastStatuss("started, parsing arguments and basic initialization...");
+		
 		/* Parsing of arguments. */
 		Options options = new Options();
 		// short, long, hasargument, description
@@ -127,8 +127,6 @@ public class JobProber {
         Option versionO = 		new Option("V", "version", false, "");
         versionO.setRequired(false); options.addOption(versionO);
 
-		JobProber.setLastStatuss("started, parsing arguments and basic initialization...");
-		
         Parser parserrr = new GnuParser();
         CommandLine parser = parserrr.parse(options, args);
 
@@ -247,7 +245,7 @@ public class JobProber {
 			/* The execution took more time than expected. */
 			JobProber.printAndExit(
 					JobProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "TIMEOUT OF "+timeoutsec+ "s (last status was '" + JobProber.getLastStatus() + "')", 
+					NAG_OUTPUT_PREFIX + "TIMEOUT OF "+timeoutsec+ "s (last status was: " + JobProber.getLastStatus() + ")", 
 					debug,
 					e);
 		}catch(ExecutionException e){

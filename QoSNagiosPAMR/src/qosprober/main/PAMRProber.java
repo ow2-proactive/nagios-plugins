@@ -1,6 +1,5 @@
 package qosprober.main;
 
-import jargs.gnu.CmdLineParser;
 import java.io.File;
 import java.io.IOException;
 import java.security.KeyException;
@@ -13,6 +12,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.security.auth.login.LoginException;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.Parser;
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.core.config.ProActiveConfiguration;
@@ -57,58 +62,70 @@ public class PAMRProber {
 	 * @return Nagios error code. */
 	public static void main(String[] args) throws Exception{
 		
-		PAMRProber.setLastStatuss("started, parsing arguments...");
-		
-		// Parsing of arguments. 
-		CmdLineParser parser = new CmdLineParser();
-		
-		CmdLineParser.Option debugO = parser.addIntegerOption('v', "debug");			// Debug mode, 0 is silent, 3 is verbose (log4j file loaded).
-		CmdLineParser.Option timeoutsecO = parser.addIntegerOption('t', "timeout");
-		CmdLineParser.Option timeoutwarnsecO = parser.addIntegerOption('n', "timeoutwarning");
-		CmdLineParser.Option paconfO = parser.addStringOption('f', "paconf");
-		CmdLineParser.Option hostO = parser.addStringOption('H', "hostname");
-		CmdLineParser.Option portO = parser.addStringOption("port");
-		CmdLineParser.Option warningO = parser.addStringOption('w', "warning");
-		CmdLineParser.Option criticalO = parser.addStringOption('c', "critical");
-		CmdLineParser.Option versionO = parser.addBooleanOption('V', "version");
+		PAMRProber.setLastStatuss("started, parsing arguments and basic initialization...");
+	
+		/* Parsing of arguments. */
+		Options options = new Options();
+		// short, long, hasargument, description
+        Option helpO =			new Option("h", "help", false, "");			
+        helpO.setRequired(false); options.addOption(helpO);
+        
+        Option debugO =			new Option("v", "debug", true, ""); 		
+        debugO.setRequired(false); options.addOption(debugO);
+        
+        Option timeoutsecO = 	new Option("t", "timeout", true, "");		
+        timeoutsecO.setRequired(true); options.addOption(timeoutsecO);
+        
+        Option timeoutwarnsecO =new Option("n", "timeoutwarning", true, "");
+        timeoutwarnsecO.setRequired(false); options.addOption(timeoutwarnsecO);
+        
+        Option paconfO = 		new Option("f", "paconf", true, "");
+        paconfO.setRequired(false); options.addOption(paconfO);
+        
+        Option hostO = 			new Option("H", "hostname", true, "");
+        hostO.setRequired(false); options.addOption(hostO);
+        
+        Option portO = 			new Option("x", "port"    , true, "");
+        portO.setRequired(false); options.addOption(portO);
+        
+        Option warningO = 		new Option("w", "warning", true, "");
+        warningO.setRequired(false); options.addOption(warningO);
+        
+        Option criticalO = 		new Option("c", "critical", true, "");
+        criticalO.setRequired(false); options.addOption(criticalO);
+        
+        Option versionO = 		new Option("V", "version", false, "");
+        versionO.setRequired(false); options.addOption(versionO);
 
-		try {
-		    parser.parse(args);
-		} catch ( CmdLineParser.OptionException e ) {
-			// In case something is not expected, print usage and exit. 
-		    Misc.printMessageUsageAndExit(e.getMessage());
+        Parser parserrr = new GnuParser();
+        CommandLine parser = parserrr.parse(options, args);
+
+		final Boolean help = parser.hasOption("h");																// Help message.
+		final Integer debug = Misc.parseInteger(parser.getOptionValue("v"), PAMRProber.DEBUG_LEVEL_1EXTENDED);	// Level of verbosity.
+		final Integer timeoutsec = Misc.parseInteger(parser.getOptionValue("t"), null);							// Timeout in seconds for the job to be executed.
+		final Integer timeoutwarnsec = Misc.parseInteger(parser.getOptionValue("n"),timeoutsec);				// Timeout in seconds for the warning message to be thrown.
+		final String paconf = (String)parser.getOptionValue("f"); 												// Path of the ProActive xml configuration file.
+		final String host = (String)parser.getOptionValue("H");						 							// Host to be tested. Ignored.
+		final String port = (String)parser.getOptionValue("x");													// Port of the host to be tested. 
+		final String warning = (String)parser.getOptionValue("w", "ignored");									// Warning level. Ignored.
+		final String critical = (String)parser.getOptionValue("c", "ignored"); 									// Critical level. Ignored. 
+		final Boolean version = parser.hasOption("V");															// Prints the version of the plugin.
+	
+		if (help == true){	
+			// automatically generate the help statement
+			//HelpFormatter formatter = new HelpFormatter();
+			//formatter.printHelp("ant", options );	
+			Misc.printMessageUsageAndExit("");
 		}
-		
-		final Integer debug = 
-			(Integer)parser.getOptionValue(debugO, PAMRProber.DEBUG_LEVEL_1EXTENDED); 	// Level of verbosity.  
-		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO); 		// Timeout in seconds for the job to be executed.
-		final Integer timeoutwarnsec = 
-			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 				// Timeout in seconds for the warning message to be thrown.
-		final String paconf = (String)parser.getOptionValue(paconfO); 					// Path of the ProActive xml configuration file.
-		final String host = (String)parser.getOptionValue(hostO); 						// Host to be tested. Ignored.
-		final String port = (String)parser.getOptionValue(portO);						// Port of the host to be tested. 
-		final String warning = (String)parser.getOptionValue(warningO, "ignored");		// Warning level. Ignored.
-		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 	// Critical level. Ignored. 
-		final Boolean version = (Boolean)parser.getOptionValue(versionO, false);			// Prints the version of the plugin.
-		
 		if (version == true){
 			Misc.printVersionAndExit();
 		}
-		
-		// Validating the arguments. 
-		String errorMessage = "";
-		Boolean errorParam = false;
-		if (timeoutsec == null)	{errorParam=true; errorMessage+="'timeout' (sec) not defined... ";}
-		if (errorParam==true)
-		{
-			// In case something is not expected, print usage and exit. 
-			Misc.printMessageUsageAndExit("There are some missing mandatory parameters: " + errorMessage);
-		}
+
+		PAMRProber.setLastStatuss("parameters parsed, doing log4j configuration...");
 		
 		// Loading log4j configuration. 
 		Misc.log4jConfiguration(debug);							// Load log4j configuration file.
 		
-		PAMRProber.setLastStatuss("parameters parsed, doing log4j configuration...");
 		
 		// Show all the arguments considered. 
 		logger.info(
@@ -153,8 +170,9 @@ public class PAMRProber {
 				pac.setProperty("proactive.net.router.address", host, false);
 				pac.setProperty("proactive.net.router.port", port, false);
 				logger.info("Using 'hostname' and 'port' provided...");
-			}
-			logger.info("Avoiding 'hostname' and 'port' provided...");
+			}else{
+				logger.info("Avoiding 'hostname' and 'port' provided...");
+			}				
 		}
 		
 		PAMRProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
@@ -181,7 +199,7 @@ public class PAMRProber {
 			// The execution took more time than expected. 
 			PAMRProber.printAndExit(
 					PAMRProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "TIMEOUT OF "+timeoutsec+ "s (last status was '" + PAMRProber.getLastStatus() + "')", 
+					NAG_OUTPUT_PREFIX + "TIMEOUT OF "+timeoutsec+ "s (last status was: " + PAMRProber.getLastStatus() + ")", 
 					debug, 
 					e);
 		}catch(ExecutionException e){
