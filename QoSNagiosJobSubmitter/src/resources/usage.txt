@@ -1,6 +1,6 @@
 
 SYNOPSIS
-   java -jar jobsubmprobe.jar --url=URL --user=USER --pass=PASS --timeout=TIMEOUT (--paconf=PACONF | --hostname=HOST --port=PORT) [OPTIONS]
+   java -jar jobsubmprobe.jar --url URL --user USER --pass PASS --timeout TIMEOUT (--paconf PACONF | --hostname HOST --port PORT) [OPTIONS]
 
 DESCRIPTION
 
@@ -9,52 +9,55 @@ It uses a simple job probe submission to test a grid concerning its responsivene
    
 Mandatory arguments to long options are mandatory for short options too.
    
-   -v, --debug=LEVELOFVERBOSITY
+   -v, --debug LEVELOFVERBOSITY
       Verbose debugging mode level. The default value is 1. Value 3: the plugin will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
        
-   -u, --user=USER
+   -u, --user USER
       Username to get connected to the Scheduler.
       
-   -p, --pass=PASS
+   -p, --pass PASS
       Password to get connected to the Scheduler.
       
-   --url=URL
+   -r, --url URL
       URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
       It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA     
        
-   -t, --timeout=TIMEOUT
+   -t, --timeout TIMEOUT
       Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
        
-   -n, --timeoutwarning=TIMEOUT_FOR_WARNING_MESSAGE
-      In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status.  
+   -n, --timeoutwarning TIMEOUT_FOR_WARNING_MESSAGE
+      In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status. It is important to note that the probe is not killed with this timeout.  
       
-   -f, --paconf=PACONF
+   -f, --paconf PACONF
       ProActive configuration file (usually ProActiveConfiguration.xml).
       
-   -H, --hostname=HOSTNAME
+   -H, --hostname HOSTNAME
       Hostname to be tested. Ignored if a ProActive configuration file is provided. 
       
-   --port=PORT
+   -x, --port PORT
       Port to be used to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
       
-   -w, --warning=WARNING
+   -w, --warning WARNING
       Ignored. Nagios compatibility. Warning level to be used.
       
-   -c, --critical=CRITICAL
+   -c, --critical CRITICAL
       Ignored. Nagios compatibility. Critical level to be used.
       
-   --deleteallold
+   -d, --deleteallold
       Delete all old jobs of this user, no matter their name. For testing purposes.
    
-   --jobname=JOBNAME
-      Changes the default name of the probe job. For testing purposes. 
+   -j, --jobname JOBNAME
+      Change the default name of the probe job. For testing purposes. 
       
-   --polling 
+   -g, --polling 
       Wait for the events like job finish and job removal by doing polling (and not using an event based mechanism). 
        
    -V, --version
       Print the version of the plugin. 
       
+   -h, --help 
+      Print this message. 
+
 NAGIOS OUTPUT INTERPRETATION
 
    SERVICE STATUS: JOBID <jobid> <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
@@ -67,5 +70,5 @@ NAGIOS OUTPUT INTERPRETATION
 EXECUTION EXAMPLE
 
    General cases
-      java -jar jobsubmprobe.jar --url=pamr://1 --user=demo --pass=demo --timeout=60 --paconf=/tmp/ProActiveConfiguration.xml
+      java -jar jobsubmprobe.jar --url pamr://1 --user demo --pass demo --timeout 60 --paconf /tmp/ProActiveConfiguration.xml
 

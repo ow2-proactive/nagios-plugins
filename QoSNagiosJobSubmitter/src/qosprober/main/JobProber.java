@@ -1,6 +1,5 @@
 package qosprober.main;
 
-import jargs.gnu.CmdLineParser;
 import java.io.File;
 import java.io.IOException;
 import java.security.KeyException;
@@ -24,6 +23,14 @@ import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import org.ow2.proactive.scheduler.common.job.JobPriority;
 import org.ow2.proactive.scheduler.examples.WaitAndPrint;
 import qosprober.exceptions.InvalidProtocolException;
+
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.Parser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.CommandLine;
+
 
 /** 
  * This is a general Nagios plugin class that performs a test on the scheduler, by doing:
@@ -69,68 +76,87 @@ public class JobProber {
 	 * @return Nagios error code. */
 	public static void main(String[] args) throws Exception{
 	
+		/* Parsing of arguments. */
+		Options options = new Options();
+		// short, long, hasargument, description
+        Option helpO =			new Option("h", "help", false, "");			
+        helpO.setRequired(false); options.addOption(helpO);
+        
+        Option debugO =			new Option("v", "debug", true, ""); 		
+        debugO.setRequired(false); options.addOption(debugO);
+        
+        Option userO = 			new Option("u", "user", true, ""); 			
+        userO.setRequired(true); options.addOption(userO);
+        
+        Option passO = 			new Option("p", "pass", true, ""); 			
+        passO.setRequired(true); options.addOption(passO);
+        
+        Option urlO = 			new Option("r", "url", true, ""); 			
+        urlO.setRequired(false); options.addOption(urlO);
+        
+        Option timeoutsecO = 	new Option("t", "timeout", true, "");		
+        timeoutsecO.setRequired(true); options.addOption(timeoutsecO);
+        
+        Option timeoutwarnsecO =new Option("n", "timeoutwarning", true, "");
+        timeoutwarnsecO.setRequired(false); options.addOption(timeoutwarnsecO);
+        
+        Option paconfO = 		new Option("f", "paconf", true, "");
+        paconfO.setRequired(false); options.addOption(paconfO);
+        
+        Option hostO = 			new Option("H", "hostname", true, "");
+        hostO.setRequired(false); options.addOption(hostO);
+        
+        Option portO = 			new Option("x", "port"    , true, "");
+        portO.setRequired(false); options.addOption(portO);
+        
+        Option warningO = 		new Option("w", "warning", true, "");
+        warningO.setRequired(false); options.addOption(warningO);
+        
+        Option criticalO = 		new Option("c", "critical", true, "");
+        criticalO.setRequired(false); options.addOption(criticalO);
+        
+        Option jobnameO = 		new Option("j", "jobname", true, "");
+        jobnameO.setRequired(false); options.addOption(jobnameO);
+        
+        Option deletealloldO = 	new Option("d", "deleteallold", false, "");
+        deletealloldO.setRequired(false); options.addOption(deletealloldO);
+        
+        Option pollingO = 		new Option("g", "polling", false, "");
+        pollingO.setRequired(false); options.addOption(pollingO);
+        
+        Option versionO = 		new Option("V", "version", false, "");
+        versionO.setRequired(false); options.addOption(versionO);
+
 		JobProber.setLastStatuss("started, parsing arguments and basic initialization...");
 		
-		/* Parsing of arguments. */
-		CmdLineParser parser = new CmdLineParser();
-		
-		CmdLineParser.Option debugO = parser.addIntegerOption('v', "debug");
-		CmdLineParser.Option userO = parser.addStringOption('u', "user");
-		CmdLineParser.Option passO = parser.addStringOption('p', "pass");
-		CmdLineParser.Option urlO = parser.addStringOption("url");
-		CmdLineParser.Option timeoutsecO = parser.addIntegerOption('t', "timeout");
-		CmdLineParser.Option timeoutwarnsecO = parser.addIntegerOption('n', "timeoutwarning");
-		CmdLineParser.Option paconfO = parser.addStringOption('f', "paconf");
-		CmdLineParser.Option hostO = parser.addStringOption('H', "hostname");
-		CmdLineParser.Option portO = parser.addStringOption("port");
-		CmdLineParser.Option warningO = parser.addStringOption('w', "warning");
-		CmdLineParser.Option criticalO = parser.addStringOption('c', "critical");
-		CmdLineParser.Option jobnameO = parser.addStringOption("jobname");
-		CmdLineParser.Option deletealloldO = parser.addBooleanOption("deleteallold");
-		CmdLineParser.Option pollingO = parser.addBooleanOption("polling");
-		CmdLineParser.Option versionO = parser.addBooleanOption('V', "version");
+        Parser parserrr = new GnuParser();
+        CommandLine parser = parserrr.parse(options, args);
 
-		try {
-		    parser.parse(args);
-		} catch ( CmdLineParser.OptionException e ) {
-			/* In case something is not expected, print usage and exit. */
-		    Misc.printMessageUsageAndExit(e.getMessage());
+		final Boolean help = parser.hasOption("h");																// Help message.
+		final Integer debug = Misc.parseInteger(parser.getOptionValue("v"), JobProber.DEBUG_LEVEL_1EXTENDED);	// Level of verbosity.
+		final String user = (String)parser.getOptionValue("u");			 										// User.
+		final String pass = (String)parser.getOptionValue("p"); 												// Pass.
+		final String url = (String)parser.getOptionValue("r"); 													// Url of the Scheduler/RM.
+		final Integer timeoutsec = Misc.parseInteger(parser.getOptionValue("t"), null);							// Timeout in seconds for the job to be executed.
+		final Integer timeoutwarnsec = Misc.parseInteger(parser.getOptionValue("n"),timeoutsec);				// Timeout in seconds for the warning message to be thrown.
+		final String paconf = (String)parser.getOptionValue("f"); 												// Path of the ProActive xml configuration file.
+		final String host = (String)parser.getOptionValue("H");						 							// Host to be tested. Ignored.
+		final String port = (String)parser.getOptionValue("x");													// Port of the host to be tested. 
+		final String warning = (String)parser.getOptionValue("w", "ignored");									// Warning level. Ignored.
+		final String critical = (String)parser.getOptionValue("c", "ignored"); 									// Critical level. Ignored. 
+		final String jobname  = (String)parser.getOptionValue("j", JobProber.JOB_NAME_DEFAULT);					// Name used to run the job in the Scheduler. 
+		final Boolean deleteallold = parser.hasOption("d");														// Delete all old jobs, not only the ones with the name of the current probe job.
+		final Boolean polling =parser.hasOption("g");															// Do polling or use an event based mechanism.
+		final Boolean version = parser.hasOption("V");															// Prints the version of the plugin.
+	
+		if (help == true){	
+			// automatically generate the help statement
+			//HelpFormatter formatter = new HelpFormatter();
+			//formatter.printHelp("ant", options );	
+			Misc.printMessageUsageAndExit("");
 		}
-		
-		final Integer debug = 
-				(Integer)parser.getOptionValue(debugO, JobProber.DEBUG_LEVEL_1EXTENDED);	// Level of verbosity.
-		final String user = (String)parser.getOptionValue(userO);			 				// User.
-		final String pass = (String)parser.getOptionValue(passO); 							// Pass.
-		final String url = (String)parser.getOptionValue(urlO); 							// Url of the Scheduler/RM.
-		final Integer timeoutsec = (Integer)parser.getOptionValue(timeoutsecO);				// Timeout in seconds for the job to be executed.
-		final Integer timeoutwarnsec = 
-			(Integer)parser.getOptionValue(timeoutwarnsecO,timeoutsec); 					// Timeout in seconds for the warning message to be thrown.
-		final String paconf = (String)parser.getOptionValue(paconfO); 						// Path of the ProActive xml configuration file.
-		final String host = (String)parser.getOptionValue(hostO); 							// Host to be tested. Ignored.
-		final String port = (String)parser.getOptionValue(portO);							// Port of the host to be tested. 
-		final String warning = (String)parser.getOptionValue(warningO, "ignored");			// Warning level. Ignored.
-		final String critical = (String)parser.getOptionValue(criticalO, "ignored"); 		// Critical level. Ignored. 
-		final String jobname  =
-				(String)parser.getOptionValue(jobnameO, JobProber.JOB_NAME_DEFAULT); 		// Critical level. Ignored. 
-		final Boolean deleteallold = (Boolean)parser.getOptionValue(deletealloldO, false);	// Delete all old jobs, not only the ones with the name of the current probe job.
-		final Boolean polling = (Boolean)parser.getOptionValue(pollingO, false);			// Delete all old jobs, not only the ones with the name of the current probe job.
-		final Boolean version = (Boolean)parser.getOptionValue(versionO, false);			// Prints the version of the plugin.
-
 		if (version == true){
 			Misc.printVersionAndExit();
-		}
-		
-		/* Check that all the mandatory parameters are given. */
-		String errorMessage = "";
-		Boolean errorParam = false;
-		if (user == null)		{errorParam=true; errorMessage+="'User' not defined... ";}
-		if (pass == null)		{errorParam=true; errorMessage+="'Pass' not defined... ";}
-		if (timeoutsec == null)	{errorParam=true; errorMessage+="'Timeout' (sec) not defined... ";}
-			
-		if (errorParam==true)
-		{
-			/* In case something is not expected, print usage and exit. */
-			Misc.printMessageUsageAndExit("There are some missing mandatory parameters: " + errorMessage);
 		}
 		
 		/* Loading log4j configuration. */

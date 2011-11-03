@@ -207,4 +207,16 @@ public class Misc {
 		}
 	    System.exit(JobProber.RESULT_OK);
 	}
+
+	/**
+	 * Parse the corresponding value, and if any problem, return the default value given. */
+	public static Integer parseInteger(String o, Integer defaultvalue){
+		Integer ret;
+		try{
+			ret = Integer.parseInt(o);
+		}catch(Exception e){
+			ret = defaultvalue;
+		}
+		return ret;
+	}
 }
