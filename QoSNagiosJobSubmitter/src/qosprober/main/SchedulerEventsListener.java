@@ -1,8 +1,6 @@
 package qosprober.main;
+
 import java.io.Serializable;
-
-import qosprober.misc.Misc;
-
 import org.apache.log4j.Logger;
 import org.ow2.proactive.scheduler.common.NotificationData;
 import org.ow2.proactive.scheduler.common.SchedulerEvent;
@@ -75,14 +73,14 @@ public class SchedulerEventsListener implements SchedulerEventListener, Serializ
 	/**
 	 * Print the list of last finished jobs. */
 	private static synchronized void printListFinished(){
-		logger.debug("\tLast finished jobs: " + Misc.getDescriptiveString((Object)lastFinishedJobs));
+		//logger.debug("\tLast finished jobs: " + Misc.getDescriptiveString((Object)lastFinishedJobs));
 	}
 
 	
 	/**
 	 * Print the list of last removed jobs. */
 	private static synchronized void printListRemoved(){
-		logger.debug("\tLast removed jobs: " + Misc.getDescriptiveString((Object)lastRemovedJobs));
+		//logger.debug("\tLast removed jobs: " + Misc.getDescriptiveString((Object)lastRemovedJobs));
 	}
 
 	
