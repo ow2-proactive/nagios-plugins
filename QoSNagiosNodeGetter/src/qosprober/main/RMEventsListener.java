@@ -1,8 +1,5 @@
 package qosprober.main;
 import java.io.Serializable;
-
-import qosprober.misc.Misc;
-
 import org.apache.log4j.Logger;
 import org.ow2.proactive.resourcemanager.common.event.RMEvent;
 import org.ow2.proactive.resourcemanager.common.event.RMNodeEvent;
@@ -44,7 +41,7 @@ public class RMEventsListener implements RMEventListener, Serializable{
 	/**
 	 * Print the list of last events. */
 	private static synchronized void printList(){
-		logger.debug("\tLast Events List: " + Misc.getDescriptiveString((Object)lastEventsList));
+		//logger.debug("\tLast Events List: " + Misc.getDescriptiveString((Object)lastEventsList));
 	}
 
 

@@ -14,7 +14,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import qosprober.main.PAMRProber;
 
-
 /** This class is supposed to have multiple minor functionalities. */
 public class Misc {
 	 
@@ -56,19 +55,14 @@ public class Misc {
     public static void createPolicyAndLoadIt() throws Exception{
 		try{
 		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
-		    
 		    temp.deleteOnExit(); // Delete temp. file when program exits.
-
 		    // Write to temp file.
 		    BufferedWriter out = new BufferedWriter(new FileWriter(temp));
 		    String policycontent = "grant {permission java.security.AllPermission;};";
 		    out.write(policycontent);
 		    out.close();
-
 		    String policypath = temp.getAbsolutePath(); 
-		    
 		    System.setProperty("java.security.policy", policypath); // Load security policy.
-		    
 		}catch(Exception e){
 			throw new Exception("Error while creating the security policy file. " + e.getMessage());
 		}
@@ -76,7 +70,6 @@ public class Misc {
     
     public static  String getResourceNumberFromURL(String url) throws Exception{
     	// Typical one is pamr://9607/Node1807777269
-    	
     	if (!url.startsWith(PAMRProber.PREFIX_URL)){
     		throw new Exception("Expected '" + PAMRProber.PREFIX_URL + "' at the beginning but found '" + url + "'.");
     	}
@@ -84,8 +77,6 @@ public class Misc {
     	rem = rem.substring(0,rem.indexOf('/'));
     	return rem;
     }
-    
-    
     
     public static String generateFibString(int length) { 
     	//System.out.println("Generating Fibonacci...");
@@ -119,7 +110,6 @@ public class Misc {
 		Runtime.getRuntime().exec(command);
     }
     
-    
 	/**
 	 * Creates a default set of properties for the log4j logging module. */
 	public static Properties getSilentLoggingProperties(){
@@ -138,13 +128,12 @@ public class Misc {
 		return properties;
 	}
 	
-	
 	/**
 	 * Creates a default set of properties for the log4j logging module. */
 	public static Properties getVerboseLoggingProperties(){
 		Properties properties = new Properties();
 		properties.put("log4j.rootLogger",				"INFO,rollingFile");// By default, do not show anything.
-		//properties.put("log4j.logger.org",				"ERROR,STDOUT");	 // For this module, show warning messages in stdout.
+		//properties.put("log4j.logger.org",			"ERROR,STDOUT");	 // For this module, show warning messages in stdout.
 		//properties.put("log4j.logger.proactive", 		"ERROR,STDOUT");
 		//properties.put("log4j.logger.qosprober", 		"ERROR,STDOUT");
 		/* NULL Appender. */

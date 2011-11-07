@@ -1,24 +1,4 @@
 README
 ******
 
-Nagios plugin to monitor ProActive based grids.
-
-To start the whole project for local testing you need to do:
-
-0. Set up PATH and JAVA_HOME so Java 1.7 is in place.
-
-   . start_environment_scheduler.sh
-
-1. Start the Scheduler/RM.
-   cd ProActiveSchedulingResourcing-3.1.0_src
-          (but make sure it is compiled everything doing:
-              cd compile
-              ./build deploy.all
-          )
-   ./bin/unix/scheduler-start
-
-2. Start the Apache server (REST API).
-   cd Projects/apache-tomcat-6.0.33
-   ./bin/startup.sh -security
-
-
+Scheduler Nagios probe.

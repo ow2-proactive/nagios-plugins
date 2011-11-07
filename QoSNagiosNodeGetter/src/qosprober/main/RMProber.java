@@ -3,7 +3,6 @@ package qosprober.main;
 import java.io.File;
 import java.security.KeyException;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,7 +17,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.Parser;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 import org.objectweb.proactive.core.config.ProActiveConfiguration;
 import org.objectweb.proactive.core.node.Node;
 import org.ow2.proactive.resourcemanager.exception.RMException;
@@ -144,7 +142,7 @@ public class RMProber {
 		}
 		
 		/* Loading log4j configuration. */
-		log4jConfiguration(debug);
+		Misc.log4jConfiguration(debug);
 		
 		/* Show all the arguments considered. */
 		logger.info(
@@ -391,37 +389,5 @@ public class RMProber {
 		}
     	System.exit(ret);
     }
-	
-	/**
-	 * Creates a default set of properties for the log4j logging module. */
-	public static Properties getSilentLoggingProperties(){
-		Properties properties = new Properties();
-		properties.put("log4j.rootLogger",				"ERROR,NULL"); 	// By default, do not show anything.
-		properties.put("log4j.logger.org",				"ERROR,STDOUT");	// For this module, show warning messages in stdout.
-		properties.put("log4j.logger.proactive", 		"ERROR,STDOUT");
-		properties.put("log4j.logger.qosprober", 		"ERROR,STDOUT");
-		/* NULL Appender. */
-		properties.put("log4j.appender.NULL",			"org.apache.log4j.varia.NullAppender");
-		/* STDOUT Appender. */
-		properties.put("log4j.appender.STDOUT",			"org.apache.log4j.ConsoleAppender");
-		properties.put("log4j.appender.STDOUT.Target",	"System.out");
-		properties.put("log4j.appender.STDOUT.layout",	"org.apache.log4j.PatternLayout");
-		properties.put("log4j.appender.STDOUT.layout.ConversionPattern","%-4r [%t] %-5p %c %x - %m%n");
-		return properties;
-	}
-	
-	/**
-	 * Configures de log4j module for logging. */
-	public static void log4jConfiguration(int debuglevel){
-		System.setProperty("log4j.configuration", "");
-		if (debuglevel == RMProber.DEBUG_LEVEL_3USER){
-			/* We load the log4j.properties file. */
-			PropertyConfigurator.configure("log4j.properties");
-		}else {
-			/* We do the log4j configuration on the fly. */
-			Properties properties = RMProber.getSilentLoggingProperties();
-			PropertyConfigurator.configure(properties);
-		}
-	}
 }
 
