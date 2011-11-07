@@ -64,7 +64,7 @@ public class Server {
     	boolean bothequal = false;
     	
     	logger.info("Client is putting a message in Server...");
-    	logger.info("Checking '" + message.length() + "' against '" + MY_MESSAGE.length() + "'....");
+    	logger.info("Checking message of length '" + message.length() + "' against message of length '" + MY_MESSAGE.length() + "'....");
     	if (MY_MESSAGE.equals(message)){
 	    	bothequal = true;
     		logger.info("Checking: OK");
