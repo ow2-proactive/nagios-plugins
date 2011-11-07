@@ -20,7 +20,8 @@ public class Misc {
 	private static Logger logger = Logger.getLogger(Misc.class.getName()); // Logger.
     private Misc(){}
 
-    /* Print the classpath (used for debug only). */
+    /** 
+     * Return the classpath being used by this JVM. */
     public static String getClasspath() {
         // Get the System Classloader
     	String ret = "";
@@ -36,7 +37,8 @@ public class Misc {
         return ret;
     }
     
-    /* Read all the content of a resource file. */
+    /** 
+     * Read all the content of a resource file. */
     public static String readAllTextResource(String resource) throws IOException{
 		InputStream is = Misc.class.getResourceAsStream(resource);
 	    InputStreamReader isr = new InputStreamReader(is);
@@ -51,7 +53,9 @@ public class Misc {
 	    is.close();
 	    return ret;
 	}
-    
+   
+    /**
+     * Create a security policy file granting all the permissions, and make the current JVM load it. */
     public static void createPolicyAndLoadIt() throws Exception{
 		try{
 		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
@@ -67,7 +71,9 @@ public class Misc {
 			throw new Exception("Error while creating the security policy file. " + e.getMessage());
 		}
 	}
-    
+   
+    /**
+     * Extract the number present in the server's url, which is used later to contact the server. */
     public static  String getResourceNumberFromURL(String url) throws Exception{
     	// Typical one is pamr://9607/Node1807777269
     	if (!url.startsWith(PAMRProber.PREFIX_URL)){
@@ -78,6 +84,8 @@ public class Misc {
     	return rem;
     }
     
+    /**
+     * Generate a non-trivial String with the given amount of characters. */
     public static String generateFibString(int length) { 
     	//System.out.println("Generating Fibonacci...");
 		int f0 = 0; 
@@ -97,15 +105,21 @@ public class Misc {
 		return new String(ret);
     }
 
+    /**
+     * Get the java home (so we can use it to run a differentd JVM). */
     public static String getJavaHome(){
     	return System.getProperty("java.home");
     }
     
+    /**
+     * Run a new JVM with the given arguments. */
     public static void runNewJVM(String classname, String arguments) throws IOException{
     	String command = Misc.getJavaHome() + "/bin/java" 	+ " " + 
     						"-cp " + Misc.getClasspath() 	+ " " + 
     						classname 						+ " " + 
     						arguments;
+    	// The command would be something like:
+    	//	/tmp/JDK/bin/java -cp bin:../otherbins package.ClassToExecute [arguments]
     	logger.info("Running command: '" + command + "'...");
 		Runtime.getRuntime().exec(command);
     }
