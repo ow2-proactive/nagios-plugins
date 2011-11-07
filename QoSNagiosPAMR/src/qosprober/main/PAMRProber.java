@@ -133,10 +133,15 @@ public class PAMRProber {
         
         Option versionO = 		new Option("V", "version", false, "");
         versionO.setRequired(false); options.addOption(versionO);
-
-        Parser parserrr = new GnuParser();
-        CommandLine parser = parserrr.parse(options, args);
-
+        
+        CommandLine parser = null;
+        try{
+	        Parser parserrr = new GnuParser();
+	        parser = parserrr.parse(options, args);
+        }catch(org.apache.commons.cli.MissingOptionException ex){
+	        Misc.printMessageUsageAndExit(ex.getMessage());	
+        }
+        
 		final Boolean help = parser.hasOption("h");																// Help message.
 		final Integer debug = Misc.parseInteger(parser.getOptionValue("v"), PAMRProber.DEBUG_LEVEL_1EXTENDED);	// Level of verbosity.
 		final Integer timeoutsec = Misc.parseInteger(parser.getOptionValue("t"), null);							// Timeout in seconds for the job to be executed.
