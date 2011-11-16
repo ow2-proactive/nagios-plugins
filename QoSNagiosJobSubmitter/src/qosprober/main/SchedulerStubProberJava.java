@@ -88,15 +88,18 @@ public class SchedulerStubProberJava {
 	public void init(String url, String user, String pass, boolean polling) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, HttpException, IOException{
 		logger.info("Joining the scheduler...");
         SchedulerAuthenticationInterface auth = SchedulerConnection.join(url);
-        logger.info("Creating credentials...");
-        Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
+        logger.info("Done.");
         logger.info("Logging in...");
+        Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
         schedulerStub = auth.login(cred);
+        logger.info("Done.");
+        logger.info("Completing connection...");
         SchedulerEventsListener aa = PAActiveObject.newActive(SchedulerEventsListener.class, new Object[]{}); 
         usePolling = polling;
         if (usePolling == false){
 	        schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
         }
+        logger.info("Done.");
 	}
 	
 	
@@ -108,6 +111,7 @@ public class SchedulerStubProberJava {
 	 */
 	public String submitJob(String name, String taskname) throws NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException, UserException{
 		// Configuration of the job.
+		logger.info("Submitting '" + name + "' job...");
 		TaskFlowJob job = new TaskFlowJob();
         job.setName(name);
         job.setPriority(
@@ -123,6 +127,7 @@ public class SchedulerStubProberJava {
         // Submission of the job.
 		JobId ret = schedulerStub.submit(job);	// Submit the job to the scheduler.
 		
+		logger.info("Done.");
 		if (ret!=null){
 			return ret.value();
 		}else{
@@ -149,6 +154,7 @@ public class SchedulerStubProberJava {
 	 * @param jobId, the ID of the job to wait. 
 	 * @throws InterruptedException */
 	public void waitUntilJobFinishes(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException, InterruptedException{
+		logger.info("Waiting for " + jobId + " job...");
 		if (usePolling == false){
 			do{
 				synchronized(SchedulerStubProberJava.class){
@@ -170,6 +176,7 @@ public class SchedulerStubProberJava {
 				finished = (status.equals(JobStatus.FINISHED));
 			}while(finished == false);	
 		}
+		logger.info("Done.");
 	}
 
 
@@ -227,14 +234,18 @@ public class SchedulerStubProberJava {
 	 * This is specially useful to delete the probe job, so we do not contaminate what the administrator sees.
 	 * @param jobId, the ID of the job. */
 	public void removeJob(String jobId) throws Exception, NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
+		logger.info("Removing job "+ jobId + "...");
 		schedulerStub.removeJob(jobId);
+		logger.info("Done.");
 	}
 	
 	
 	/** 
 	 * Disconnect from the Scheduler. */
 	public void disconnect() throws NotConnectedException, PermissionException, HttpException, IOException{		
+		logger.info("Disconnecting...");
 		schedulerStub.disconnect();
+		logger.info("Done.");
 	}
 	
 	/**
@@ -270,4 +281,35 @@ public class SchedulerStubProberJava {
 		}
 		return jobs;
 	}
+
+	// Removal of old probe jobs. 
+	public void removeOldProbeJobs(String jobname, boolean deleteallold) throws UnknownJobException, InvalidProtocolException, Exception{
+		Vector<String> schedulerjobs;
+		if (deleteallold==true){
+			logger.info("Removing ALL old jobs (that belong to this user)...");
+			schedulerjobs = getAllCurrentJobsList("*");		// Get ALL jobs (no matter their name).
+		}else{
+			logger.info("Removing same-name old jobs...");
+			schedulerjobs = getAllCurrentJobsList(jobname);	// Get all jobs with the same name as this probe job.
+		}
+		
+		if (schedulerjobs.size()>0){
+			logger.info("\tThere are old jobs...");
+			for(String jobb:schedulerjobs){
+				logger.info("\tRemoving old job with JobId " + jobb + "...");
+				JobProber.setLastStatuss("connected to scheduler, removing old job (jobid " + jobb + ")...");
+				forceJobKillingAndRemoval(jobb);
+				logger.info("\tWaiting until cleaned...");
+				waitUntilJobIsCleaned(jobb); // Wait until either job's end or removal.
+				logger.info("\tDone.");
+			}
+		}else{
+			logger.info("\tThere are no old jobs...");
+		}
+		schedulerjobs = getAllCurrentJobsList(jobname);
+		if (schedulerjobs.size()!=0){
+			throw new Exception("ERROR (not possible to remove all previous '"+jobname+"' probe jobs in the scheduler)");
+		}
+		logger.info("Done.");
+	}	
 }

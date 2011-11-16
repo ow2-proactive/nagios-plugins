@@ -35,7 +35,7 @@
  * $$PROACTIVE_INITIAL_DEV$$
  */
 
-package qosprober.misc;
+package qosprobercore.misc;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -47,9 +47,7 @@ import java.io.InputStreamReader;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-import org.ow2.proactive.scheduler.common.job.Job;
-import org.ow2.proactive.scheduler.common.job.factories.JobFactory;
-import qosprober.main.JobProber;
+import qosprobercore.main.NagiosPlugin;
 
 /** This class is supposed to have multiple minor functionalities. */
 public class Misc {
@@ -57,7 +55,8 @@ public class Misc {
 	
     private Misc(){}
     
-    /* Read all the content of a resource file. */
+    /**
+     * Read all the content of a resource file. */
     public static String readAllTextResource(String resource) throws IOException{
 		InputStream is = Misc.class.getResourceAsStream(resource);
 	    InputStreamReader isr = new InputStreamReader(is);
@@ -72,12 +71,6 @@ public class Misc {
 	    is.close();
 	    return ret;
 	}
-    
-    /* Return the name of a job by reading its job file descriptor. */
-    public static String getJobNameFromJobDescriptor(String jobdescxmlpath) throws Exception{
-    	Job job = JobFactory.getFactory().createJob(jobdescxmlpath);
-    	return job.getName();
-    }
     
     /** 
 	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
@@ -128,41 +121,39 @@ public class Misc {
 	}
 	
 	/**
+	 * Creates a default set of properties for the log4j logging module. */
+	public static Properties getVerboseLoggingProperties(){
+		Properties properties = new Properties();
+		properties.put("log4j.rootLogger",				"INFO,STDOUT"); 		// By default, show everything.
+		/* STDOUT Appender. */
+		properties.put("log4j.appender.STDOUT",			"org.apache.log4j.ConsoleAppender");
+		properties.put("log4j.appender.STDOUT.Target",	"System.out");
+		properties.put("log4j.appender.STDOUT.layout",	"org.apache.log4j.PatternLayout");
+		properties.put("log4j.appender.STDOUT.layout.ConversionPattern","[%20.20c] %5p -     %m%n");
+		return properties;
+	}
+	
+	/**
 	 * Configures de log4j module for logging. */
 	public static void log4jConfiguration(int debuglevel){
 		System.setProperty("log4j.configuration", "");
-		if (debuglevel == JobProber.DEBUG_LEVEL_3USER){
-			/* We load the log4j.properties file. */
-			PropertyConfigurator.configure("log4j.properties");
+		if (debuglevel == NagiosPlugin.DEBUG_LEVEL_3_USER){
+			// We load the log4j.properties file. 
+			File file = new File("log4j.properties");
+			if (file.exists() == true){
+				PropertyConfigurator.configure("log4j.properties");
+			}else{
+				Properties properties = Misc.getVerboseLoggingProperties();
+				PropertyConfigurator.configure(properties);
+			}
 		}else {
-			/* We do the log4j configuration on the fly. */
+			// We do the log4j configuration on the fly. 
 			Properties properties = Misc.getSilentLoggingProperties();
 			PropertyConfigurator.configure(properties);
 		}
 	}
 
-	/**
-	 * Used when a parameter given by the user is wrong. 
-	 * Print a message, then the usage of the application, and the exits the application. */
-	public static void printMessageUsageAndExit(String mainmessage){
-		System.out.println(mainmessage);
-	    Misc.printUsage();
-	    System.exit(JobProber.RESULT_CRITICAL);
-	}
 	
-	/**
-	 * Print the version of the plugin and the exits the application. */
-	public static void printVersionAndExit(){
-		String usage = null;
-		try {
-			usage = Misc.readAllTextResource("/resources/version.txt");
-			System.err.println(usage);
-		} catch (IOException e) {
-			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
-		}
-	    System.exit(JobProber.RESULT_OK);
-	}
-
 	/**
 	 * Parse the corresponding value, and if any problem, return the default value given. */
 	public static Integer parseInteger(String o, Integer defaultvalue){
