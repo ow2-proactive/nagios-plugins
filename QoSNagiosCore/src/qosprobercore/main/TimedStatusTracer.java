@@ -39,9 +39,7 @@ package qosprobercore.main;
 
 import java.util.Locale;
 import java.util.Properties;
-
 import org.apache.log4j.Logger;
-
 import qosprobercore.misc.Misc;
 
 /** 
@@ -51,11 +49,10 @@ import qosprobercore.misc.Misc;
  *    -Job result comparison 
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
 public class TimedStatusTracer {
-
+	private static TimedStatusTracer instance;				// Singleton.
 	private TimeTick timetick;
 	private Properties timingMeasurements;
 	private Properties timingMeasurementsReference;
-	
 	private String lastStatusDescription = null;			// Holds a message representative of the current status of the test. 
 															// It is used in case of TIMEOUT, to help the administrator guess 
 															// where the problem is.
@@ -68,18 +65,25 @@ public class TimedStatusTracer {
 	public static void main(String args[]) throws Exception{
 		Misc.log4jConfiguration(3);
 		TimedStatusTracer st = new TimedStatusTracer();
-		st.finishLastMeasurementAndStartNewOne("first");
+		st.finishLastMeasurementAndStartNewOne("first", "status1 here");
 		Thread.sleep(1000); // Initializing part.
-		st.finishLastMeasurementAndStartNewOne("second");
+		st.finishLastMeasurementAndStartNewOne("second", "status2 here");
 		Thread.sleep(2000); // Middle part.
-		st.finishLastMeasurementAndStartNewOne("third");
+		st.finishLastMeasurementAndStartNewOne("third", "status3 here");
 		Thread.sleep(3000); // Disconnection part.
 		st.finishLastMeasurement();
 		st.addNewReference("warning", 10.0);
-		System.out.println(st.getMeasurementsSummaryWithTotal());
+		System.out.println(st.getMeasurementsSummary("all"));
 	}
 	
-	public TimedStatusTracer(){
+	public static TimedStatusTracer getInstance(){
+		if (instance==null){
+			instance = new TimedStatusTracer();
+		}
+		return instance;
+	}
+	
+	private TimedStatusTracer(){
 		timingMeasurements = new Properties();
 		timingMeasurementsReference = new Properties();
 		timetick = new TimeTick();
@@ -109,26 +113,42 @@ public class TimedStatusTracer {
 		setLastStatusDescription(currentStatus);
 	}
 	
-	
 	public synchronized void addNewReference(String label, Double time_sec){
 		timingMeasurementsReference.put((String)label, time_sec);
 	}
 	
-	public synchronized String getMeasurementsSummaryWithTotal(){
+	public synchronized String getMeasurementsSummary(String totalLabel){
 		String ret_measurements = "";
 		String ret_total = "";
 		String ret_references = "";
-		Double total =-new Double(0.0);
+		Double total = new Double(0.0);
+		
 		for (Object key: timingMeasurements.keySet()){
 			Double timing = (Double)timingMeasurements.get(key.toString());
 			total += timing;
-			ret_measurements = key + "=" +String.format(Locale.ENGLISH, "%1.03f", timing) + " " + ret_measurements;
+			ret_measurements = key + "=" + String.format(Locale.ENGLISH, "%1.03f", timing) + " " + ret_measurements;
 		}
-		ret_total = "total_all="+String.format(Locale.ENGLISH, "%1.03f", total) + " ";
+		
+		if (totalLabel == null){
+			ret_total = "";
+		}else{
+			ret_total = totalLabel + "=" + String.format(Locale.ENGLISH, "%1.03f", total) + " ";
+		}
+		
 		for (Object key: timingMeasurementsReference.keySet()){
-			ret_references = key + "=" +String.format(Locale.ENGLISH, "%1.03f", timingMeasurementsReference.get(key.toString())) + " " + ret_references;
+			ret_references = key + "=" + String.format(Locale.ENGLISH, "%1.03f", timingMeasurementsReference.get(key.toString())) + " " + ret_references;
 		}
+		
 		return ret_total + ret_measurements + ret_references;
+	}
+
+	public synchronized Double getTotal(){
+		Double total = new Double(0.0);
+		for (Object key: timingMeasurements.keySet()){
+			Double timing = (Double)timingMeasurements.get(key.toString());
+			total += timing;
+		}
+		return total;
 	}
 	
 	/** 
@@ -148,5 +168,4 @@ public class TimedStatusTracer {
 	public synchronized String getLastStatusDescription(){
 		return lastStatusDescription;
 	}
-	
 }

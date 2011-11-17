@@ -51,6 +51,9 @@ Mandatory arguments to long options are mandatory for short options too.
       
    -g, --polling 
       Wait for the events like job finish and job removal by doing polling (and not using an event based mechanism). 
+
+   -z, --highpriority
+      Set the priority of the job to high (normal is default).
        
    -V, --version
       Print the version of the plugin. 

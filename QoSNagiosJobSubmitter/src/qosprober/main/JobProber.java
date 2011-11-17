@@ -48,12 +48,13 @@ import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.core.node.NodeException;
 import org.ow2.proactive.scheduler.common.exception.SchedulerException;
-import org.ow2.proactive.scheduler.common.job.JobPriority;
 import org.ow2.proactive.scheduler.examples.WaitAndPrint;
 import qosprober.exceptions.InvalidProtocolException;
 import qosprobercore.main.NagiosPlugin;
 import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.NagiosReturnObject;
+import qosprobercore.main.TimedStatusTracer;
+
 import org.apache.commons.cli.*;
 
 /** 
@@ -68,12 +69,7 @@ public class JobProber {
 		"nagios_plugin_probe_job";							// Name of the probe job in the Scheduler, as the administrator will see it.
 	public static final String TASK_CLASS_NAME = 
 		WaitAndPrint.class.getName();						// Class to be instantiated and executed as a task in the Scheduler.
-	public static String EXPECTED_JOB_OUTPUT;				// The job output that is expected. It is used to check the right execution of the job. 
-	public static JobPriority DEFAULT_JOB_PRIORITY = 
-		JobPriority.NORMAL;									// Priority of the probe job used for the test. 
-	private static String lastStatus;						// Holds a message representative of the current status of the test.
-															// It is used in case of TIMEOUT, to help the administrator guess
-															// where the problem is.
+	public static String expectedJobOutput;					// The job output that is expected. It is used to check the right execution of the job. 
 	public static Logger logger = 
 			Logger.getLogger(JobProber.class.getName()); 	// Logger.
 	
@@ -83,8 +79,6 @@ public class JobProber {
 	 * @return Nagios error code. */
 	public static void main(String[] args) throws Exception{
 	
-		JobProber.setLastStatuss("started, parsing arguments and basic initialization...");
-		
 		/* Parsing of arguments. */
 		Options options = new Options();
 		// short, long, hasargument, description
@@ -104,6 +98,7 @@ public class JobProber {
         Option deletealloldO = 	new Option("d", "deleteallold", false, ""); 	deletealloldO.setRequired(false); options.addOption(deletealloldO);
         Option pollingO = 		new Option("g", "polling", false, ""); 			pollingO.setRequired(false); options.addOption(pollingO);
         Option versionO = 		new Option("V", "version", false, ""); 			versionO.setRequired(false); options.addOption(versionO);
+        Option highpriorityO = 	new Option("z", "highpriority", false, ""); 	highpriorityO.setRequired(false); options.addOption(highpriorityO);
 
         CommandLine parser = null;
         try{
@@ -130,96 +125,64 @@ public class JobProber {
 		ar.put("deleteallold", new Boolean(parser.hasOption("d")));												// Delete all old jobs, not only the ones with the name of the current probe job.
 		ar.put("polling", new Boolean(parser.hasOption("g")));													// Do polling or use an event based mechanism.
 		ar.put("version", new Boolean(parser.hasOption("V")));													// Prints the version of the plugin.
-	
-		if ((Boolean)ar.get("help") == true){	
+		ar.put("highpriority", new Boolean(parser.hasOption("z")));												// Set high priority for the job (not normal priority).
+
+		Integer debug = (Integer)ar.get("debug");																// Debug level to be used.
+		
+		if ((Boolean)ar.get("help") == true)	
 			NagiosPlugin.printMessageUsageAndExit("");
-		}
-		if ((Boolean)ar.get("version") == true){
+		
+		if ((Boolean)ar.get("version") == true)
 			NagiosPlugin.printVersionAndExit();
-		}
 		
-		/* Loading log4j configuration. */
-		Misc.log4jConfiguration((Integer)ar.get("debug"));
+		Misc.log4jConfiguration(debug);						// Loading log4j configuration. 
 		
-		/* Show all the arguments considered. */
-		
-		for (Object key: ar.keySet()){
-			logger.info("\t" + key + ": " + ar.get(key.toString()));
-		}
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		System.exit(0);
+		for (String key: ar.keySet())						// Show all the arguments considered. 
+			logger.info("\t" + key + ":'" + ar.get(key) + "'");
 		
 		/* Loading job's expected output. */
-		EXPECTED_JOB_OUTPUT = Misc.readAllTextResource("/resources/expectedoutput.txt");
+		expectedJobOutput = Misc.readAllTextResource("/resources/expectedoutput.txt");
 		
 		PAEnvironmentInitializer.initPAConfiguration(ar);
-		JobProber.setLastStatuss("basic initialization done, initializing probe module...");
 		
-		/* We prepare now our probe to run it in a different thread. */
-		/* The probe consists in a job submission done to the Scheduler. */
+		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
 		ExecutorService executor = Executors.newFixedThreadPool(1);
 		
-		Callable<Object[]> proberCallable = new Callable<Object[]>(){
-			public Object[] call() throws Exception {
-				return JobProber.probe(ar);
+		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.
+		
+		// We add some reference values to be printed later in the summary for Nagios.
+		tracer.addNewReference("timeout_threshold", new Double((Integer)ar.get("timeoutsec")));
+		tracer.addNewReference("time_all_warning_threshold", new Double((Integer)ar.get("timeoutwarnsec")));
+
+		Callable<NagiosReturnObject> proberCallable = new Callable<NagiosReturnObject>(){
+			public NagiosReturnObject call() throws Exception {
+				return JobProber.probe(ar, tracer);
 			}
 		};
 
-		/* We submit to the executor the prober activity (and the prober will then 
-		 * submit a job to the scheduler in that activity). */
-		Future<Object[]> proberFuture = executor.submit(proberCallable); // We ask to execute the probe.
-		
-		try{
-			/* We execute the future using a timeout. */
-			Object[] res = proberFuture.get((Integer)ar.get("timeoutsec"), TimeUnit.SECONDS);
-			/* At this point all went okay. */ 
-			NagiosPlugin.printAndExit((Integer)res[0], (String)res[1]);
-		}catch(TimeoutException e){
-			logger.info("Exception ", e);
-			/* The execution took more time than expected. */
-			NagiosPlugin.printAndExit(
-					NagiosReturnObject.RESULT_2_CRITICAL, 
-					"TIMEOUT OF "+(Integer)ar.get("timeoutsec")+ " SEC. (last status was: " + JobProber.getLastStatus() + ")", 
-					(Integer)ar.get("debug"),
-					e);
-		}catch(ExecutionException e){
-			/* There was a problem with the execution of the prober. */
-			logger.info("Exception ", e);
-			NagiosPlugin.printAndExit(
-					NagiosReturnObject.RESULT_2_CRITICAL, 
-					"FAILURE: " + e.getMessage(),
-					(Integer)ar.get("debug"),
-					e);
-		}catch(Exception e){
-			/* There was an unexpected critical exception not captured. */
-			logger.info("Exception ", e);
-			NagiosPlugin.printAndExit(
-					NagiosReturnObject.RESULT_2_CRITICAL, 
-					"CRITICAL ERROR: " + e.getMessage(),
-					(Integer)ar.get("debug"),
-					e);
-		}
-	}
+		// We submit to the executor the prober activity (and the prober will then submit a job to the scheduler in that activity). 
+		Future<NagiosReturnObject> proberFuture = executor.submit(proberCallable); // We ask to execute the probe.
 	
+		NagiosReturnObject res = null;
+		try{ 								// We execute the future using a timeout. 
+			res = proberFuture.get((Integer)ar.get("timeoutsec"), TimeUnit.SECONDS);
+			res.appendCurvesSection(tracer.getMeasurementsSummary("time_all"));
+		}catch(TimeoutException e){
+			logger.info("Exception ", e); 	// The execution took more time than expected. 
+			res = new NagiosReturnObject(
+					NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+(Integer)ar.get("timeoutsec")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
+			logger.info("Exception ", e);
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
+			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
+			logger.info("Exception ", e);
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
+			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+		}
+		NagiosPlugin.printAndExit(res, debug);
+	}
 	
 	/**
 	 * Probe the scheduler
@@ -233,142 +196,68 @@ public class JobProber {
 	 *   - disconnect
 	 *  After a correct disconnection call, the output of the job is compared with a 
 	 *  given correct output, and the result of the test is told. 
-	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. */	 
-	public static Object[] probe(HashMap<String, Object> args) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
-		String jobname = (String)args.get("jobname");
-		TimeTick timer = new TimeTick(); // We want to get time durations.
+	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. */	 
+	public static NagiosReturnObject probe(HashMap<String, Object> args, TimedStatusTracer tracer) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
+		String jobname = (String)args.get("jobname");							// Name of the job to be submitted to the scheduler.
 		
-		/* We get connected to the Scheduler through this stub, later we submit a job, etc. */
+		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
-		SchedulerStubProberJava schedulerstub = new SchedulerStubProberJava();		// We create directly the stub prober.
-		double time_initializing = timer.tickSec();
+		SchedulerStubProberJava schedulerstub = new SchedulerStubProberJava();	// We create directly the stub prober.
 		
-		JobProber.setLastStatuss("scheduler stub created, connecting to shceduler...");
+		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to the scheduler...");
 		
-		// Connection with the scheduler. 
-		schedulerstub.init((String)args.get("url"), (String)args.get("user"), (String)args.get("pass"), (Boolean)args.get("polling"));						// Login procedure...
-		JobProber.setLastStatuss("connected to scheduler, removing old jobs...");
+		schedulerstub.init(														// We get connected to the Scheduler.
+				(String)args.get("url"), (String)args.get("user"), (String)args.get("pass"), (Boolean)args.get("polling"));	
 		
-		double time_connection = timer.tickSec();
+		tracer.finishLastMeasurementAndStartNewOne("time_removing_old_jobs", "connected, removing old jobs...");	
 		
-		// Removal of old probe jobs. 
-		schedulerstub.removeOldProbeJobs(jobname, (Boolean)args.get("deleteallold"));
+		schedulerstub.removeOldProbeJobs(										// Removal of old probe jobs.
+				jobname,(Boolean)args.get("deleteallold"));
 		
-		double time_removing_old_jobs = timer.tickSec();
-		JobProber.setLastStatuss("removed old jobs, submitting job...");
+		tracer.finishLastMeasurementAndStartNewOne("time_submission", "connected, submitting job...");
 	
-		// Job submission, wait for execution, and output retrieval. 
+		String jobId = schedulerstub.submitJob(									// Submission of the job.
+				jobname, JobProber.TASK_CLASS_NAME, (Boolean)args.get("highpriority"));	
 		
-		int output_to_return = NagiosReturnObject.RESULT_2_CRITICAL; 
-		String output_to_print = "NO TEST PERFORMED"; 			// Default output (for Nagios).
+		tracer.finishLastMeasurementAndStartNewOne("time_execution", "job " + jobId + " submitted, waiting for its execution...");
 		
-		String jobId = schedulerstub.submitJob(
-				jobname, JobProber.TASK_CLASS_NAME); 			// Submission of the job.
+		schedulerstub.waitUntilJobFinishes(jobId); 								// Wait for the job to finish.
 		
-		JobProber.setLastStatuss("job "+jobId+" submitted, waiting for it...");
+		tracer.finishLastMeasurementAndStartNewOne("time_retrieval", "job " + jobId + " executed, getting its output...");
 		
-		double time_submission = timer.tickSec();
+		String jresult = schedulerstub.getJobResult(jobId); 					// Getting the result of the submitted job.
 		
-		schedulerstub.waitUntilJobFinishes(jobId); 				// Wait for the job to finish.
-		
-		JobProber.setLastStatuss("job "+jobId+" finished, getting its result...");
-		
-		double time_execution = timer.tickSec();
-		
-		String jresult = schedulerstub.getJobResult(jobId); 	// Getting the result of the submitted job.
-		
-		JobProber.setLastStatuss("job "+jobId+" result retrieved, removing job from scheduler...");
-		
-		double time_retrieval = timer.tickSec();
+		tracer.finishLastMeasurementAndStartNewOne("time_removal", "output obtained, removing job...");
 	
-		// Removal of the probe job from the scheduler. 
-		schedulerstub.removeJob(jobId);							// Job removed from the list of jobs in the Scheduler.
+		schedulerstub.removeJob(jobId);											// Job removed from the list of jobs in the Scheduler.
 		
-		double time_removal = timer.tickSec();
+		tracer.finishLastMeasurementAndStartNewOne("time_disconn", "job removed, disconnecting...");
 		
-		JobProber.setLastStatuss("job "+jobId+" removed from scheduler, disconnecting...");
+		schedulerstub.disconnect();												// Getting disconnected from the Scheduler.
+		
+		tracer.finishLastMeasurement();
 	
-		// Disconnection from the scheduler. 
+		NagiosReturnObject ret = new NagiosReturnObject(
+				NagiosReturnObject.RESULT_2_CRITICAL, "NO TEST PERFORMED"); // Default output (for Nagios).
 		
-		schedulerstub.disconnect();								// Getting disconnected from the Scheduler.
-		
-		JobProber.setLastStatuss("disconnected from scheduler, checking job result...");
-		
-		double time_disconn = timer.tickSec();
-		
-		double time_all = time_initializing+time_connection+time_removing_old_jobs+time_submission+time_execution+time_retrieval+time_removal+time_disconn;
-		
-		String timesummary = "";
-		
-/*		String timesummary =
-			"time_initialization=" + String.format(Locale.ENGLISH, "%1.03f", time_initializing) + "s " +
-			"time_connection=" + String.format(Locale.ENGLISH, "%1.03f", time_connection)   + "s " +
-			"time_cleaning_old_jobs=" + String.format(Locale.ENGLISH, "%1.03f", time_removing_old_jobs) + "s " +
-			"time_submission=" + String.format(Locale.ENGLISH, "%1.03f", time_submission)   + "s " + 
-			"time_execution=" + String.format(Locale.ENGLISH, "%1.03f", time_execution )   + "s " + 
-			"time_output_retrieval=" + String.format(Locale.ENGLISH, "%1.03f", time_retrieval )   + "s " +
-			"time_job_removal=" + String.format(Locale.ENGLISH, "%1.03f", time_removal   )   + "s " + 
-			"time_disconnection=" + String.format(Locale.ENGLISH, "%1.03f", time_disconn   )   + "s " +
-			"timeout_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutsec)   + "s " +
-			"time_all_warning_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutwarnsec)   + "s " +
-			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", time_all) + "s"; 
-*/		
-				
-		logger.info("Checking output...");
 		if (jresult==null){ 		// No job result obtained... It must never happen, but we check just in case.
 			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
-			output_to_print = "JOBID " + jobId + " ERROR (no job result obtained)";
-			output_to_return = NagiosReturnObject.RESULT_2_CRITICAL;
+			ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "JOBID " + jobId + " ERROR (no job result obtained)");
 		}else{ 						// Non-timeout case. Result obtained.
 			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: '" + jresult.toString() + "'.");
 			
-//			try { 
-//				/* To have a better checking of the output of the job, just remove the extension '.tmp' of this output, (remaining a '.out' file).
-//				 * This '.out' file is the file used to match the output of the job.
-//				 */
-//				String ppath = "/tmp/output";
-//				logger.info("Writing output in '" + ppath + "'...");
-//				Misc.writeAllFile(ppath, jresult.toString());
-//				logger.info("Done.");
-//			} catch (Exception e1) {
-//				logger.warn("Could not write the output of the process.", e1);
-//			}
-//			
-			if (jresult.toString().equals(EXPECTED_JOB_OUTPUT)){ 		// Checked file, all OK.
-				if (time_all > (Integer)args.get("timeoutwarnsec")){
-					output_to_return = NagiosReturnObject.RESULT_1_WARNING;
-					output_to_print = "JOBID " + jobId + " TOO SLOW | " + timesummary;
+			if (jresult.toString().equals(expectedJobOutput)){ 		// Checked file, all OK.
+				if (tracer.getTotal() > (Integer)args.get("timeoutwarnsec")){
+					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "JOBID " + jobId + " TOO SLOW");
 				}else{
-					output_to_return = NagiosReturnObject.RESULT_0_OK;
-					output_to_print = "JOBID " + jobId + " OK | " + timesummary;
+					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "JOBID " + jobId + " OK");
 				}
 			}else{ 														// Outputs were different. 
-				output_to_return = NagiosReturnObject.RESULT_2_CRITICAL;
-				output_to_print = "JOBID " + jobId + " OUTPUT CHECK FAILED | " + timesummary;
+				ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "JOBID " + jobId + " OUTPUT CHECK FAILED");
 			}
 		}
-		
-		Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
-		ret[0] = new Integer(output_to_return);
-		ret[1] = output_to_print;
-			
 		return ret;
 	}
-		
-	/** 
-	 * Save a message regarding the last status of the probe. 
-	 * This last status will be used in case of timeout to tell Nagios up to which point
-	 * (logging, job submission, job retrieval, etc.) the probe arrived. */
-	public synchronized static void setLastStatuss(String laststatus){
-		JobProber.lastStatus = laststatus;
-	}
-	
-	/** 
-	 * Get a message regarding the last status of the probe. 
-	 * This last status will be used in case of timeout to tell Nagios up to which point
-	 * (logging, job submission, job retrieval, etc.) the probe arrived. 
-	 * @return the last status of the test. */
-	public synchronized static String getLastStatus(){
-		return JobProber.lastStatus;
-	}
 }
+//controlar cada uno de los casos y los timeouts
+ //si se puede controlar que para ver la version nada va a funcionar (ver el -V)

@@ -1,5 +1,43 @@
-package qosprobercore.main;
+/*
+ * ################################################################
+ *
+ * ProActive Parallel Suite(TM): The Java(TM) library for
+ *    Parallel, Distributed, Multi-Core Computing for
+ *    Enterprise Grids & Clouds
+ *
+ * Copyright (C) 1997-2011 INRIA/University of
+ *                 Nice-Sophia Antipolis/ActiveEon
+ * Contact: proactive@ow2.org or contact@activeeon.com
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation; version 3 of
+ * the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+ * USA
+ *
+ * If needed, contact us to obtain a release under GPL Version 2 or 3
+ * or a different license than the AGPL.
+ *
+ *  Initial developer(s):               The ProActive Team
+ *                        http://proactive.inria.fr/team_members.htm
+ *  Contributor(s):
+ *
+ * ################################################################
+ * $$PROACTIVE_INITIAL_DEV$$
+ */
 
+package qosprobercore.main;
+/** It behaves as a structure where to put all the information that will be told to the administrator
+ * who controls/monitors the plugin via Nagios. */
 public class NagiosReturnObject {
 	/** Nagios exit codes. */
 	public static final int RESULT_0_OK = 0; 				// Nagios code. Execution successfully. 
@@ -7,16 +45,38 @@ public class NagiosReturnObject {
 	public static final int RESULT_2_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
 	public static final int RESULT_3_UNKNOWN = 3; 			// Nagios code. Unknown state of the tested entity.
 	
-	private String errorMessage;
-	private int errorCode;
+	private String errorMessage;							// Message to be told to Nagios.
+	private String curvesSection;							// Curves section for Nagios to use to generate curves. 
+	private int errorCode;									// Error code to be told to Nagios.
+	private Throwable exception;							// Exception to be told to Nagios.
+	
 	public NagiosReturnObject(int errorCode, String errorMessage){
+		this(errorCode, errorMessage, null);
+	}
+	
+	public NagiosReturnObject(int errorCode, String errorMessage, Throwable exception){
 		this.errorCode = errorCode;
 		this.errorMessage = errorMessage;
+		this.exception = exception;
+		this.curvesSection = null;
 	}
-	public String getErrorMessage(){
-		return errorMessage;
+	
+	public void appendCurvesSection(String str){
+		if (curvesSection == null)
+			curvesSection = str;
+		else
+			this.curvesSection = this.curvesSection + " " + str;
 	}
+	
+	public String getWholeMessage(){
+		return errorMessage + " | " + curvesSection;
+	}
+	
 	public int getErrorCode(){
 		return errorCode;
+	}
+	
+	public Throwable getException(){
+		return exception;
 	}
 }

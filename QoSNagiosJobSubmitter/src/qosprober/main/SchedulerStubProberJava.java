@@ -109,13 +109,12 @@ public class SchedulerStubProberJava {
 	 * @param taskname, name of the class to be instantiated and executed as the task for this job. 
 	 * @return and ID of the submitted job in case of success. 
 	 */
-	public String submitJob(String name, String taskname) throws NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException, UserException{
+	public String submitJob(String name, String taskname, Boolean highpriority) throws NotConnectedException, PermissionException, SubmissionClosedException, JobCreationException, UserException{
 		// Configuration of the job.
 		logger.info("Submitting '" + name + "' job...");
 		TaskFlowJob job = new TaskFlowJob();
         job.setName(name);
-        job.setPriority(
-        		JobProber.DEFAULT_JOB_PRIORITY);// Configure the priority of the probe job.
+        job.setPriority(highpriority?JobPriority.HIGH:JobPriority.NORMAL);
         job.setCancelJobOnError(true);
         job.setDescription("Nagios plugin probe job.");
         JavaTask task = new JavaTask(); 		// Create the java task.
@@ -297,7 +296,6 @@ public class SchedulerStubProberJava {
 			logger.info("\tThere are old jobs...");
 			for(String jobb:schedulerjobs){
 				logger.info("\tRemoving old job with JobId " + jobb + "...");
-				JobProber.setLastStatuss("connected to scheduler, removing old job (jobid " + jobb + ")...");
 				forceJobKillingAndRemoval(jobb);
 				logger.info("\tWaiting until cleaned...");
 				waitUntilJobIsCleaned(jobb); // Wait until either job's end or removal.
