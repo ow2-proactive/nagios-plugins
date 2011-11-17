@@ -1,6 +1,6 @@
 
 SYNOPSIS
-   java -jar jobsubmprobe.jar --url URL --user USER --pass PASS --timeout TIMEOUT (--paconf PACONF | --hostname HOST --port PORT) [OPTIONS]
+   java -jar jobsubmprobe.jar --url URL --user USER --pass PASS --timeout TIMEOUT [OPTIONS]
 
 DESCRIPTION
 
@@ -20,7 +20,7 @@ Mandatory arguments to long options are mandatory for short options too.
       
    -r, --url URL
       URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
-      It should have a format like 'rmi://shainese.inria.fr:1099/' for JAVAPA     
+      It should have a format like 'rmi://shainese.inria.fr:1099/' 
        
    -t, --timeout TIMEOUT
       Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
@@ -29,13 +29,13 @@ Mandatory arguments to long options are mandatory for short options too.
       In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status. It is important to note that the probe is not killed with this timeout.  
       
    -f, --paconf PACONF
-      ProActive configuration file (usually ProActiveConfiguration.xml).
+      ProActive configuration file (usually ProActiveConfiguration.xml). Needed if a PAMR router is present.
       
    -H, --hostname HOSTNAME
-      Hostname to be tested. Ignored if a ProActive configuration file is provided. 
+      PAMR router hostname to use to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
       
    -x, --port PORT
-      Port to be used to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
+      PAMR router port to be used to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
       
    -w, --warning WARNING
       Ignored. Nagios compatibility. Warning level to be used.

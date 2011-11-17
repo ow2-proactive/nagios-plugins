@@ -40,7 +40,6 @@ package qosprobercore.main;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.HashMap;
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.core.config.ProActiveConfiguration;
 
@@ -69,14 +68,10 @@ public class PAEnvironmentInitializer {
 		logger.info("Done.");
 	}
 
-	public static void initPAConfiguration(HashMap<String, Object> properties) throws Exception{
+	public static void initPAConfiguration(String paconf, String host, String port) throws Exception{
 		/* Security policy procedure. */
 		createPolicyAndLoadIt();
 
-		String paconf = (String)properties.get("paconf");
-		String host = (String)properties.get("host");
-		String port = (String)properties.get("port");
-		
 		/* Load ProActive configuration. */
 		boolean usepaconffilee = false;
 		/* Check whether to use or not the ProActive configuration file. */

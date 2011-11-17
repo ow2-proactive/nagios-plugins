@@ -113,7 +113,7 @@ public class TimedStatusTracer {
 		setLastStatusDescription(currentStatus);
 	}
 	
-	public synchronized void addNewReference(String label, Double time_sec){
+	public synchronized void addNewReference(String label, Number time_sec){
 		timingMeasurementsReference.put((String)label, time_sec);
 	}
 	

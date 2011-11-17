@@ -44,6 +44,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -164,5 +166,13 @@ public class Misc {
 			ret = defaultvalue;
 		}
 		return ret;
+	}
+	
+	public static void allElementsAreNotNull(Collection<String> notnull, HashMap<String, Object> set) throws IllegalArgumentException{
+		for (String key:notnull){
+			if (set.get(key)==null){
+				throw new IllegalArgumentException("The argument '" + key + "' is null.");
+			}
+		}
 	}
 }
