@@ -25,5 +25,6 @@
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/commons-httpclient-3.1.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/ejb3-persistence.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/commons-cli-1.1.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/QoSNagiosCore"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

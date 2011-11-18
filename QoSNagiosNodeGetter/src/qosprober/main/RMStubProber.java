@@ -47,6 +47,7 @@ import org.ow2.proactive.authentication.crypto.Credentials;
 import org.ow2.proactive.resourcemanager.authentication.RMAuthentication;
 import org.ow2.proactive.resourcemanager.exception.RMException;
 import org.ow2.proactive.resourcemanager.frontend.RMConnection;
+import org.objectweb.proactive.core.node.Node;
 import org.ow2.proactive.resourcemanager.frontend.ResourceManager;
 import org.ow2.proactive.utils.NodeSet;
 
@@ -63,18 +64,15 @@ public class RMStubProber {
 	 * Uses the url of the RM, and the user/pass to login to it. 
 	 */
 	public void init(String url, String user, String pass) throws RMException, KeyException, LoginException{
-    	logger.info("\tJoining the Resource Manager...");
+    	logger.info("Joining the Resource Manager...");
         RMAuthentication auth = RMConnection.join(url); 	// Join the RM.
-        logger.info("\tDone.");
-        logger.info("\tCreating credentials...");
+        logger.info("Done.");
+        logger.info("Creating credentials...");
         Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
-        logger.info("\tDone.");
-        logger.info("\tLogging in...");
+        logger.info("Done.");
+        logger.info("Logging in...");
         rmStub = auth.login(cred);								// Login against the RM.
-        logger.info("\tDone.");
-        
-        //RMEventsListener aa = PAActiveObject.newActive(RMEventsListener.class, new Object[]{}); 
-        //rmStub.addEventListener((RMEventsListener) aa, true);
+        logger.info("Done.");
 	}
 	
 	/**
@@ -83,6 +81,11 @@ public class RMStubProber {
 	 */
 	public NodeSet getNodes(int amountOfNodesRequired){
 		NodeSet ns = rmStub.getAtMostNodes(amountOfNodesRequired, null);
+		logger.info("Listing nodes...");					// List the nodes obtained.
+    	for(Node n:ns){
+    		logger.info("\t - " + n.getNodeInformation().getName());
+    	}
+    	logger.info("Done.");
 		return ns;
 	}
 	
@@ -90,13 +93,17 @@ public class RMStubProber {
 	 * Release the given set of nodes.
 	 */
 	public void releaseNodes(NodeSet setOfNodesToRelease){
+    	logger.info("Releasing nodes...");					
 		rmStub.releaseNodes(setOfNodesToRelease);
+    	logger.info("Done.");					
 	}
 
 	/**
 	 * Disconnect from the Resource Manager.
 	 */
 	public void disconnect(){
+    	logger.info("Disconnecting...");					// Disconnecting from RM.
 		rmStub.disconnect();
+    	logger.info("Done.");	
 	}
 }

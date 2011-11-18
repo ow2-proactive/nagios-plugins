@@ -37,29 +37,20 @@
 
 package qosprober.main;
 
-import java.io.File;
 import java.security.KeyException;
-import java.util.Locale;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.concurrent.*;
 import javax.security.auth.login.LoginException;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.Parser;
+import org.apache.commons.cli.*;
 import org.apache.log4j.Logger;
-import org.objectweb.proactive.core.config.ProActiveConfiguration;
-import org.objectweb.proactive.core.node.Node;
 import org.ow2.proactive.resourcemanager.exception.RMException;
 import org.ow2.proactive.utils.NodeSet;
-import qosprober.misc.Misc;
-
+import qosprobercore.main.NagiosPlugin;
+import qosprobercore.main.NagiosReturnObject;
+import qosprobercore.main.PAEnvironmentInitializer;
+import qosprobercore.main.TimedStatusTracer;
+import qosprobercore.misc.Misc;
 
 /** 
  * This is a general Nagios plugin class that performs a test on the RM, by doing:
@@ -68,221 +59,36 @@ import qosprober.misc.Misc;
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
 public class RMProber {
 
-	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
-	/** Nagios exit codes. */
-	public static final int RESULT_OK       = 0; 			// Nagios code. Execution successfully. 
-	public static final int RESULT_WARNING  = 1; 			// Nagios code. Warning. 
-	public static final int RESULT_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
-	public static final int RESULT_UNKNOWN  = 3; 			// Nagios code. Unknown state of the tested entity.
-	
-	
-	public static final int DEBUG_LEVEL_0SILENT		= 0;	// Debug level, silent mode. 
-	public static final int DEBUG_LEVEL_1EXTENDED 	= 1;	// Debug level, more than silent mode. Shows backtraces if error. 
-	public static final int DEBUG_LEVEL_2VERBOSE	= 2;	// Debug level, similar to the previous one.
-	public static final int DEBUG_LEVEL_3USER		= 3;	// Debug level, debugging only.
-	
-	public static final String COMMUNICATION_PROTOCOL =
-			"pamr";											// Default protocol to be used to get connected to the RM. 
-	private static String lastStatus;						// Holds a message representative of the current status of the test.
-															// It is used in case of TIMEOUT, to help the administrator guess
-															// where the problem is.
-	
 	public static Logger logger = Logger.getLogger(RMProber.class.getName()); // Logger.
+	private HashMap<String, Object> arguments; 				// Arguments given to the prober. 
+	
+	/** 
+	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
+	 * @param args arguments to create this RMProber. */
+	public RMProber(HashMap<String, Object> args){
+		this.arguments = args;
+	}
 	
 	/**
-	 * Starting point.
-	 * The arguments/parameters are specified in the file /resources/usage.txt
-	 * @return Nagios error code. */
-	public static void main(String[] args) throws Exception{
-		
-		RMProber.setLastStatuss("started, parsing arguments and basic initialization...");
+	 * Initialize the ProActive environment for this probe. */
+	public void initializeEnvironment() throws Exception{
+		Misc.log4jConfiguration((Integer)arguments.get("debug"));						// Loading log4j configuration. 
+		/* Loading job's expected output. */
+		PAEnvironmentInitializer.initPAConfiguration(
+			(String)arguments.get("paconf"),
+			(String)arguments.get("hostname"),
+			(String)arguments.get("port"));
+	}
 	
-		/* Parsing of arguments. */
-		Options options = new Options();
-		// short, long, hasargument, description
-        Option helpO =			new Option("h", "help", false, "");			
-        helpO.setRequired(false); options.addOption(helpO);
-        
-        Option debugO =			new Option("v", "debug", true, ""); 		
-        debugO.setRequired(false); options.addOption(debugO);
-        
-        Option userO = 			new Option("u", "user", true, ""); 			
-        userO.setRequired(true); options.addOption(userO);
-        
-        Option passO = 			new Option("p", "pass", true, ""); 			
-        passO.setRequired(true); options.addOption(passO);
-        
-        Option urlO = 			new Option("r", "url", true, ""); 			
-        urlO.setRequired(true); options.addOption(urlO);
-        
-		Option nodesrequiredO = new Option("q", "nodes", true, "");
-        nodesrequiredO.setRequired(false); options.addOption(nodesrequiredO);
-
-		Option nodeswarningO = new Option("b", "nodeswarning", true, "");
-        nodeswarningO.setRequired(false); options.addOption(nodeswarningO);
-	
-        Option nodescriticalO = new Option("s", "nodescritical", true, "");
-        nodescriticalO.setRequired(false); options.addOption(nodescriticalO);
-		
-        Option timeoutsecO = 	new Option("t", "timeout", true, "");		
-        timeoutsecO.setRequired(true); options.addOption(timeoutsecO);
-        
-        Option timeoutwarnsecO =new Option("n", "timeoutwarning", true, "");
-        timeoutwarnsecO.setRequired(false); options.addOption(timeoutwarnsecO);
-        
-        Option paconfO = 		new Option("f", "paconf", true, "");
-        paconfO.setRequired(false); options.addOption(paconfO);
-        
-        Option hostO = 			new Option("H", "hostname", true, "");
-        hostO.setRequired(false); options.addOption(hostO);
-        
-        Option portO = 			new Option("x", "port"    , true, "");
-        portO.setRequired(false); options.addOption(portO);
-        
-        Option warningO = 		new Option("w", "warning", true, "");
-        warningO.setRequired(false); options.addOption(warningO);
-        
-        Option criticalO = 		new Option("c", "critical", true, "");
-        criticalO.setRequired(false); options.addOption(criticalO);
-        
-        Option versionO = 		new Option("V", "version", false, "");
-        versionO.setRequired(false); options.addOption(versionO);
-
-        CommandLine parser = null;
-        try{
-	        Parser parserrr = new GnuParser();
-	        parser = parserrr.parse(options, args);
-        }catch(org.apache.commons.cli.MissingOptionException ex){
-	        Misc.printMessageUsageAndExit(ex.getMessage());	
-        }
-
-		final Boolean help = parser.hasOption("h");																// Help message.
-		final Integer debug = Misc.parseInteger(parser.getOptionValue("v"), RMProber.DEBUG_LEVEL_1EXTENDED);	// Level of verbosity.
-		final String user = (String)parser.getOptionValue("u");			 										// User.
-		final String pass = (String)parser.getOptionValue("p"); 												// Pass.
-		final String url = (String)parser.getOptionValue("r"); 													// Url of the Scheduler/RM.
-		final Integer nodesrequired = Misc.parseInteger(parser.getOptionValue("q"),1); 							// Amount of nodes to be asked to the Resource Manager.
-		final Integer nodeswarning = Misc.parseInteger(parser.getOptionValue("b"),nodesrequired);   			// Obtaining fewer nodes than this, a warning message will be thrown. 
-		final Integer nodescritical = Misc.parseInteger(parser.getOptionValue("s"),nodesrequired); 				// Obtaining fewer nodes than this, a critical message will be thrown. 
-		final Integer timeoutsec = Misc.parseInteger(parser.getOptionValue("t"), null);							// Timeout in seconds for the job to be executed.
-		final Integer timeoutwarnsec = Misc.parseInteger(parser.getOptionValue("n"),timeoutsec);				// Timeout in seconds for the warning message to be thrown.
-		final String paconf = (String)parser.getOptionValue("f"); 												// Path of the ProActive xml configuration file.
-		final String host = (String)parser.getOptionValue("H");						 							// Host to be tested. Ignored.
-		final String port = (String)parser.getOptionValue("x");													// Port of the host to be tested. 
-		final String warning = (String)parser.getOptionValue("w", "ignored");									// Warning level. Ignored.
-		final String critical = (String)parser.getOptionValue("c", "ignored"); 									// Critical level. Ignored. 
-		final Boolean version = parser.hasOption("V");															// Prints the version of the plugin.
-	
-		if (help == true){	
-			// automatically generate the help statement
-			//HelpFormatter formatter = new HelpFormatter();
-			//formatter.printHelp("ant", options );	
-			Misc.printMessageUsageAndExit("");
-		}
-		if (version == true){
-			Misc.printVersionAndExit();
-		}
-		
-		/* Loading log4j configuration. */
-		Misc.log4jConfiguration(debug);
-		
-		/* Show all the arguments considered. */
-		logger.info(
-				"Configuration: \n" +
-				"\t debug              : " + debug + "\n" +
-				"\t user               : " + user + "\n" +
-				"\t pass               : " + pass + "\n" +
-				"\t url                : " + url + "\n" +
-				"\t nodes required     : " + nodesrequired + "\n" +
-				"\t min. nodes warning : " + nodeswarning + "\n" +
-				"\t min. nodes critical: " + nodescritical + "\n" +
-				"\t timeout            : " + timeoutsec + "\n" +
-				"\t warning timeout    : " + timeoutwarnsec + "\n" +
-				"\t paconf             : " + paconf + "\n" +
-				"\t host               : " + host + "\n" +
-				"\t port               : " + port + "\n" +
-				"\t warning            : " + warning  + "\n" +
-				"\t critical           : " + critical + "\n" 
-				);
-		
-		RMProber.setLastStatuss("basic initialization done, loading security policy...");
-		
-		/* Security policy procedure. */
-		logger.info("Setting security policies... ");
-		Misc.createPolicyAndLoadIt();
-		logger.info("Done.");
-		
-		RMProber.setLastStatuss("security policy loaded, loading proactive configuration (if needed)...");
-		
-		/* Load ProActive configuration. */
-		boolean usepaconffilee = false;
-		/* Check whether to use or not the ProActive configuration file. */
-		if (paconf!=null){
-			/* A ProActiveConf.xml file was given. If we find it, we use it. */
-			if (new File(paconf).exists()==true){
-				System.setProperty("proactive.configuration", paconf);
-				usepaconffilee = true;
-			}else{
-				logger.warn("The ProActive configuration file '"+paconf+"' was not found. Using default configuration.");
-			}
-		}
-		
-		if (usepaconffilee == false){
-			logger.info("Avoiding ProActive configuration file...");
-			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
-			if (host!=null && port!=null){
-				pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
-				pac.setProperty("proactive.net.router.address", host, false);
-				pac.setProperty("proactive.net.router.port", port, false);
-				logger.info("Using 'hostname' and 'port' provided...");
-			}else{
-				logger.info("Avoiding 'hostname' and 'port' provided...");
-			}
-		}
-		
-		RMProber.setLastStatuss("proactive configuration loaded, initializing probe module...");
-		
-		/* Now we prepare our probe to run it in a different thread. */
-		/* The probe consists in a node obtaining done from the Resource Manager. */
-		ExecutorService executor = Executors.newFixedThreadPool(1);
-		
-		Callable<Object[]> proberCallable = new Callable<Object[]>(){
-			public Object[] call() throws Exception {
-				return RMProber.probe(url, user, pass, timeoutsec, timeoutwarnsec, nodesrequired, nodeswarning, nodescritical);
-			}
-		};
-
-		/* We submit to the executor the prober activity (and the prober will then 
-		 * obtain a node from the RM in that activity). */
-		Future<Object[]> proberFuture = executor.submit(proberCallable); // We ask to execute the probe.
-		
-		try{
-			/* We execute the future using a timeout. */
-			Object[] res = proberFuture.get(timeoutsec, TimeUnit.SECONDS);
-			/* At this point all went okay. */ 
-			RMProber.printAndExit((Integer)res[0], (String)res[1]);
-		}catch(TimeoutException e){
-			/* The execution took more time than expected. */
-			RMProber.printAndExit(
-					RMProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "TIMEOUT OF "+timeoutsec+ "s (last status was: " + RMProber.getLastStatus() + ")", 
-					debug, 
-					e);
-		}catch(ExecutionException e){
-			/* There was an unexpected problem with the execution of the prober. */
-			RMProber.printAndExit(
-					RMProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "FAILURE: " + e.getMessage(), 
-					debug, 
-					e);
-		}catch(Exception e){
-			/* There was an unexpected critical exception not captured. */
-			RMProber.printAndExit(
-					RMProber.RESULT_CRITICAL, 
-					NAG_OUTPUT_PREFIX + "CRITICAL ERROR: " + e.getMessage(), 
-					debug, 
-					e);
-		}
+	/** 
+	 * Validate all the arguments given to this probe. 
+	 * @throws IllegalArgumentException in case a non-valid argument is given. */
+	public void validateArguments() throws IllegalArgumentException{
+		String[] notnull1 = {"url", "user", "pass", "timeout"}; // These arguments should not be null.
+		Misc.allElementsAreNotNull(Arrays.asList(notnull1), arguments);
+		Integer debug = (Integer)arguments.get("debug");
+		if (debug<0 || debug>3)
+			throw new IllegalArgumentException("The argument 'v' must be 0, 1, 2 or 3.");
 	}
 	
 	
@@ -297,139 +103,158 @@ public class RMProber {
 	 * @throws RMException 
 	 * @throws LoginException 
 	 * @throws KeyException */	 
-	public static Object[] probe(String url, String user, String pass, int timeoutsec, int timeoutwarnsec, int nodesRequired, int nodesminimumwarning, int nodesminimumcritical) throws KeyException, LoginException, RMException{
+	public NagiosReturnObject probe(TimedStatusTracer tracer) throws KeyException, LoginException, RMException{
+		// We add some reference values to be printed later in the summary for Nagios.
+		tracer.addNewReference("timeout_threshold", new Double((Integer)arguments.get("timeout")));
+		tracer.addNewReference("time_all_warning_threshold", new Double((Integer)arguments.get("timeoutwarning")));
 		
-		TimeTick timer = new TimeTick(); // We want to get time durations of each operation.
+		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
-		/* We get connected to the Scheduler through this stub, later we submit a job, etc. */
-		RMStubProber rmstub; 
+		RMStubProber rmstub = new RMStubProber();			// We get connected to the RM through this stub. 
 		
-		rmstub = new RMStubProber();
+		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to RM...");
 		
-		double time_initializing = timer.tickSec();
+		rmstub.init(										// We get connected to the RM.
+				(String)arguments.get("url"),  (String)arguments.get("user"), 
+				(String)arguments.get("pass"));	
 		
-		RMProber.setLastStatuss("RM stub created, connecting to RM...");
-		logger.info("Connecting to Resource Manager... "); 	// Connecting to RM...
-		rmstub.init(url, user, pass); 						// Login procedure...
-		logger.info("Done.");
-	
-		RMProber.setLastStatuss("connected to RM, getting nodes...");
+		tracer.finishLastMeasurementAndStartNewOne("time_getting_nodes", "connected to RM, getting nodes...");
 		
-		double time_connection = timer.tickSec();
-		
-		int output_to_return = RMProber.RESULT_CRITICAL; 
-		String output_to_print = 
-			NAG_OUTPUT_PREFIX + "NO TEST PERFORMED"; 		// Default output (for Nagios).
-		
-		logger.info("Getting nodes...");
-		NodeSet nodes = rmstub.getNodes(nodesRequired); 	// Request some nodes.
-		
-		
-		double time_getting_nodes = timer.tickSec();
-		
+		NodeSet nodes = rmstub.getNodes(					// Request some nodes.
+				(Integer)arguments.get("nodesrequired")); 	
 		int obtainednodes = nodes.size();
-		logger.info("\tListing nodes...");					// List the nodes obtained.
-    	for(Node n:nodes){
-    		logger.info("\t - " + n.getNodeInformation().getName());
-    	}
-    	logger.info("Done.");
+		
+		tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "releasing nodes...");
     	
+    	rmstub.releaseNodes(nodes);							// Release the nodes obtained.
     	
-    	RMProber.setLastStatuss("obtained nodes, releasing nodes...");
+		tracer.finishLastMeasurementAndStartNewOne("time_disconn", "disconnecting...");
     	
-    	logger.info("Releasing nodes...");					// Release the nodes obtained.
-    	rmstub.releaseNodes(nodes);
-    	logger.info("Done.");
-    	
-    	double time_releasing_nodes = timer.tickSec();		
-    	
-    	RMProber.setLastStatuss("released nodes, disconnecting...");
-    	
-    	logger.info("Disconnecting...");					// Disconnecting from RM.
-    	rmstub.disconnect();
-    	logger.info("Done.");
+    	rmstub.disconnect();								// Disconnect from the Resource Manager.
     				
-		double time_disconn = timer.tickSec();
+		tracer.finishLastMeasurement();
 		
-		double time_all = time_initializing+time_connection+time_getting_nodes+time_releasing_nodes+time_disconn;
+		NagiosReturnObject res = null;  
 		
-		String timesummary =
-			"nodes_required=" + (nodesRequired) + " " +
-			"nodes_obtained=" + (obtainednodes) + " " +
-			"time_connection=" + String.format(Locale.ENGLISH, "%1.03f", time_connection)   + "s " +
-			"time_getting_nodes=" + String.format(Locale.ENGLISH, "%1.03f", time_getting_nodes) + "s " +
-			"time_releasing_nodes=" + String.format(Locale.ENGLISH, "%1.03f", time_releasing_nodes) + "s " +
-			"time_disconnection=" + String.format(Locale.ENGLISH, "%1.03f", time_disconn   )   + "s " +
-			"timeout_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutsec)   + "s " +
-			"time_all_warning_threshold=" + String.format(Locale.ENGLISH, "%1.03f", (float)timeoutwarnsec)   + "s " +
-			"time_all="   + String.format(Locale.ENGLISH, "%1.03f", time_all) + "s"; 
+		String summary = "(obtained/required/critical/warning)=(" + 
+				obtainednodes + "/" + arguments.get("nodesrequired") + "/" + 
+				arguments.get("nodescritical") + "/" + arguments.get("nodeswarning") + ")";
 		
-		String summary = "(obtained/required/critical/warning)=(" + obtainednodes + "/" + nodesRequired + "/" + nodesminimumcritical + "/" + nodesminimumwarning + ")";
+		Double time_all = tracer.getTotal();
 		
-		if (obtainednodes < nodesminimumcritical){	// Else everything was okay.
-			output_to_return = RMProber.RESULT_CRITICAL;
-			output_to_print = 
-				NAG_OUTPUT_PREFIX + "CRITICAL STATE, TOO FEW NODES OBTAINED "+ summary + " | " + timesummary;
-		}else if (obtainednodes < nodesminimumwarning){		// Else everything was okay.
-			output_to_return = RMProber.RESULT_WARNING;
-			output_to_print = 
-				NAG_OUTPUT_PREFIX + "WARNING STATE, TOO FEW NODES OBTAINED "+ summary + " | " + timesummary;
-		}else if (time_all > timeoutwarnsec){						// If longer than timeoutwarnsec, warning message.
-			output_to_return = RMProber.RESULT_WARNING;
-			output_to_print = 
-				NAG_OUTPUT_PREFIX + "WARNING STATE, " + obtainednodes + " NODE/S OBTAINED TOO SLOWLY | " + timesummary;
-		}else{												// Else everything was okay.
-			output_to_return = RMProber.RESULT_OK;
-			output_to_print = 
-				NAG_OUTPUT_PREFIX + obtainednodes + " NODE/S OBTAINED OK | " + timesummary;
+		if (obtainednodes < (Integer)arguments.get("nodescritical")){	
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL STATE, TOO FEW NODES OBTAINED " + summary);
+		}else if (obtainednodes < (Integer)arguments.get("nodeswarning")){		
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "WARNING STATE, TOO FEW NODES OBTAINED " + summary);
+		}else if (time_all > (Integer)arguments.get("timeoutwarning")){			// If longer than timeoutwarnsec, warning message.
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "WARNING STATE, " + obtainednodes + " NODE/S OBTAINED TOO SLOWLY");
+		}else{																	// Else everything was okay.
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, obtainednodes + " NODE/S OBTAINED OK");
 		}
 	
-		Object [] ret = new Object[2];							// Both, error code and message are returned to be shown.
-		ret[0] = new Integer(output_to_return);
-		ret[1] = output_to_print;
-			
-		return ret;
+		return res;
 	}
-	
-	/** 
-	 * Save a message regarding the last status of the probe. 
-	 * This last status will be used in case of timeout to tell Nagios up to which point
-	 * (logging, job submission, job retrieval, etc.) the probe arrived. */
-	public synchronized static void setLastStatuss(String laststatus){
-		RMProber.lastStatus = laststatus;
-	}
-	
-	/** 
-	 * Get a message regarding the last status of the probe. 
-	 * This last status will be used in case of timeout to tell Nagios up to which point
-	 * (logging, job submission, job retrieval, etc.) the probe arrived. 
-	 * @return the last status of the test. */
-	public synchronized static String getLastStatus(){
-		return RMProber.lastStatus;
-	}
-	
-	/** 
-	 * Print a message in the stdout (for Nagios to use it) and return with the given error code. */
-	public synchronized static void printAndExit(Integer ret, String str){
-    	System.out.println(str);
-    	System.exit(ret);
-    }
-    
-	/** 
-	 * Print a message in the stdout (for Nagios to use it) and return with the given error code. 
-	 * Print a backtrace only if the debuglevel is appropriate. */
-	public synchronized static void printAndExit(Integer ret, String str, int debuglevel, Throwable e){
-		switch(debuglevel){
-			case RMProber.DEBUG_LEVEL_0SILENT:
-				System.out.println(str);
-				break;
-			default:
-				System.out.println(str);
-				e.printStackTrace(System.out);
-				break;
-			
-		}
-    	System.exit(ret);
-    }
-}
 
+	/**
+	 * Starting point.
+	 * The arguments/parameters are specified in the file /resources/usage.txt
+	 * @return Nagios error code. */
+	public static void main(String[] args) throws Exception{
+		/* Parsing of arguments. */
+		Options options = new Options();
+		// short, long, hasargument, description
+        Option helpO =			new Option("h", "help", false, "");			options.addOption(helpO);
+        Option debugO =			new Option("v", "debug", true, ""); 		options.addOption(debugO);
+        Option userO = 			new Option("u", "user", true, ""); 			options.addOption(userO);
+        Option passO = 			new Option("p", "pass", true, ""); 			options.addOption(passO);
+        Option urlO = 			new Option("r", "url", true, ""); 			options.addOption(urlO);
+		Option nodesrequiredO = new Option("q", "nodesrequired", true, "");	options.addOption(nodesrequiredO);
+		Option nodeswarningO = 	new Option("b", "nodeswarning", true, "");	options.addOption(nodeswarningO);
+        Option nodescriticalO = new Option("s", "nodescritical", true, "");	options.addOption(nodescriticalO);
+        Option timeoutO = 		new Option("t", "timeout", true, "");		options.addOption(timeoutO);
+        Option timeoutwarningO =new Option("n", "timeoutwarning", true, "");options.addOption(timeoutwarningO);
+        Option paconfO = 		new Option("f", "paconf", true, ""); 		options.addOption(paconfO);
+        Option hostO = 			new Option("H", "hostname", true, "");		options.addOption(hostO);
+        Option portO = 			new Option("x", "port"    , true, "");		options.addOption(portO);
+        Option warningO = 		new Option("w", "warning", true, "");		options.addOption(warningO);
+        Option criticalO = 		new Option("c", "critical", true, "");		options.addOption(criticalO);
+        Option versionO = 		new Option("V", "version", false, "");		options.addOption(versionO);
+
+        CommandLine parser = null;
+        try{
+	        Parser parserrr = new GnuParser();
+	        parser = parserrr.parse(options, args);
+        }catch(org.apache.commons.cli.MissingOptionException ex){
+	        NagiosPlugin.printMessageUsageAndExit(ex.getMessage());	
+        }
+
+        final HashMap<String, Object> ar = new HashMap<String, Object>();
+
+		ar.put("help", parser.hasOption("h"));																	// Help message.
+		ar.put("debug", Misc.parseInteger(parser.getOptionValue("v"), NagiosPlugin.DEBUG_LEVEL_1_EXTENDED));	// Level of verbosity.
+		ar.put("user", (String)parser.getOptionValue("u"));			 											// User.
+		ar.put("pass", (String)parser.getOptionValue("p")); 													// Pass.
+		ar.put("url", (String)parser.getOptionValue("r")); 														// Url of the Scheduler/RM.
+		ar.put("nodesrequired", Misc.parseInteger(parser.getOptionValue("q"),1)); 								// Amount of nodes to be asked to the Resource Manager.
+		ar.put("nodeswarning", Misc.parseInteger(parser.getOptionValue("b"),(Integer)ar.get("nodesrequired"))); // Obtaining fewer nodes than this, a warning message will be thrown. 
+		ar.put("nodescritical", Misc.parseInteger(parser.getOptionValue("s"),(Integer)ar.get("nodesrequired")));// Obtaining fewer nodes than this, a critical message will be thrown. 
+		ar.put("timeout", Misc.parseInteger(parser.getOptionValue("t"), null));									// Timeout in seconds for the job to be executed.
+		ar.put("timeoutwarning", Misc.parseInteger(parser.getOptionValue("n"),(Integer)ar.get("timeout")));		// Timeout in seconds for the warning message to be thrown.
+		ar.put("paconf", (String)parser.getOptionValue("f")); 													// Path of the ProActive xml configuration file.
+		ar.put("host", (String)parser.getOptionValue("H"));						 								// PAMR router host. Ignored.
+		ar.put("port", (String)parser.getOptionValue("x"));														// PAMR router port. 
+		ar.put("warning", (String)parser.getOptionValue("w", "ignored"));										// Warning level. Ignored.
+		ar.put("critical", (String)parser.getOptionValue("c", "ignored")); 										// Critical level. Ignored. 
+		ar.put("version", parser.hasOption("V"));																// Prints the version of the plugin.
+	
+		if ((Boolean)ar.get("help") == true)	
+			NagiosPlugin.printMessageUsageAndExit("");
+		
+		if ((Boolean)ar.get("version") == true)
+			NagiosPlugin.printVersionAndExit();
+		
+		final RMProber jobp = new RMProber(ar);				// Create the prober.
+		
+		jobp.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
+	
+		jobp.initializeEnvironment();						// Initializes the environment for ProActive objects.
+		
+		for (String key: ar.keySet())						// Show all the arguments considered. 
+			logger.info("\t" + key + ":'" + ar.get(key) + "'");
+		
+		/* Now we prepare our probe to run it in a different thread. */
+		/* The probe consists in a node obtaining done from the Resource Manager. */
+		ExecutorService executor = Executors.newFixedThreadPool(1);
+		
+		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.
+		
+		Callable<NagiosReturnObject> proberCallable = new Callable<NagiosReturnObject>(){
+			public NagiosReturnObject call() throws Exception {
+				return jobp.probe(tracer);
+			}
+		};
+
+		/* We submit to the executor the prober activity (and the prober will then 
+		 * obtain a node from the RM in that activity). */
+		Future<NagiosReturnObject> proberFuture = executor.submit(proberCallable); // We ask to execute the probe.
+		
+		NagiosReturnObject res = null;
+		try{ // We execute the future using a timeout.
+			res = proberFuture.get((Integer)ar.get("timeout"), TimeUnit.SECONDS);
+			res.appendCurvesSection(tracer.getMeasurementsSummary("time_all"));
+		}catch(TimeoutException e){
+			/* The execution took more time than expected. */
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+(Integer)ar.get("timeout")+ "s (last status was: " + tracer.getLastStatusDescription() + ")", e);
+			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+		}catch(ExecutionException e){
+			/* There was an unexpected problem with the execution of the prober. */
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
+			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+		}catch(Exception e){
+			/* There was an unexpected critical exception not captured. */
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
+			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+		}
+		NagiosPlugin.printAndExit(res, (Integer)ar.get("debug"));
+	}
+}	

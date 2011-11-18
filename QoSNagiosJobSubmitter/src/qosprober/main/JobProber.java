@@ -48,6 +48,7 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.core.node.NodeException;
+import org.apache.commons.cli.MissingOptionException;
 import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import org.ow2.proactive.scheduler.examples.WaitAndPrint;
 import qosprobercore.exceptions.InvalidProtocolException;
@@ -212,7 +213,7 @@ public class JobProber {
         try{
 	        Parser parserrr = new GnuParser();
 	        parser = parserrr.parse(options, args);
-        }catch(org.apache.commons.cli.MissingOptionException ex){
+        }catch(MissingOptionException ex){
 	        NagiosPlugin.printMessageUsageAndExit(ex.getMessage());	
         }
 
@@ -241,7 +242,6 @@ public class JobProber {
 		if ((Boolean)ar.get("version") == true)
 			NagiosPlugin.printVersionAndExit();
 		
-	
 		final JobProber jobp = new JobProber(ar);			// Create the prober.
 		
 		jobp.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.

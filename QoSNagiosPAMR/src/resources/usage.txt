@@ -1,7 +1,7 @@
 
 SYNOPSIS
 
-   java -jar pamrrouterprobe.jar --timeout TIMEOUT (--paconf PACONF | --hostname HOST --port PORT) [OPTIONS]
+   check_pamr_router --timeout TIMEOUT (--paconf PACONF | --hostname HOST --port PORT) [OPTIONS]
 
 DESCRIPTION
 
@@ -52,5 +52,5 @@ NAGIOS OUTPUT INTERPRETATION
 EXECUTION EXAMPLE
 
    General cases
-      java -jar pamrrouterprobe.jar --paconf /tmp/ProActiveConfiguration.xml --timeout 100
+      check_pamr_router --paconf /tmp/ProActiveConfiguration.xml --timeout 100
  

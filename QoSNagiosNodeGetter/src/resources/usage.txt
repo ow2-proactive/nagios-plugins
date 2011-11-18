@@ -1,7 +1,7 @@
 
 SYNOPSIS
 
-   java -jar nodegetprobe.jar --url URL --user USER --pass PASS --timeout TIMEOUT (--paconf PACONF | --hostname HOST --port PORT) [OPTIONS]
+   check_node_obtaining --url URL --user USER --pass PASS --timeout TIMEOUT (--paconf PACONF | --hostname HOST --port PORT) [OPTIONS]
 
 DESCRIPTION
 
@@ -22,7 +22,7 @@ Mandatory arguments to long options are mandatory for short options too.
    -r, --url URL
       URL to get connected to the RM. Can be 'pamr://0' if already specified the RM in the ProActive configuration file.
            
-   -q, --nodes AMOUNT_OF_NODES_TO_ASK_FOR
+   -q, --nodesrequired AMOUNT_OF_NODES_TO_ASK_FOR
       Amount of nodes that will be requested to the Resource Manager.
 
    -b, --nodeswarning NODESWARNING
@@ -38,13 +38,13 @@ Mandatory arguments to long options are mandatory for short options too.
       In seconds. If the overall test time exceeds this value, then the plugin will tell to Nagios a warning status.  
       
    -f, --paconf PACONF
-      ProActive configuration file (usually ProActiveConfiguration.xml).
+      ProActive configuration file (usually ProActiveConfiguration.xml). Necessary if a PAMR router is present.
       
    -H, --hostname HOSTNAME
-      Hostname to be tested. Ignored if a ProActive configuration file is provided. 
+      Hostname of the PAMR router. Ignored if a ProActive configuration file is provided. 
       
    -x, --port PORT
-      Port to be used to get connected to the RM. Ignored if a ProActive configuration file is provided. 
+      Port where the PAMR router service is exposed. Ignored if a ProActive configuration file is provided. 
       
    -w, --warning WARNING
       Nagios compatibility. Warning level to be used.
@@ -69,5 +69,5 @@ NAGIOS OUTPUT INTERPRETATION
 EXECUTION EXAMPLE
 
    General cases
-      java -jar nodegetprobe.jar --url pamr://0 --user d --pass p --timeout 100 --paconf /tmp/ProActiveConfiguration.xml 
+      check_node_obtaining --url pamr://0 --user d --pass p --timeout 100 --paconf /tmp/ProActiveConfiguration.xml 
 

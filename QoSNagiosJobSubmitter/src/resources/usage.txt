@@ -1,6 +1,6 @@
 
 SYNOPSIS
-   java -jar jobsubmprobe.jar --url URL --user USER --pass PASS --timeout TIMEOUT [OPTIONS]
+   check_job_submission --url URL --user USER --pass PASS --timeout TIMEOUT [OPTIONS]
 
 DESCRIPTION
 
@@ -73,5 +73,5 @@ NAGIOS OUTPUT INTERPRETATION
 EXECUTION EXAMPLE
 
    General cases
-      java -jar jobsubmprobe.jar --url pamr://1 --user demo --pass demo --timeout 60 --paconf /tmp/ProActiveConfiguration.xml
+      check_job_submission --url pamr://1 --user demo --pass demo --timeout 60 --paconf /tmp/ProActiveConfiguration.xml
 
