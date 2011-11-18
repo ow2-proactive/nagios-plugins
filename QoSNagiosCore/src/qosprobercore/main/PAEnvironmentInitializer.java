@@ -51,6 +51,8 @@ public class PAEnvironmentInitializer {
 	public static final String COMMUNICATION_PROTOCOL = "pamr";									// Default protocol to be used to get connected to the RM.
 	public static Logger logger = Logger.getLogger(PAEnvironmentInitializer.class.getName());	// Logger.
 	
+	private static Boolean usePAConfFile = null;
+	
     /** 
 	 * Create a java.policy file to grant permissions, and load it in the current JVM. */
 	public static void createPolicyAndLoadIt() throws Exception{
@@ -94,6 +96,8 @@ public class PAEnvironmentInitializer {
 			}
 		}
 		
+		usePAConfFile = usepaconffilee;
+		
 		if (usepaconffilee == false){ // The PA configuration file was not given or was not found.
 			logger.info("Avoiding ProActive configuration file...");
 			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
@@ -106,5 +110,9 @@ public class PAEnvironmentInitializer {
 				logger.info("Avoiding 'hostname' and 'port' provided...");
 			}
 		}
+	}
+
+	public static Boolean usingPAConfigurationFile(){
+		return usePAConfFile;
 	}
 }

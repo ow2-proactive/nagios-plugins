@@ -1,7 +1,7 @@
 
 SYNOPSIS
 
-   check_node_obtaining --url URL --user USER --pass PASS --timeout TIMEOUT (--paconf PACONF | --hostname HOST --port PORT) [OPTIONS]
+   check_node_obtaining --url URL --user USER --pass PASS --timeout TIMEOUT [OPTIONS]
 
 DESCRIPTION
 

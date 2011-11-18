@@ -39,13 +39,13 @@ package qosprober.main;
 
 import java.security.KeyException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.concurrent.*;
 import javax.security.auth.login.LoginException;
 import org.apache.commons.cli.*;
 import org.apache.log4j.Logger;
 import org.ow2.proactive.resourcemanager.exception.RMException;
 import org.ow2.proactive.utils.NodeSet;
+import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.PAEnvironmentInitializer;
@@ -60,12 +60,12 @@ import qosprobercore.misc.Misc;
 public class RMProber {
 
 	public static Logger logger = Logger.getLogger(RMProber.class.getName()); // Logger.
-	private HashMap<String, Object> arguments; 				// Arguments given to the prober. 
+	private Arguments arguments; 				// Arguments given to the prober. 
 	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
 	 * @param args arguments to create this RMProber. */
-	public RMProber(HashMap<String, Object> args){
+	public RMProber(Arguments args){
 		this.arguments = args;
 	}
 	
@@ -151,7 +151,6 @@ public class RMProber {
 		}else{																	// Else everything was okay.
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, obtainednodes + " NODE/S OBTAINED OK");
 		}
-	
 		return res;
 	}
 
@@ -174,7 +173,7 @@ public class RMProber {
         Option timeoutO = 		new Option("t", "timeout", true, "");		options.addOption(timeoutO);
         Option timeoutwarningO =new Option("n", "timeoutwarning", true, "");options.addOption(timeoutwarningO);
         Option paconfO = 		new Option("f", "paconf", true, ""); 		options.addOption(paconfO);
-        Option hostO = 			new Option("H", "hostname", true, "");		options.addOption(hostO);
+        Option hostnameO =		new Option("H", "hostname", true, "");		options.addOption(hostnameO);
         Option portO = 			new Option("x", "port"    , true, "");		options.addOption(portO);
         Option warningO = 		new Option("w", "warning", true, "");		options.addOption(warningO);
         Option criticalO = 		new Option("c", "critical", true, "");		options.addOption(criticalO);
@@ -188,7 +187,7 @@ public class RMProber {
 	        NagiosPlugin.printMessageUsageAndExit(ex.getMessage());	
         }
 
-        final HashMap<String, Object> ar = new HashMap<String, Object>();
+        final Arguments ar = new Arguments();
 
 		ar.put("help", parser.hasOption("h"));																	// Help message.
 		ar.put("debug", Misc.parseInteger(parser.getOptionValue("v"), NagiosPlugin.DEBUG_LEVEL_1_EXTENDED));	// Level of verbosity.
@@ -201,7 +200,7 @@ public class RMProber {
 		ar.put("timeout", Misc.parseInteger(parser.getOptionValue("t"), null));									// Timeout in seconds for the job to be executed.
 		ar.put("timeoutwarning", Misc.parseInteger(parser.getOptionValue("n"),(Integer)ar.get("timeout")));		// Timeout in seconds for the warning message to be thrown.
 		ar.put("paconf", (String)parser.getOptionValue("f")); 													// Path of the ProActive xml configuration file.
-		ar.put("host", (String)parser.getOptionValue("H"));						 								// PAMR router host. Ignored.
+		ar.put("hostname", (String)parser.getOptionValue("H"));					 								// PAMR router host. Ignored.
 		ar.put("port", (String)parser.getOptionValue("x"));														// PAMR router port. 
 		ar.put("warning", (String)parser.getOptionValue("w", "ignored"));										// Warning level. Ignored.
 		ar.put("critical", (String)parser.getOptionValue("c", "ignored")); 										// Critical level. Ignored. 

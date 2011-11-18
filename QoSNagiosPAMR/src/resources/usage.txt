@@ -1,7 +1,7 @@
 
 SYNOPSIS
 
-   check_pamr_router --timeout TIMEOUT (--paconf PACONF | --hostname HOST --port PORT) [OPTIONS]
+   check_pamr_router --timeout TIMEOUT (-f PACONF | -H PAMRROUTERHOSTNAME -x PAMRROUTERPORT) [OPTIONS]
 
 DESCRIPTION
 
@@ -23,10 +23,10 @@ Mandatory arguments to long options are mandatory for short options too.
    -f, --paconf PACONF
       ProActive configuration file (usually ProActiveConfiguration.xml).
       
-   -H, --hostname HOSTNAME
+   -H, --hostname PAMRROUTERHOSTNAME
       Hostname to be tested. Ignored if a ProActive configuration file is provided. 
       
-   -x, --port PORT
+   -x, --port PAMRROUTERPORT
       Port to be used to get connected to the RM. Ignored if a ProActive configuration file is provided. 
       
    -w, --warning WARNING

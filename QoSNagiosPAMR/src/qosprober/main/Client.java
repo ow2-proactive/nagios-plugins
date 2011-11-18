@@ -43,7 +43,8 @@ import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.core.config.ProActiveConfiguration;
 
-import qosprober.misc.Misc;
+import qosprober.misc.PAMRMisc;
+import qosprobercore.main.PAEnvironmentInitializer;
 
 /** 
  * Client class.
@@ -61,7 +62,7 @@ public class Client {
     private Server server;													// Stub of the server. 
     
     private static final String MY_MESSAGE = 
-    		Misc.generateFibString(PAMRProber.MESSAGE_LENGTH);				// Message to send to the server.
+    		PAMRMisc.generateFibString(PAMRProber.MESSAGE_LENGTH);				// Message to send to the server.
     
     public Client() {}														// Empty constructor. ProActive needs it.
 
@@ -125,7 +126,7 @@ public class Client {
     	logger.info("Done.");
     	
     	logger.info("Setting up security policy...");
-    	Misc.createPolicyAndLoadIt();
+    	PAEnvironmentInitializer.createPolicyAndLoadIt();
     	logger.info("Done.");
     	
         logger.info("Creating Client Active object..."); 		// We create the client telling about the server url.

@@ -40,7 +40,6 @@ package qosprober.main;
 import java.io.IOException;
 import java.security.KeyException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.concurrent.*;
 import javax.security.auth.login.LoginException;
 import qosprobercore.misc.Misc;
@@ -52,6 +51,7 @@ import org.apache.commons.cli.MissingOptionException;
 import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import org.ow2.proactive.scheduler.examples.WaitAndPrint;
 import qosprobercore.exceptions.InvalidProtocolException;
+import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
 import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.NagiosReturnObject;
@@ -75,12 +75,12 @@ public class JobProber {
 			Logger.getLogger(JobProber.class.getName()); 	// Logger.
 	public static String expectedJobOutput;					// The job output that is expected. It is used to check the right execution of the job. 
 	
-	private HashMap<String, Object> arguments; 				// Arguments given to the prober. 
+	private Arguments arguments; 				// Arguments given to the prober. 
 	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
 	 * @param args arguments to create this JobProber. */
-	public JobProber(HashMap<String, Object> args){
+	public JobProber(Arguments args){
 		this.arguments = args;
 	}
 	
@@ -217,7 +217,8 @@ public class JobProber {
 	        NagiosPlugin.printMessageUsageAndExit(ex.getMessage());	
         }
 
-        final HashMap<String, Object> ar = new HashMap<String, Object>();
+        final Arguments ar = new Arguments();
+        
 		ar.put("help", new Boolean(parser.hasOption("h")));														// Help message.
 		ar.put("debug", Misc.parseInteger(parser.getOptionValue("v"), NagiosPlugin.DEBUG_LEVEL_1_EXTENDED));	// Level of verbosity.
 		ar.put("user", (String)parser.getOptionValue("u"));			 											// User.

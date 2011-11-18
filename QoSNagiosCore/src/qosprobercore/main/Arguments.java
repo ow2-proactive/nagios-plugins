@@ -35,42 +35,37 @@
  * $$PROACTIVE_INITIAL_DEV$$
  */
 
-package qosprober.main;
+package qosprobercore.main;
 
-import java.util.Date;
+import java.util.HashMap;
+import java.util.Set;
 
-/** 
- * Class to get the time elapsed between events. */
-public class TimeTick {
-	private long init;
-	
-	public TimeTick(){
-		tickSec();
+public class Arguments {
+	private HashMap<String, Object> args;
+	public Arguments(){
+		args = new HashMap<String, Object>();
+	}
+	public void put(String key, Object value){
+		args.put(key, value);
 	}
 	
-	/**
-	 * Get the time elapsed between this call and the previous one. */
-	public double tickSec(){
-		long now = (new Date()).getTime();
-		double interval = ((double)((double)now - (double)init)) / 1000;
-		init = restart();
-		return interval;
+	public Object get(String key){
+		if (args.containsKey(key)==false)
+			throw new RuntimeException("Problem trying to use key '" + key + "'.");
+		return args.get(key);
+	}
+	public Set<String> keySet(){
+		return args.keySet();
+	}
+	public static void main(String[] args){
+		
+		
+		Arguments ar = new Arguments();
+		ar.put("hey1", "hey");
+		ar.put("hey2", null);
+		System.out.println(ar.get("hey1"));
+		System.out.println(ar.get("hey2"));
+		System.out.println(ar.get("hey3"));
 	}
 	
-	private long restart(){
-		return (new Date()).getTime();
-	}
-	
-	public static void main(String args[]) throws Exception{
-		TimeTick tt = new TimeTick();
-		System.out.println("tick " + tt.tickSec());
-		Thread.sleep(150);
-		System.out.println("tick " + tt.tickSec());
-		Thread.sleep(250);
-		System.out.println("tick " + tt.tickSec());
-		Thread.sleep(350);
-		System.out.println("tick " + tt.tickSec());
-		Thread.sleep(1400);
-		System.out.println("tick " + tt.tickSec());
-	}
 }

@@ -39,7 +39,7 @@ package qosprober.main;
 
 import org.apache.log4j.Logger;
 
-import qosprober.misc.Misc;
+import qosprober.misc.PAMRMisc;
 
 /**
  * Server class. It is instantiated as an Active object within the plugin process. Then a secondary 
@@ -52,7 +52,7 @@ public class Server {
 	public static Logger logger = Logger.getLogger(Server.class.getName()); // Logger.
     private boolean done = false;											// This flag tells whether the call from the client was already done or not.
     private static final String MY_MESSAGE =
-    		Misc.generateFibString(PAMRProber.MESSAGE_LENGTH);				// This message should be received from the client. 
+    		PAMRMisc.generateFibString(PAMRProber.MESSAGE_LENGTH);				// This message should be received from the client. 
     																		// If not, there was a problem.
     
     public Server() {}														// Needed by ProActive to initialize the Active object.

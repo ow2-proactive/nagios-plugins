@@ -45,10 +45,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+
+import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
 
 /** 
@@ -182,7 +183,7 @@ public class Misc {
 	 * @param notnull set with the name of the keys that should not have a null value in 'target'.
 	 * @param target set to analyze
 	 * @throws IllegalArgumentException thrown in case a supposed non-null argument is indeed null. */
-	public static void allElementsAreNotNull(Collection<String> notnull, HashMap<String, Object> target) throws IllegalArgumentException{
+	public static void allElementsAreNotNull(Collection<String> notnull, Arguments target) throws IllegalArgumentException{
 		for (String key:notnull){
 			if (target.get(key)==null){
 				throw new IllegalArgumentException("The argument '" + key + "' is null.");
