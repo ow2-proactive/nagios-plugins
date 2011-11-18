@@ -56,7 +56,6 @@ import qosprobercore.main.NagiosPlugin;
 import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.TimedStatusTracer;
-
 import org.apache.commons.cli.*;
 
 /** 
