@@ -36,10 +36,12 @@
  */
 
 package qosprobercore.main;
-/** It behaves as a structure where to put all the information that will be told to the administrator
+
+/**
+ * It behaves as a structure where to put all the information that will be told to the administrator
  * who controls/monitors the plugin via Nagios. */
 public class NagiosReturnObject {
-	/** Nagios exit codes. */
+	// Nagios exit codes.
 	public static final int RESULT_0_OK = 0; 				// Nagios code. Execution successfully. 
 	public static final int RESULT_1_WARNING = 1; 			// Nagios code. Warning. 
 	public static final int RESULT_2_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
@@ -49,11 +51,16 @@ public class NagiosReturnObject {
 	private String curvesSection;							// Curves section for Nagios to use to generate curves. 
 	private int errorCode;									// Error code to be told to Nagios.
 	private Throwable exception;							// Exception to be told to Nagios.
-	
+
 	public NagiosReturnObject(int errorCode, String errorMessage){
 		this(errorCode, errorMessage, null);
 	}
 	
+	/**
+	 * Full constructor of the NagiosReturnObject class.
+	 * @param errorCode error code to be returned.
+	 * @param errorMessage message to be returned to the user (through Nagios).
+	 * @param exception exception thrown (if any) that caused the problem (if any). */
 	public NagiosReturnObject(int errorCode, String errorMessage, Throwable exception){
 		this.errorCode = errorCode;
 		this.errorMessage = errorMessage;
@@ -61,6 +68,9 @@ public class NagiosReturnObject {
 		this.curvesSection = null;
 	}
 	
+	/**
+	 * Append to the section of curves (section after the pipe character in Nagios outputs) the given string.
+	 * @param str string to append. */
 	public void appendCurvesSection(String str){
 		if (curvesSection == null)
 			curvesSection = str;
@@ -68,14 +78,23 @@ public class NagiosReturnObject {
 			this.curvesSection = this.curvesSection + " " + str;
 	}
 	
+	/**
+	 * Get the whole message with the format 'errorMessage | curves_section_string'.
+	 * @return the whole message. */
 	public String getWholeMessage(){
 		return errorMessage + " | " + curvesSection;
 	}
 	
+	/**
+	 * Return the error code.
+	 * @return error code. */
 	public int getErrorCode(){
 		return errorCode;
 	}
 	
+	/**
+	 * Return the exception (or null if not present).
+	 * @return exception. */
 	public Throwable getException(){
 		return exception;
 	}

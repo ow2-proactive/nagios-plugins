@@ -43,13 +43,16 @@ import java.io.FileWriter;
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.core.config.ProActiveConfiguration;
 
+/**
+ * Class that helps initializing the ProActive environment, specially when referred to the PAMR router
+ * connection parameters. */
 public class PAEnvironmentInitializer {
 
 	public static final String COMMUNICATION_PROTOCOL = "pamr";									// Default protocol to be used to get connected to the RM.
 	public static Logger logger = Logger.getLogger(PAEnvironmentInitializer.class.getName());	// Logger.
 	
     /** 
-	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
+	 * Create a java.policy file to grant permissions, and load it in the current JVM. */
 	public static void createPolicyAndLoadIt() throws Exception{
 		logger.info("Setting security policies... ");
 		try{
@@ -68,6 +71,12 @@ public class PAEnvironmentInitializer {
 		logger.info("Done.");
 	}
 
+	/**
+	 * Initialize the ProActive configuration. It handles the PAMR router configuration.
+	 * @param paconf ProActive configuration file (if needed).
+	 * @param host host where the PAMR router is.
+	 * @param port port where the PAMR router service is exposed.
+	 * @throws Exception */
 	public static void initPAConfiguration(String paconf, String host, String port) throws Exception{
 		/* Security policy procedure. */
 		createPolicyAndLoadIt();

@@ -43,14 +43,11 @@ import org.apache.log4j.Logger;
 import qosprobercore.misc.Misc;
 
 /** 
- * This is a general Nagios plugin class that performs a test on the scheduler, by doing:
- *    -Job submission
- *    -Job result retrieval
- *    -Job result comparison 
- *  After that, a short summary regarding the result of the test is shown using Nagios format. */
+ * Class that provides support for measuring execution time of certain calls, and, for saving last status information
+ * which is shown in case of timeout (to let the user know where the process got stuck before the timeout). */
 public class TimedStatusTracer {
 	private static TimedStatusTracer instance;				// Singleton.
-	private TimeTick timetick;
+	private TimeTick timetick;								// Timing measurement object.
 	private Properties timingMeasurements;
 	private Properties timingMeasurementsReference;
 	private String lastStatusDescription = null;			// Holds a message representative of the current status of the test. 
@@ -61,7 +58,9 @@ public class TimedStatusTracer {
 															// It is used in case of TIMEOUT, to help the administrator guess 
 															// where the problem is.
 	public static Logger logger = Logger.getLogger(TimedStatusTracer.class.getName()); // Logger.
-	
+
+	/** 
+	 * Testing purposes. */
 	public static void main(String args[]) throws Exception{
 		Misc.log4jConfiguration(3);
 		TimedStatusTracer st = new TimedStatusTracer();
@@ -76,25 +75,36 @@ public class TimedStatusTracer {
 		System.out.println(st.getMeasurementsSummary("all"));
 	}
 	
+	/** 
+	 * This class follows a singleton pattern. */
 	public static TimedStatusTracer getInstance(){
 		if (instance==null){
 			instance = new TimedStatusTracer();
 		}
 		return instance;
 	}
-	
+
+	/** 
+	 * Private class constructor. */
 	private TimedStatusTracer(){
 		timingMeasurements = new Properties();
 		timingMeasurementsReference = new Properties();
 		timetick = new TimeTick();
 	}
 	
+	/**
+	 * Start a new time measurement. It will be added with the label provided.
+	 * The time measurement finishes once finishLastMeasurement is executed. 
+	 * @param label label to be used for this measurement. */
 	public synchronized void startNewMeasurement(String label){
 		lastLabel = label;
 		timetick.tickSec();
 		logger.info("Started new measurement '"+label+"'.");
 	}
 	
+	/**
+	 * Finish previous started measurement. It adds to the list of measurements
+	 * done an entry following the format label=time. */
 	public synchronized void finishLastMeasurement(){
 		if (lastLabel != null){
 			Double time = new Double(timetick.tickSec());
@@ -103,20 +113,38 @@ public class TimedStatusTracer {
 		}	
 	}
 	
+	/**
+	 * Finish previous started measurement and start a new one.
+	 * @param newlabel label to be used for the new measurement. */
 	public synchronized void finishLastMeasurementAndStartNewOne(String newlabel){
 		finishLastMeasurement();
 		startNewMeasurement(newlabel);
 	}
 	
+	/**
+	 * Finish previous started measurement and start a new one.
+	 * It also adds a current status, so in case of timeout we can retrieve it and tell the user where the process got stuck.
+	 * @param newlabel new label to be used with the new measurement.
+	 * @param currentStatus	current status to be set from now on. */
 	public synchronized void finishLastMeasurementAndStartNewOne(String newlabel, String currentStatus){
 		finishLastMeasurementAndStartNewOne(newlabel);
 		setLastStatusDescription(currentStatus);
 	}
 	
+	/**
+	 * Add a new "hardcoded" entry to the set of measurements. This is to show reference values such as "timeout value". 
+	 * @param label label of the new entry.
+	 * @param time_sec value of the new entry. */
 	public synchronized void addNewReference(String label, Number time_sec){
 		timingMeasurementsReference.put((String)label, time_sec);
 	}
 	
+	/**
+	 * Get a string with the summary of all the entries with the format 'key1=value1 key2=value2 ...'
+	 * @param totalLabel if not null, it adds a new entry with the totalLabel and the value given
+	 * by the sum of all the measurements (not including the references).
+	 * @return a string with the summary.
+	 */
 	public synchronized String getMeasurementsSummary(String totalLabel){
 		String ret_measurements = "";
 		String ret_total = "";
@@ -142,6 +170,9 @@ public class TimedStatusTracer {
 		return ret_total + ret_measurements + ret_references;
 	}
 
+	/**
+	 * Get the sum of all the measurements (not including references added).
+	 * @return the sum. */
 	public synchronized Double getTotal(){
 		Double total = new Double(0.0);
 		for (Object key: timingMeasurements.keySet()){

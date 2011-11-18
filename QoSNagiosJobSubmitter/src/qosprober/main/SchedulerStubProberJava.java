@@ -61,7 +61,7 @@ import java.io.IOException;
 import java.security.KeyException;
 import java.util.Vector;
 import org.ow2.proactive.authentication.crypto.Credentials;
-import qosprober.exceptions.InvalidProtocolException;
+import qosprobercore.exceptions.InvalidProtocolException;
 
 /** 
  * Class that connects the test with the real scheduler, works as a stub. 

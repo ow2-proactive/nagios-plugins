@@ -38,11 +38,11 @@
 package qosprobercore.main;
 
 import java.io.IOException;
-
 import org.apache.log4j.Logger;
-
 import qosprobercore.misc.Misc;
 
+/**
+ * Set of useful definitions and methods for any Nagios plugin. */
 public class NagiosPlugin {
 	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
 	
@@ -74,7 +74,8 @@ public class NagiosPlugin {
     
 	/**
 	 * Used when a parameter given by the user is wrong. 
-	 * Print a message, then the usage of the application, and the exits the application. */
+	 * Print a message, then the usage of the application, and the exits the application. 
+	 * @param mainmessage message to be shown to the user (though Nagios). */
 	public static void printMessageUsageAndExit(String mainmessage){
 		if (mainmessage!=null){
 			System.out.println(mainmessage);

@@ -51,14 +51,17 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import qosprobercore.main.NagiosPlugin;
 
-/** This class is supposed to have multiple minor functionalities. */
+/** 
+ * This class is supposed to have multiple minor functionalities. */
 public class Misc {
 	private static Logger logger = Logger.getLogger(Misc.class.getName()); // Logger.
 	
     private Misc(){}
     
     /**
-     * Read all the content of a resource file. */
+     * Read all the content of a resource file. 
+     * @param resource path of the resource to read.
+     * @return string that the resource contains. */
     public static String readAllTextResource(String resource) throws IOException{
 		InputStream is = Misc.class.getResourceAsStream(resource);
 	    InputStreamReader isr = new InputStreamReader(is);
@@ -105,7 +108,8 @@ public class Misc {
 	}
 	
 	/**
-	 * Creates a default set of properties for the log4j logging module. */
+	 * Creates a default set of properties for the log4j logging module.
+	 * @return properties. */
 	public static Properties getSilentLoggingProperties(){
 		Properties properties = new Properties();
 		properties.put("log4j.rootLogger",				"ERROR,NULL"); 	// By default, do not show anything.
@@ -123,7 +127,8 @@ public class Misc {
 	}
 	
 	/**
-	 * Creates a default set of properties for the log4j logging module. */
+	 * Creates a default set of properties for the log4j logging module.
+	 * @return properties. */
 	public static Properties getVerboseLoggingProperties(){
 		Properties properties = new Properties();
 		properties.put("log4j.rootLogger",				"INFO,STDOUT"); 		// By default, show everything.
@@ -136,7 +141,8 @@ public class Misc {
 	}
 	
 	/**
-	 * Configures de log4j module for logging. */
+	 * Configures de log4j module for logging.
+	 * @param debuglevel debug level (or verbosity level) to be used when loading log4j properties. */
 	public static void log4jConfiguration(int debuglevel){
 		System.setProperty("log4j.configuration", "");
 		if (debuglevel == NagiosPlugin.DEBUG_LEVEL_3_USER){
@@ -157,7 +163,10 @@ public class Misc {
 
 	
 	/**
-	 * Parse the corresponding value, and if any problem, return the default value given. */
+	 * Parse the corresponding value, and if any problem, return the default value given. 
+	 * @param o string to parse.
+	 * @param defaultvalue default value in case of exception parsing the string.
+	 * @return the result of the parsing as an Integer. */
 	public static Integer parseInteger(String o, Integer defaultvalue){
 		Integer ret;
 		try{
@@ -167,10 +176,15 @@ public class Misc {
 		}
 		return ret;
 	}
-	
-	public static void allElementsAreNotNull(Collection<String> notnull, HashMap<String, Object> set) throws IllegalArgumentException{
+
+	/**
+	 * Check whether all the arguments whose names/keys are given by notnull, have a value (in the set 'target') different than null.
+	 * @param notnull set with the name of the keys that should not have a null value in 'target'.
+	 * @param target set to analyze
+	 * @throws IllegalArgumentException thrown in case a supposed non-null argument is indeed null. */
+	public static void allElementsAreNotNull(Collection<String> notnull, HashMap<String, Object> target) throws IllegalArgumentException{
 		for (String key:notnull){
-			if (set.get(key)==null){
+			if (target.get(key)==null){
 				throw new IllegalArgumentException("The argument '" + key + "' is null.");
 			}
 		}

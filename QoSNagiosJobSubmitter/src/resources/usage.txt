@@ -29,7 +29,7 @@ Mandatory arguments to long options are mandatory for short options too.
       In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status. It is important to note that the probe is not killed with this timeout.  
       
    -f, --paconf PACONF
-      ProActive configuration file (usually ProActiveConfiguration.xml). Needed if a PAMR router is present.
+      ProActive configuration file (usually ProActiveConfiguration.xml). Used if a PAMR router is present behind a protected server.
       
    -H, --hostname HOSTNAME
       PAMR router hostname to use to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
