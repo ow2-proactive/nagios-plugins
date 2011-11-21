@@ -40,26 +40,48 @@ package qosprobercore.main;
 import java.util.HashMap;
 import java.util.Set;
 
+/**
+ * An Arguments object contains all the arguments (entries) that a probe class might need to perform the test.
+ * We control that each get has a valid key. */
 public class Arguments {
-	private HashMap<String, Object> args;
+	private HashMap<String, Object> args;	// Set of arguments given.
+	
+	/** 
+	 * Constructor. */
 	public Arguments(){
 		args = new HashMap<String, Object>();
 	}
+	
+	/**
+	 * Simple put method.
+	 * @param key key to be used for the new entry.
+	 * @param value value to be used for the new entry. */
 	public void put(String key, Object value){
 		args.put(key, value);
 	}
 	
+	/**
+	 * Simple get method. 
+	 * It controls that the given key has been 'put' before by a 'put' method.
+	 * @param key key to get the right entry.
+	 * @return returns the value of the entry/argument. */
 	public Object get(String key){
 		if (args.containsKey(key)==false)
 			throw new RuntimeException("Problem trying to use key '" + key + "'.");
 		return args.get(key);
 	}
+	
+	/**
+	 * Get the whole key set.
+	 * @return key set.
+	 */
 	public Set<String> keySet(){
 		return args.keySet();
 	}
+	
+	/**
+	 * Testing purposes. */
 	public static void main(String[] args){
-		
-		
 		Arguments ar = new Arguments();
 		ar.put("hey1", "hey");
 		ar.put("hey2", null);
