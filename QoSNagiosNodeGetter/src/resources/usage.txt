@@ -1,7 +1,7 @@
 
 SYNOPSIS
 
-   check_node_obtaining --url URL --user USER --pass PASS --timeout TIMEOUT [OPTIONS]
+   check_node_obtaining --url URL --user USER --pass PASS --critical TIMEOUT [OPTIONS]
 
 DESCRIPTION
 
@@ -31,12 +31,6 @@ Mandatory arguments to long options are mandatory for short options too.
    -s, --nodescritical NODESCRITICAL
       If the amount of nodes obtained is strictly smaller than NODESCRITICAL, then a critical message will be told to Nagios.
 
-   -t, --timeout TIMEOUT
-      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
-       
-   -n, --timeoutwarning TIMEOUT_FOR_WARNING_MESSAGE
-      In seconds. If the overall test time exceeds this value, then the plugin will tell to Nagios a warning status.  
-      
    -f, --paconf PACONF
       ProActive configuration file (usually ProActiveConfiguration.xml). Necessary if a PAMR router is present.
       
@@ -47,10 +41,10 @@ Mandatory arguments to long options are mandatory for short options too.
       Port where the PAMR router service is exposed. Ignored if a ProActive configuration file is provided. 
       
    -w, --warning WARNING
-      Nagios compatibility. Warning level to be used.
+      In seconds. If the overall test time exceeds this value, then the plugin will tell to Nagios a warning status.  
       
    -c, --critical CRITICAL
-      Nagios compatibility. Critical level to be used.
+      Timeout (in seconds) to wait for the test until it is killed and critical status is told to Nagios.
       
    -V, --version
       Print the version of the plugin. 
@@ -69,5 +63,5 @@ NAGIOS OUTPUT INTERPRETATION
 EXECUTION EXAMPLE
 
    General cases
-      check_node_obtaining --url pamr://0 --user d --pass p --timeout 100 --paconf /tmp/ProActiveConfiguration.xml 
+      check_node_obtaining --url pamr://0 --user d --pass p --critical 100 --paconf /tmp/ProActiveConfiguration.xml 
 

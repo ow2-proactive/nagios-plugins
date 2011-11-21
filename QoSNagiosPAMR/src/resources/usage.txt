@@ -1,7 +1,7 @@
 
 SYNOPSIS
 
-   check_pamr_router --timeout TIMEOUT (-f PACONF | -H PAMRROUTERHOSTNAME -x PAMRROUTERPORT) [OPTIONS]
+   check_pamr_router --critical TIMEOUT (-f PACONF | -H PAMRROUTERHOSTNAME -x PAMRROUTERPORT) [OPTIONS]
 
 DESCRIPTION
 
@@ -14,12 +14,6 @@ Mandatory arguments to long options are mandatory for short options too.
    -v, --debug LEVELOFVERBOSITY
       Verbose debugging mode level. Default value is 1. Value 3: it will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
        
-   -t, --timeout TIMEOUT
-      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
-       
-   -n, --timeoutwarning TIMEOUT_FOR_WARNING_MESSAGE
-      In seconds. If the overall test time exceeds this value, then the plugin will tell to Nagios a warning status.  
-      
    -f, --paconf PACONF
       ProActive configuration file (usually ProActiveConfiguration.xml).
       
@@ -30,10 +24,10 @@ Mandatory arguments to long options are mandatory for short options too.
       Port to be used to get connected to the RM. Ignored if a ProActive configuration file is provided. 
       
    -w, --warning WARNING
-      Ignored. Nagios compatibility. Warning level to be used.
+      In seconds. If the overall test time exceeds this value, then the plugin will tell to Nagios a warning status.  
       
    -c, --critical CRITICAL
-      Ignored. Nagios compatibility. Critical level to be used.
+      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
       
    -V, --version
       Print the version of the plugin. 
@@ -52,5 +46,5 @@ NAGIOS OUTPUT INTERPRETATION
 EXECUTION EXAMPLE
 
    General cases
-      check_pamr_router --paconf /tmp/ProActiveConfiguration.xml --timeout 100
+      check_pamr_router --paconf /tmp/ProActiveConfiguration.xml --critical 100
  

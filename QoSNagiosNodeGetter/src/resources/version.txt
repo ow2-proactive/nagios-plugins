@@ -1,2 +1,2 @@
 Plugin version: 0.9a
-Updated on Thu Nov 3 17:54:27 CET 2011
+Updated on Mon Nov 21 16:01:13 CET 2011

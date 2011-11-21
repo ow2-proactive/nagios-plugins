@@ -1,6 +1,6 @@
 
 SYNOPSIS
-   check_job_submission --url URL --user USER --pass PASS --timeout TIMEOUT [OPTIONS]
+   check_job_submission --url URL --user USER --pass PASS --critical TIMEOUT [OPTIONS]
 
 DESCRIPTION
 
@@ -21,12 +21,6 @@ Mandatory arguments to long options are mandatory for short options too.
    -r, --url URL
       URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
       It should have a format like 'rmi://shainese.inria.fr:1099/' 
-       
-   -t, --timeout TIMEOUT
-      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
-       
-   -n, --timeoutwarning TIMEOUT_FOR_WARNING_MESSAGE
-      In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status. It is important to note that the probe is not killed with this timeout.  
       
    -f, --paconf PACONF
       ProActive configuration file (usually ProActiveConfiguration.xml). Used if a PAMR router is present behind a protected server.
@@ -38,10 +32,10 @@ Mandatory arguments to long options are mandatory for short options too.
       PAMR router port to be used to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
       
    -w, --warning WARNING
-      Ignored. Nagios compatibility. Warning level to be used.
+      In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status. It is important to note that the probe is not killed with this timeout.  
       
    -c, --critical CRITICAL
-      Ignored. Nagios compatibility. Critical level to be used.
+      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
       
    -d, --deleteallold
       Delete all old jobs of this user, no matter their name. For testing purposes.
@@ -73,5 +67,5 @@ NAGIOS OUTPUT INTERPRETATION
 EXECUTION EXAMPLE
 
    General cases
-      check_job_submission --url pamr://1 --user demo --pass demo --timeout 60 --paconf /tmp/ProActiveConfiguration.xml
+      check_job_submission --url pamr://1 --user demo --pass demo --critical 60 --paconf /tmp/ProActiveConfiguration.xml
 

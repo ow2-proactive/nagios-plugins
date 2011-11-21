@@ -99,7 +99,7 @@ public class JobProber {
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
 	public void validateArguments() throws IllegalArgumentException{
-		String[] notnull1 = {"url", "user", "pass", "timeout"}; // These arguments should not be null.
+		String[] notnull1 = {"url", "user", "pass", "critical"}; // These arguments should not be null.
 		Misc.allElementsAreNotNull(Arrays.asList(notnull1), arguments);
 		Integer debug = (Integer)arguments.get("debug");
 		if (debug<0 || debug>3)
@@ -116,8 +116,8 @@ public class JobProber {
 	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. */	 
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		// We add some reference values to be printed later in the summary for Nagios.
-		tracer.addNewReference("timeout_threshold", new Double((Integer)arguments.get("timeout")));
-		tracer.addNewReference("time_all_warning_threshold", new Double((Integer)arguments.get("timeoutwarning")));
+		tracer.addNewReference("timeout_threshold", new Double((Integer)arguments.get("critical")));
+		tracer.addNewReference("time_all_warning_threshold", new Double((Integer)arguments.get("warning")));
 		
 		String jobname = (String)arguments.get("jobname");							// Name of the job to be submitted to the scheduler.
 		
@@ -168,7 +168,7 @@ public class JobProber {
 			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: '" + jresult.toString() + "'.");
 			
 			if (jresult.toString().equals(expectedJobOutput)){ 		// Checked file, all OK.
-				if (tracer.getTotal() > (Integer)arguments.get("timeoutwarning")){
+				if (tracer.getTotal() > (Integer)arguments.get("warning")){
 					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "JOBID " + jobId + " TOO SLOW");
 				}else{
 					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "JOBID " + jobId + " OK");
@@ -195,8 +195,6 @@ public class JobProber {
         Option userO = 			new Option("u", "user", true, ""); 				options.addOption(userO);
         Option passO = 			new Option("p", "pass", true, ""); 				options.addOption(passO);
         Option urlO = 			new Option("r", "url", true, ""); 				options.addOption(urlO);
-        Option timeoutO =  		new Option("t", "timeout", true, "");			options.addOption(timeoutO);
-        Option timeoutwarningO =new Option("n", "timeoutwarning", true, ""); 	options.addOption(timeoutwarningO);
         Option paconfO = 		new Option("f", "paconf", true, ""); 			options.addOption(paconfO);
         Option hostnameO = 		new Option("H", "hostname", true, "");			options.addOption(hostnameO);
         Option portO = 			new Option("x", "port"    , true, "");			options.addOption(portO);
@@ -223,13 +221,11 @@ public class JobProber {
 		ar.put("user", (String)parser.getOptionValue("u"));			 											// User.
 		ar.put("pass", (String)parser.getOptionValue("p")); 													// Pass.
 		ar.put("url", (String)parser.getOptionValue("r")); 														// Url of the Scheduler/RM.
-		ar.put("timeout", Misc.parseInteger(parser.getOptionValue("t"), null));									// Timeout in seconds for the job to be executed.
-		ar.put("timeoutwarning", Misc.parseInteger(parser.getOptionValue("n"),(Integer)ar.get("timeout")));		// Timeout in seconds for the warning message to be thrown.
 		ar.put("paconf", (String)parser.getOptionValue("f")); 													// Path of the ProActive xml configuration file.
 		ar.put("hostname", (String)parser.getOptionValue("H"));					 								// Host to be tested. 
 		ar.put("port", (String)parser.getOptionValue("x"));														// Port of the host to be tested. 
-		ar.put("warning", (String)parser.getOptionValue("w", "ignored"));										// Warning level. Ignored.
-		ar.put("critical", (String)parser.getOptionValue("c", "ignored")); 										// Critical level. Ignored. 
+		ar.put("critical", Misc.parseInteger(parser.getOptionValue("c"), null));								// Timeout in seconds for the job to be executed.
+		ar.put("warning", Misc.parseInteger(parser.getOptionValue("w"),(Integer)ar.get("critical")));			// Timeout in seconds for the warning message to be thrown.
 		ar.put("jobname", (String)parser.getOptionValue("j", JobProber.JOB_NAME_DEFAULT));						// Name used to run the job in the Scheduler. 
 		ar.put("deleteallold", new Boolean(parser.hasOption("d")));												// Delete all old jobs, not only the ones with the name of the current probe job.
 		ar.put("polling", new Boolean(parser.hasOption("g")));													// Do polling or use an event based mechanism.
@@ -268,12 +264,12 @@ public class JobProber {
 	
 		NagiosReturnObject res = null;
 		try{ 								// We execute the future using a timeout. 
-			res = proberFuture.get((Integer)ar.get("timeout"), TimeUnit.SECONDS);
+			res = proberFuture.get((Integer)ar.get("critical"), TimeUnit.SECONDS);
 			res.appendCurvesSection(tracer.getMeasurementsSummary("time_all"));
 		}catch(TimeoutException e){
 			logger.info("Exception ", e); 	// The execution took more time than expected. 
 			res = new NagiosReturnObject(
-					NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+(Integer)ar.get("timeout")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+					NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+(Integer)ar.get("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
 			logger.info("Exception ", e);

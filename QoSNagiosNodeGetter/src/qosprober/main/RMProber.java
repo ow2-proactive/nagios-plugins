@@ -84,7 +84,7 @@ public class RMProber {
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
 	public void validateArguments() throws IllegalArgumentException{
-		String[] notnull1 = {"url", "user", "pass", "timeout"}; // These arguments should not be null.
+		String[] notnull1 = {"url", "user", "pass", "critical"}; // These arguments should not be null.
 		Misc.allElementsAreNotNull(Arrays.asList(notnull1), arguments);
 		Integer debug = (Integer)arguments.get("debug");
 		if (debug<0 || debug>3)
@@ -105,8 +105,8 @@ public class RMProber {
 	 * @throws KeyException */	 
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws KeyException, LoginException, RMException{
 		// We add some reference values to be printed later in the summary for Nagios.
-		tracer.addNewReference("timeout_threshold", new Double((Integer)arguments.get("timeout")));
-		tracer.addNewReference("time_all_warning_threshold", new Double((Integer)arguments.get("timeoutwarning")));
+		tracer.addNewReference("timeout_threshold", new Double((Integer)arguments.get("critical")));
+		tracer.addNewReference("time_all_warning_threshold", new Double((Integer)arguments.get("warning")));
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
@@ -146,7 +146,7 @@ public class RMProber {
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL STATE, TOO FEW NODES OBTAINED " + summary);
 		}else if (obtainednodes < (Integer)arguments.get("nodeswarning")){		
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "WARNING STATE, TOO FEW NODES OBTAINED " + summary);
-		}else if (time_all > (Integer)arguments.get("timeoutwarning")){			// If longer than timeoutwarnsec, warning message.
+		}else if (time_all > (Integer)arguments.get("warning")){			// If longer than timeoutwarnsec, warning message.
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "WARNING STATE, " + obtainednodes + " NODE/S OBTAINED TOO SLOWLY");
 		}else{																	// Else everything was okay.
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, obtainednodes + " NODE/S OBTAINED OK");
@@ -170,8 +170,6 @@ public class RMProber {
 		Option nodesrequiredO = new Option("q", "nodesrequired", true, "");	options.addOption(nodesrequiredO);
 		Option nodeswarningO = 	new Option("b", "nodeswarning", true, "");	options.addOption(nodeswarningO);
         Option nodescriticalO = new Option("s", "nodescritical", true, "");	options.addOption(nodescriticalO);
-        Option timeoutO = 		new Option("t", "timeout", true, "");		options.addOption(timeoutO);
-        Option timeoutwarningO =new Option("n", "timeoutwarning", true, "");options.addOption(timeoutwarningO);
         Option paconfO = 		new Option("f", "paconf", true, ""); 		options.addOption(paconfO);
         Option hostnameO =		new Option("H", "hostname", true, "");		options.addOption(hostnameO);
         Option portO = 			new Option("x", "port"    , true, "");		options.addOption(portO);
@@ -197,13 +195,11 @@ public class RMProber {
 		ar.put("nodesrequired", Misc.parseInteger(parser.getOptionValue("q"),1)); 								// Amount of nodes to be asked to the Resource Manager.
 		ar.put("nodeswarning", Misc.parseInteger(parser.getOptionValue("b"),(Integer)ar.get("nodesrequired"))); // Obtaining fewer nodes than this, a warning message will be thrown. 
 		ar.put("nodescritical", Misc.parseInteger(parser.getOptionValue("s"),(Integer)ar.get("nodesrequired")));// Obtaining fewer nodes than this, a critical message will be thrown. 
-		ar.put("timeout", Misc.parseInteger(parser.getOptionValue("t"), null));									// Timeout in seconds for the job to be executed.
-		ar.put("timeoutwarning", Misc.parseInteger(parser.getOptionValue("n"),(Integer)ar.get("timeout")));		// Timeout in seconds for the warning message to be thrown.
 		ar.put("paconf", (String)parser.getOptionValue("f")); 													// Path of the ProActive xml configuration file.
 		ar.put("hostname", (String)parser.getOptionValue("H"));					 								// PAMR router host. Ignored.
 		ar.put("port", (String)parser.getOptionValue("x"));														// PAMR router port. 
-		ar.put("warning", (String)parser.getOptionValue("w", "ignored"));										// Warning level. Ignored.
-		ar.put("critical", (String)parser.getOptionValue("c", "ignored")); 										// Critical level. Ignored. 
+		ar.put("critical", Misc.parseInteger(parser.getOptionValue("c"), null));								// Timeout in seconds for the job to be executed.
+		ar.put("warning", Misc.parseInteger(parser.getOptionValue("w"),(Integer)ar.get("critical")));			// Timeout in seconds for the warning message to be thrown.
 		ar.put("version", parser.hasOption("V"));																// Prints the version of the plugin.
 	
 		if ((Boolean)ar.get("help") == true)	
@@ -239,11 +235,11 @@ public class RMProber {
 		
 		NagiosReturnObject res = null;
 		try{ // We execute the future using a timeout.
-			res = proberFuture.get((Integer)ar.get("timeout"), TimeUnit.SECONDS);
+			res = proberFuture.get((Integer)ar.get("critical"), TimeUnit.SECONDS);
 			res.appendCurvesSection(tracer.getMeasurementsSummary("time_all"));
 		}catch(TimeoutException e){
 			/* The execution took more time than expected. */
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+(Integer)ar.get("timeout")+ "s (last status was: " + tracer.getLastStatusDescription() + ")", e);
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+(Integer)ar.get("critical")+ "s (last status was: " + tracer.getLastStatusDescription() + ")", e);
 			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
 		}catch(ExecutionException e){
 			/* There was an unexpected problem with the execution of the prober. */
