@@ -47,6 +47,7 @@ import org.ow2.proactive.utils.NodeSet;
 import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
 import qosprobercore.main.NagiosReturnObject;
+import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.TimedStatusTracer;
 import qosprobercore.misc.Misc;
@@ -124,6 +125,10 @@ public class RMProber {
 				arguments.getInt("nodesrequired")); 	
 		int obtainednodes = nodes.size();
 		
+		tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "connected to RM, getting status...");
+		
+		int freenodes = rmstub.getRMState().getFreeNodesNumber(); // Get the amount of free nodes.
+		
 		tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "releasing nodes...");
     	
     	rmstub.releaseNodes(nodes);							// Release the nodes obtained.
@@ -134,22 +139,32 @@ public class RMProber {
     				
 		tracer.finishLastMeasurement();
 		
-		NagiosReturnObject res = null;  
 		
-		String summary = "(obtained/required)=(" + obtainednodes + "/" + arguments.getValue("nodesrequired") + ")";
+		
+		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
+		
+		int nodesrequired = arguments.getInt("nodesrequired");
 		
 		Double time_all = tracer.getTotal();
 		
-		if (obtainednodes < arguments.getInt("nodescritical")){	
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL STATE, TOO FEW NODES OBTAINED " + summary);
-		}else if (obtainednodes < arguments.getInt("nodeswarning")){		
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "WARNING STATE, TOO FEW NODES OBTAINED " + summary);
-		}else if (arguments.isGiven("warning") && time_all > arguments.getInt("warning")){ // If it took longer than timeoutwarnsec, throw a warning message.
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "WARNING STATE, " + obtainednodes + " NODE/S OBTAINED TOO SLOWLY");
-		}else{																	// Else everything was okay.
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, obtainednodes + " NODE/S OBTAINED OK");
+		summary.addFact(obtainednodes + " NODE/S OBTAINED");
+		
+		if (obtainednodes < arguments.getInt("nodescritical")){									// Fewer nodes than criticalnodes.	
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TOO FEW NODES (" + nodesrequired + " REQUIRED, " + freenodes + " FREE)"));
+		}else if (obtainednodes < arguments.getInt("nodeswarning")){							// Fewer nodes than warningnodes.	
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING,  "TOO FEW NODES (" + nodesrequired + " REQUIRED, " + freenodes + " FREE)"));
 		}
-		return res;
+		
+		if (arguments.isGiven("warning") && time_all > arguments.getInt("warning")){			// It took longer than timeoutwarnsec.
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "NODE/S OBTAINED TOO SLOWLY"));
+		}																					// Everything was okay.
+		
+		if (summary.isAllOkay() == true){
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "OK"));
+		}
+		
+		return summary.getSummaryOfAll();
+		
 	}
 
 	/**
@@ -210,19 +225,19 @@ public class RMProber {
 		NagiosReturnObject res = null;
 		try{ // We execute the future using a timeout.
 			res = proberFuture.get(options.getInt("critical"), TimeUnit.SECONDS);
-			res.appendCurvesSection(tracer.getMeasurementsSummary("time_all"));
+			res.addCurvesSection(tracer, "time_all");
 		}catch(TimeoutException e){
 			/* The execution took more time than expected. */
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+options.getInt("critical")+ "s (last status was: " + tracer.getLastStatusDescription() + ")", e);
-			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+			res.addCurvesSection(tracer, null);
 		}catch(ExecutionException e){
 			/* There was an unexpected problem with the execution of the prober. */
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
-			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+			res.addCurvesSection(tracer, null);
 		}catch(Exception e){
 			/* There was an unexpected critical exception not captured. */
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
-			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+			res.addCurvesSection(tracer, null);
 		}
 		NagiosPlugin.printAndExit(res, options.getInt("debug"));
 	}

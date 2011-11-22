@@ -50,6 +50,7 @@ import qosprober.misc.PAMRMisc;
 import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
 import qosprobercore.main.NagiosReturnObject;
+import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.TimedStatusTracer;
 import qosprobercore.misc.Misc;
@@ -162,13 +163,19 @@ public class PAMRProber {
     
 		tracer.finishLastMeasurement();
     	
-    	NagiosReturnObject res = null;
+		
+		
+		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
+		
 		if (arguments.isGiven("warning") && tracer.getTotal() > arguments.getInt("warning")){ // If it took longer than timeoutwarnsec, throw a warning message.
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "WARNING STATE, SLOW PROBE");
-		}else{														// Else, we consider that everything went okay.
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK,"OK");
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "PROBE TOO SLOW"));
 		}
-		return res;
+		
+		if (summary.isAllOkay() == true){	// If everything went okay...
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK,"OK"));
+		}
+		
+		return summary.getSummaryOfAll();
 	}
 	
 	/**
@@ -221,16 +228,16 @@ public class PAMRProber {
 		NagiosReturnObject res = null;
 		try{								 // We execute the future using a timeout. 
 			res = proberFuture.get(options.getInt("critical"), TimeUnit.SECONDS);
-			res.appendCurvesSection(tracer.getMeasurementsSummary("time_all"));
+			res.addCurvesSection(tracer, "time_all");
 		}catch(TimeoutException e){ 		// The execution took more time than expected. 
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+options.getInt("critical")+ " SEC (last status was: " + tracer.getLastStatusDescription() + ")", e);
-			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+			res.addCurvesSection(tracer, null);
 		}catch(ExecutionException e){ 		// There was an unexpected problem with the execution of the prober. 
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
-			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+			res.addCurvesSection(tracer, null);
 		}catch(Exception e){				// There was an unexpected critical exception not captured. 
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
-			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+			res.addCurvesSection(tracer, null);
 		}
 		NagiosPlugin.printAndExit(res, options.getInt("debug"));
 	}

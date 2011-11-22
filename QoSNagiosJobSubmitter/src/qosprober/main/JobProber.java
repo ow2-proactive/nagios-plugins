@@ -52,6 +52,7 @@ import org.ow2.proactive.scheduler.examples.WaitAndPrint;
 import qosprobercore.exceptions.InvalidProtocolException;
 import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
+import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.TimedStatusTracer;
@@ -160,25 +161,30 @@ public class JobProber {
 		
 		tracer.finishLastMeasurement();
 	
-		NagiosReturnObject ret = null; 
+		
+		
+		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
+		summary.addFact("JOBID " + jobId + ":" + jobname);
 		
 		if (jresult==null){ 		// No job result obtained... It must never happen, but we check just in case.
-			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: NOT FINISHED");
-			ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "JOBID " + jobId + " ERROR (no job result obtained)");
+			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: NO OUTPUT");
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "NO JOB RESULT OBTAINED"));
 		}else{ 						// Non-timeout case. Result obtained.
 			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: '" + jresult.toString() + "'.");
-			
-			if (jresult.toString().equals(expectedJobOutput)){ 		// Checked file, all OK.
-				if (arguments.isGiven("warning") && tracer.getTotal() > arguments.getInt("warning")){
-					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "JOBID " + jobId + " TOO SLOW");
-				}else{
-					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "JOBID " + jobId + " OK");
-				}
-			}else{ 														// Outputs were different. 
-				ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "JOBID " + jobId + " OUTPUT CHECK FAILED");
+			if (jresult.toString().equals(expectedJobOutput) == false){ 
+				summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "OUTPUT CHECK FAILED"));
 			}
+		}	
+		
+		if (arguments.isGiven("warning") && tracer.getTotal() > arguments.getInt("warning")){
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "TOO SLOW"));
 		}
-		return ret;
+		
+		if (summary.isAllOkay()){
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "OK"));
+		}
+		
+		return summary.getSummaryOfAll();
 	}
 	
 	
@@ -242,20 +248,20 @@ public class JobProber {
 		NagiosReturnObject res = null;
 		try{ 								// We execute the future using a timeout. 
 			res = proberFuture.get(options.getInt("critical"), TimeUnit.SECONDS);
-			res.appendCurvesSection(tracer.getMeasurementsSummary("time_all"));
+			res.addCurvesSection(tracer, "time_all");
 		}catch(TimeoutException e){
 			logger.info("Exception ", e); 	// The execution took more time than expected. 
 			res = new NagiosReturnObject(
 					NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+options.getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
-			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+			res.addCurvesSection(tracer, null);
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
 			logger.info("Exception ", e);
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
-			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+			res.addCurvesSection(tracer, null);
 		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
 			logger.info("Exception ", e);
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
-			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
+			res.addCurvesSection(tracer, null);
 		}
 		NagiosPlugin.printAndExit(res, options.getInt("debug"));
 	}

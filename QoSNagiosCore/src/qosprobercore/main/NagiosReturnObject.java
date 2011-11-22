@@ -42,17 +42,17 @@ package qosprobercore.main;
  * who controls/monitors the plugin via Nagios. */
 public class NagiosReturnObject {
 	// Nagios exit codes.
-	public static final int RESULT_0_OK = 0; 				// Nagios code. Execution successfully. 
-	public static final int RESULT_1_WARNING = 1; 			// Nagios code. Warning. 
-	public static final int RESULT_2_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
-	public static final int RESULT_3_UNKNOWN = 3; 			// Nagios code. Unknown state of the tested entity.
+	public static final Integer RESULT_0_OK = 0; 				// Nagios code. Execution successfully. 
+	public static final Integer RESULT_1_WARNING = 1; 			// Nagios code. Warning. 
+	public static final Integer RESULT_2_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
+	public static final Integer RESULT_3_UNKNOWN = 3; 			// Nagios code. Unknown state of the tested entity.
 	
 	private String errorMessage;							// Message to be told to Nagios.
 	private String curvesSection;							// Curves section for Nagios to use to generate curves. 
 	private int errorCode;									// Error code to be told to Nagios.
 	private Throwable exception;							// Exception to be told to Nagios.
 
-	public NagiosReturnObject(int errorCode, String errorMessage){
+	public NagiosReturnObject(Integer errorCode, String errorMessage){
 		this(errorCode, errorMessage, null);
 	}
 	
@@ -61,21 +61,19 @@ public class NagiosReturnObject {
 	 * @param errorCode error code to be returned.
 	 * @param errorMessage message to be returned to the user (through Nagios).
 	 * @param exception exception thrown (if any) that caused the problem (if any). */
-	public NagiosReturnObject(int errorCode, String errorMessage, Throwable exception){
+	public NagiosReturnObject(Integer errorCode, String errorMessage, Throwable exception){
 		this.errorCode = errorCode;
 		this.errorMessage = errorMessage;
 		this.exception = exception;
-		this.curvesSection = null;
+		this.curvesSection = "";
 	}
 	
 	/**
 	 * Append to the section of curves (section after the pipe character in Nagios outputs) the given string.
-	 * @param str string to append. */
-	public void appendCurvesSection(String str){
-		if (curvesSection == null)
-			curvesSection = str;
-		else
-			this.curvesSection = this.curvesSection + " " + str;
+	 * @param tst TimedStatusTracer containing the timing measurements done. 
+	 * @param all_time_label label for the sum of all the measurements done (null if this measurement should not be added). */
+	public void addCurvesSection(TimedStatusTracer tst, String all_time_label){
+		curvesSection = tst.getMeasurementsSummary(all_time_label);
 	}
 	
 	/**
@@ -86,9 +84,16 @@ public class NagiosReturnObject {
 	}
 	
 	/**
+	 * Return the error message.
+	 * @return error message. */
+	public String getErrorMessage(){
+		return errorMessage;
+	}
+	
+	/**
 	 * Return the error code.
 	 * @return error code. */
-	public int getErrorCode(){
+	public Integer getErrorCode(){
 		return errorCode;
 	}
 	
