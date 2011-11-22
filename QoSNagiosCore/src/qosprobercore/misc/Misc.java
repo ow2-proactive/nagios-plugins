@@ -185,7 +185,7 @@ public class Misc {
 	 * @throws IllegalArgumentException thrown in case a supposed non-null argument is indeed null. */
 	public static void allElementsAreNotNull(Collection<String> notnull, Arguments target) throws IllegalArgumentException{
 		for (String key:notnull){
-			if (target.get(key)==null){
+			if (target.getValue(key)==null){
 				throw new IllegalArgumentException("The argument '" + key + "' is null.");
 			}
 		}

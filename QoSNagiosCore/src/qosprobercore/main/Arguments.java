@@ -37,27 +37,138 @@
 
 package qosprobercore.main;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
+import java.util.List;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.MissingOptionException;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Parser;
+import org.apache.log4j.Logger;
+
+import qosprobercore.misc.Misc;
 
 /**
  * An Arguments object contains all the arguments (entries) that a probe class might need to perform the test.
  * We control that each get has a valid key. */
 public class Arguments {
-	private HashMap<String, Object> args;	// Set of arguments given.
+	public static Logger logger = 
+			Logger.getLogger(Arguments.class.getName()); 	// Logger.
+	private Options options;								// Set of arguments given by the user.
+	private ArrayList<String> optionsLongOpt;				// Workaround to get a list of the expected arguments. options.getOptions does not work.
+	private HashMap<String, Object> values;					// Set of argument values given by the user.
+	private HashMap<String, Object> defaultValues;			// Set of argument values to be used if the user do not provide them.
+	private CommandLine parser;								// Parser itself.
+	private String[] arguments;								// Raw arguments given by the user.
 	
 	/** 
 	 * Constructor. */
-	public Arguments(){
-		args = new HashMap<String, Object>();
+	public Arguments(String[] arguments){
+		values = new HashMap<String, Object>();
+		optionsLongOpt = new ArrayList<String>();		// Set of arguments given by the user.
+		defaultValues = new HashMap<String, Object>();
+		options = new Options();						// Configuration for each argument. 
+		this.arguments = arguments;
 	}
 	
+	/**
+	 * Add a new expected option/argument.
+	 * @param shortname a short form to cite the flag (-x).
+	 * @param longname a long form to cite the flag (--execution).
+	 * @param hasarguments whether this flag expects arguments. */
+	public void addNewOption(String shortname, String longname, Boolean hasarguments){
+		addNewOption(shortname, longname, hasarguments, null);
+	}
+
+	/**
+	 * Add a new expected option/argument.
+	 * @param shortname a short form to cite the flag (-x).
+	 * @param longname a long form to cite the flag (--execution).
+	 * @param hasarguments whether this flag expects arguments.
+	 * @param defaultValue default value to return in case the user does not provide this flag's value. */
+	public void addNewOption(String shortname, String longname, Boolean hasarguments, Object defaultValue){
+		Option option = new Option(shortname, longname, hasarguments, "");
+		options.addOption(option);
+		if (defaultValue!=null)
+			defaultValues.put(longname, defaultValue);
+		optionsLongOpt.add(longname);
+	}
+	
+	/**
+	 * Perform the parsing of the raw arguments.
+	 * @throws ParseException in case of an unexpected format of the command-line.
+	 */
+	public void parseAll() throws ParseException{
+        try{
+	        Parser parserrr = new GnuParser();
+	        parser = parserrr.parse(options, arguments);
+        }catch(MissingOptionException ex){
+	        NagiosPlugin.printMessageUsageAndExit(ex.getMessage());	
+        }
+		for (String key: keySet())			// Show all the arguments considered. 
+			logger.info("\t" + key + ": isPresent="+ isPresent(key) + " value='" + get(key) + "'");
+	}
+	
+	/**
+	 * Get a String provided the key.
+	 * @param key key of the argument.
+	 * @return value of the argument. If it was not given, it will return the default value. */
+	public String getStr(String key){
+		checkKey(key);
+		String ret = parser.getOptionValue(key);
+		if (ret == null){
+			ret = (String)defaultValues.get(key);
+		}	
+		return ret;
+	}
+	
+	/**
+	 * Get a Object provided the key.
+	 * @param key key of the argument.
+	 * @return value of the argument. If it was not given, it will return the default value. */
+	public Object getValue(String key){
+		checkKey(key);
+		Object ret = parser.getOptionValue(key);
+		if (ret == null){
+			ret = (String)defaultValues.get(key);
+		}	
+		return ret;
+	}
+	
+	/**
+	 * Get an Integer provided the key.
+	 * @param key key of the argument.
+	 * @return value of the argument. If it was not given, it will return the default value. */
+	public Integer getInt(String key){
+		checkKey(key);
+		return Misc.parseInteger(parser.getOptionValue(key), (Integer)defaultValues.get(key));
+	}
+	
+	/**
+	 * Get a boolean provided the key.
+	 * @param key key of the argument.
+	 * @return whether this argument was provided or not. */
+	public Boolean getBoo(String key){
+		checkKey(key);
+		return new Boolean(parser.hasOption(key));
+	}
+
+	/**
+	 * Perform a checking on the given key (if it was not expected, it throws an exception).
+	 * @param key key to be checked. */
+	public void checkKey(String key){
+		if (optionsLongOpt.contains(key)==false)
+			throw new RuntimeException("Problem trying to use key '" + key + "'.");
+	}
 	/**
 	 * Simple put method.
 	 * @param key key to be used for the new entry.
 	 * @param value value to be used for the new entry. */
 	public void put(String key, Object value){
-		args.put(key, value);
+		values.put(key, value);
 	}
 	
 	/**
@@ -65,29 +176,20 @@ public class Arguments {
 	 * It controls that the given key has been 'put' before by a 'put' method.
 	 * @param key key to get the right entry.
 	 * @return returns the value of the entry/argument. */
-	public Object get(String key){
-		if (args.containsKey(key)==false)
-			throw new RuntimeException("Problem trying to use key '" + key + "'.");
-		return args.get(key);
+	private Object get(String key){
+		return parser.getOptionValue(key);
+	}
+	
+	private Boolean isPresent(String key){
+		return parser.hasOption(key);
 	}
 	
 	/**
 	 * Get the whole key set.
 	 * @return key set.
 	 */
-	public Set<String> keySet(){
-		return args.keySet();
-	}
-	
-	/**
-	 * Testing purposes. */
-	public static void main(String[] args){
-		Arguments ar = new Arguments();
-		ar.put("hey1", "hey");
-		ar.put("hey2", null);
-		System.out.println(ar.get("hey1"));
-		System.out.println(ar.get("hey2"));
-		System.out.println(ar.get("hey3"));
+	private List<String> keySet(){
+		return optionsLongOpt;
 	}
 	
 }
