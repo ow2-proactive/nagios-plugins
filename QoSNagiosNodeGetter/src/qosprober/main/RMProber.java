@@ -119,15 +119,15 @@ public class RMProber {
 				arguments.getStr("url"),  arguments.getStr("user"), 
 				arguments.getStr("pass"));	
 		
+		tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "connected to RM, getting status...");
+		
+		int freenodes = rmstub.getRMState().getFreeNodesNumber(); // Get the amount of free nodes.
+		
 		tracer.finishLastMeasurementAndStartNewOne("time_getting_nodes", "connected to RM, getting nodes...");
 		
 		NodeSet nodes = rmstub.getNodes(					// Request some nodes.
 				arguments.getInt("nodesrequired")); 	
 		int obtainednodes = nodes.size();
-		
-		tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "connected to RM, getting status...");
-		
-		int freenodes = rmstub.getRMState().getFreeNodesNumber(); // Get the amount of free nodes.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "releasing nodes...");
     	
@@ -153,6 +153,15 @@ public class RMProber {
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TOO FEW NODES (" + nodesrequired + " REQUIRED, " + freenodes + " FREE)"));
 		}else if (obtainednodes < arguments.getInt("nodeswarning")){							// Fewer nodes than warningnodes.	
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING,  "TOO FEW NODES (" + nodesrequired + " REQUIRED, " + freenodes + " FREE)"));
+		}
+		
+		// Having F free nodes, if W is the number of wanted nodes, I should get the min(F, W). 
+		//        4 free nodes,    3                  wanted nodes, I should get the min(4, 3)=3 nodes. 
+		
+		if (obtainednodes < Math.min(freenodes, nodesrequired)){
+			summary.addNagiosReturnObject(
+					new NagiosReturnObject(
+							NagiosReturnObject.RESULT_2_CRITICAL, "PROBLEM: NODES (OBTAINED/REQUIRED/FREE)=("+obtainednodes+"/"+nodesrequired+"/"+freenodes+")"));
 		}
 		
 		if (arguments.isGiven("warning") && time_all > arguments.getInt("warning")){			// It took longer than timeoutwarnsec.
@@ -189,8 +198,8 @@ public class RMProber {
 		options.addNewOption("x", "port"    , true);                                                // Port of the host to be tested. 
 		
 		options.addNewOption("q", "nodesrequired", true, new Integer(1));							// Amount of nodes to be asked to the Resource Manager.
-		options.addNewOption("b", "nodeswarning", true, new Integer(1));							// Obtaining fewer nodes than this, a warning message will be thrown.
-		options.addNewOption("s", "nodescritical", true, new Integer(1));							// Obtaining fewer nodes than this, a critical message will be thrown.
+		options.addNewOption("b", "nodeswarning", true, new Integer(0));							// Obtaining fewer nodes than this, a warning message will be thrown.
+		options.addNewOption("s", "nodescritical", true, new Integer(0));							// Obtaining fewer nodes than this, a critical message will be thrown.
 
 		options.parseAll();
 		

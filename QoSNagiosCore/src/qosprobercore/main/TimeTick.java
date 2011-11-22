@@ -40,27 +40,34 @@ package qosprobercore.main;
 import java.util.Date;
 
 /** 
- * Class to get the time elapsed between events. */
+ * Class to get the time elapsed between events/ticks. */
 public class TimeTick {
-	private long init;
-	
+	private long init;		// Timestamp of the last tick.
+
+	/**
+	 * Empty constructor. */
 	public TimeTick(){
 		tickSec();
 	}
 	
 	/**
-	 * Get the time elapsed between this call and the previous one. */
+	 * Get the time elapsed between this tick/call and the previous one. */
 	public double tickSec(){
 		long now = (new Date()).getTime();
 		double interval = ((double)((double)now - (double)init)) / 1000;
-		init = restart();
+		init = gettime();
 		return interval;
 	}
 	
-	private long restart(){
+	/**
+	 * Get the current time in ms since the epoch.
+	 * @return the value. */
+	private long gettime(){
 		return (new Date()).getTime();
 	}
 	
+	/**
+	 * Debugging purposes. */
 	public static void main(String args[]) throws Exception{
 		TimeTick tt = new TimeTick();
 		System.out.println("tick " + tt.tickSec());

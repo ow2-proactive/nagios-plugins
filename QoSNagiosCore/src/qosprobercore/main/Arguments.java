@@ -99,8 +99,7 @@ public class Arguments {
 	
 	/**
 	 * Perform the parsing of the raw arguments.
-	 * @throws ParseException in case of an unexpected format of the command-line.
-	 */
+	 * @throws ParseException in case of an unexpected format of the command-line. */
 	public void parseAll() throws ParseException{
         try{
 	        Parser parserrr = new GnuParser();
@@ -108,6 +107,11 @@ public class Arguments {
         }catch(MissingOptionException ex){
 	        NagiosPlugin.printMessageUsageAndExit(ex.getMessage());	
         }
+	}
+	
+	/**
+	 * Print a summary with the argument given by the user. */
+	public void printArgumentsGiven(){
 		for (String key: keySet())			// Show all the arguments considered. 
 			logger.info("\t" + key + ": isPresent="+ isPresent(key) + " value='" + get(key) + "'");
 	}

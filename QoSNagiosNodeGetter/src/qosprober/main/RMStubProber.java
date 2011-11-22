@@ -1,4 +1,5 @@
-/* * ################################################################
+/*
+ * ################################################################
  *
  * ProActive Parallel Suite(TM): The Java(TM) library for
  *    Parallel, Distributed, Multi-Core Computing for
@@ -73,6 +74,7 @@ public class RMStubProber {
 	
 	/**
 	 * Get the given amount of nodes (or as many as possible) from the Resource Manager.
+	 * @param amountOfNodesRequired nodes to be requested to the RM.
 	 * @return the set with the nodes obtained. */
 	public NodeSet getNodes(int amountOfNodesRequired){
 		NodeSet ns = rmStub.getAtMostNodes(amountOfNodesRequired, null);

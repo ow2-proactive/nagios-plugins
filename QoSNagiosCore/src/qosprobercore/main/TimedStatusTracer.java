@@ -48,16 +48,16 @@ import qosprobercore.misc.Misc;
 public class TimedStatusTracer {
 	private static TimedStatusTracer instance;				// Singleton.
 	private TimeTick timetick;								// Timing measurement object.
-	private Properties timingMeasurements;
-	private Properties timingMeasurementsReference;
+	private Properties timingMeasurements;					// Entries with measurements.
+	private Properties timingMeasurementsReference;			// Entries with references. 
 	private String lastStatusDescription = null;			// Holds a message representative of the current status of the test. 
 															// It is used in case of TIMEOUT, to help the administrator guess 
 															// where the problem is.
-	
 	private String lastLabel = null;						// Holds a message representative of the current status of the test. 
-															// It is used in case of TIMEOUT, to help the administrator guess 
+															// It is used in case of TIMEOUT, to help the administrator guess. 
 															// where the problem is.
-	public static Logger logger = Logger.getLogger(TimedStatusTracer.class.getName()); // Logger.
+	public static Logger logger =							// Logger. 
+			Logger.getLogger(TimedStatusTracer.class.getName()); 
 
 	/** 
 	 * Testing purposes. */
@@ -143,8 +143,7 @@ public class TimedStatusTracer {
 	 * Get a string with the summary of all the entries with the format 'key1=value1 key2=value2 ...'
 	 * @param totalLabel if not null, it adds a new entry with the totalLabel and the value given
 	 * by the sum of all the measurements (not including the references).
-	 * @return a string with the summary.
-	 */
+	 * @return a string with the summary. */
 	public synchronized String getMeasurementsSummary(String totalLabel){
 		String ret_measurements = "";
 		String ret_total = "";

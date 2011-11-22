@@ -55,7 +55,9 @@ public class NagiosPlugin {
 	
     /** 
      * Print a message in the stdout (for Nagios to use it) and return with the given error code. 
-     * Print a back-trace later only if the debug-level is appropriate. */
+     * Print a back-trace later only if the debug-level is appropriate. 
+     * @param obj object to take the information from.
+     * @param debuglevel level of verbosity. */
     public synchronized static void printAndExit(NagiosReturnObject obj, int debuglevel){
     	Throwable exc = obj.getException();
         switch(debuglevel){
