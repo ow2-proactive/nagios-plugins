@@ -133,7 +133,7 @@ public class Arguments {
 		checkKey(key);
 		Object ret = parser.getOptionValue(key);
 		if (ret == null){
-			ret = (String)defaultValues.get(key);
+			ret = defaultValues.get(key);
 		}	
 		return ret;
 	}
@@ -152,6 +152,15 @@ public class Arguments {
 	 * @param key key of the argument.
 	 * @return whether this argument was provided or not. */
 	public Boolean getBoo(String key){
+		checkKey(key);
+		return new Boolean(parser.hasOption(key));
+	}
+
+	/**
+	 * Get a boolean telling if the user provided the value.
+	 * @param key key of the argument.
+	 * @return whether this argument was provided or not. */
+	public Boolean isGiven(String key){
 		checkKey(key);
 		return new Boolean(parser.hasOption(key));
 	}

@@ -47,7 +47,7 @@ import org.ow2.proactive.authentication.crypto.Credentials;
 import org.ow2.proactive.resourcemanager.authentication.RMAuthentication;
 import org.ow2.proactive.resourcemanager.exception.RMException;
 import org.ow2.proactive.resourcemanager.frontend.RMConnection;
-import org.objectweb.proactive.core.node.Node;
+//import org.objectweb.proactive.core.node.Node;
 import org.ow2.proactive.resourcemanager.frontend.ResourceManager;
 import org.ow2.proactive.utils.NodeSet;
 
@@ -81,10 +81,12 @@ public class RMStubProber {
 	 */
 	public NodeSet getNodes(int amountOfNodesRequired){
 		NodeSet ns = rmStub.getAtMostNodes(amountOfNodesRequired, null);
-		logger.info("Listing nodes...");					// List the nodes obtained.
-    	for(Node n:ns){
-    		logger.info("\t - " + n.getNodeInformation().getName());
-    	}
+    	logger.info("Getting nodes...");					
+//		logger.info("\tListing nodes...");					// List the nodes obtained.
+//    	for(Node n:ns){
+//    		logger.info("\t\t - " + n.getNodeInformation().getName());
+//    	}
+//    	logger.info("\tDone.");
     	logger.info("Done.");
 		return ns;
 	}

@@ -42,7 +42,6 @@ import java.security.KeyException;
 import java.util.Arrays;
 import java.util.concurrent.*;
 import javax.security.auth.login.LoginException;
-import org.apache.commons.cli.*;
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
 import org.objectweb.proactive.core.node.NodeException;
@@ -78,11 +77,11 @@ public class PAMRProber {
 	/**
 	 * Initialize the ProActive environment for this probe. */
 	public void initializeEnvironment() throws Exception{
-		Misc.log4jConfiguration((Integer)arguments.get("debug"));						// Loading log4j configuration. 
+		Misc.log4jConfiguration(arguments.getInt("debug"));						// Loading log4j configuration. 
 		PAEnvironmentInitializer.initPAConfiguration(
-			(String)arguments.get("paconf"),
-			(String)arguments.get("hostname"),
-			(String)arguments.get("port"));
+			arguments.getStr("paconf"),
+			arguments.getStr("hostname"),
+			arguments.getStr("port"));
 	}
 	
 	/** 
@@ -91,7 +90,7 @@ public class PAMRProber {
 	public void validateArguments() throws IllegalArgumentException{
 		String[] notnull1 = {"critical"}; // These arguments should not be null.
 		Misc.allElementsAreNotNull(Arrays.asList(notnull1), arguments);
-		Integer debug = (Integer)arguments.get("debug");
+		Integer debug = arguments.getInt("debug");
 		if (debug<0 || debug>3)
 			throw new IllegalArgumentException("The argument 'v' must be 0, 1, 2 or 3.");
 	}
@@ -112,8 +111,10 @@ public class PAMRProber {
 	 * @throws ActiveObjectCreationException */	 
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws KeyException, LoginException, RMException, IOException, ActiveObjectCreationException, NodeException, Exception{
 		// We add some reference values to be printed later in the summary for Nagios.
-		tracer.addNewReference("timeout_threshold", new Double((Integer)arguments.get("critical")));
-		tracer.addNewReference("time_all_warning_threshold", new Double((Integer)arguments.get("warning")));
+		tracer.addNewReference("timeout_threshold", new Double(arguments.getInt("critical")));
+		if (arguments.getBoo("warning")==true){ // If the warning flag was given, then show it.
+			tracer.addNewReference("time_all_warning_threshold", new Double(arguments.getInt("warning")));
+		}
 		
     	String serverurl = null;
     	Server server = null;
@@ -145,9 +146,9 @@ public class PAMRProber {
         if (PAEnvironmentInitializer.usingPAConfigurationFile() == true){		
         								// Depending on whether there is a ProActive configuration file, these are
         								// the parameters that we send to the client to get connected to the same router.
-	        qosprober.misc.PAMRMisc.runNewJVM(Client.class.getName(), serverurl + " " + arguments.get("paconf"));
+	        qosprober.misc.PAMRMisc.runNewJVM(Client.class.getName(), serverurl + " " + arguments.getStr("paconf"));
         }else{
-        	qosprober.misc.PAMRMisc.runNewJVM(Client.class.getName(), serverurl + " " + arguments.get("hostname") + " " + arguments.get("port"));
+        	qosprober.misc.PAMRMisc.runNewJVM(Client.class.getName(), serverurl + " " + arguments.getStr("hostname") + " " + arguments.getStr("port"));
         }
         logger.info("Done.");
         
@@ -162,13 +163,7 @@ public class PAMRProber {
 		tracer.finishLastMeasurement();
     	
     	NagiosReturnObject res = null;
-		//double time_all = time_initializing+time_registering_server+time_executing_client+time_waiting_message;
-		
-		//String timesummary = "time_initializing=" "time_registering_server=" "time_executing_client=" "time_waiting_message=" "timeout_threshold=" "time_all_warning_threshold=" 
-
-    	Double time_all = tracer.getTotal();
-    	
-		if (time_all > (Integer)arguments.get("warning")){	// If it took longer than timeoutwarnsec, throw a warning message.
+		if (arguments.isGiven("warning") && tracer.getTotal() > arguments.getInt("warning")){ // If it took longer than timeoutwarnsec, throw a warning message.
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "WARNING STATE, SLOW PROBE");
 		}else{														// Else, we consider that everything went okay.
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK,"OK");
@@ -181,53 +176,33 @@ public class PAMRProber {
 	 * The arguments/parameters are specified in the file /resources/usage.txt
 	 * @return Nagios error code. */
 	public static void main(String[] args) throws Exception{
-		
+        final Arguments options = new Arguments(args);
 		/* Parsing of arguments. */
-		Options options = new Options();
 		// short, long, hasargument, description
-        Option helpO =			new Option("h", "help", false, "");				options.addOption(helpO);
-        Option debugO =			new Option("v", "debug", true, ""); 			options.addOption(debugO);
-        Option paconfO = 		new Option("f", "paconf", true, ""); 			options.addOption(paconfO);
-        Option hostnameO = 		new Option("H", "hostname", true, "");			options.addOption(hostnameO);
-        Option portO = 			new Option("x", "port"    , true, "");			options.addOption(portO);
-        Option warningO = 		new Option("w", "warning", true, ""); 			options.addOption(warningO);
-        Option criticalO = 		new Option("c", "critical", true, "");			options.addOption(criticalO);
-        Option versionO = 		new Option("V", "version", false, "");			options.addOption(versionO);
+		options.addNewOption("h", "help", false);													// Help message.                                	
+		options.addNewOption("V", "version", false);                                                // Prints the version of the plugin.
+		options.addNewOption("v", "debug", true, new Integer(NagiosPlugin.DEBUG_LEVEL_1_EXTENDED)); // Level of verbosity.
+		options.addNewOption("w", "warning", true);									                // Timeout in seconds for the warning message to be thrown.
+		options.addNewOption("c", "critical", true);                                                // Timeout in seconds for the job to be executed.
+		
+		options.addNewOption("f", "paconf", true);                                                  // Path of the ProActive xml configuration file.
+		options.addNewOption("H", "hostname", true);                                                // Host to be tested. 
+		options.addNewOption("x", "port"    , true);                                                // Port of the host to be tested. 
         
-        CommandLine parser = null;
-        try{
-	        Parser parserrr = new GnuParser();
-	        parser = parserrr.parse(options, args);
-        }catch(org.apache.commons.cli.MissingOptionException ex){
-	        NagiosPlugin.printMessageUsageAndExit(ex.getMessage());	
-        }
-        
-        final Arguments ar = new Arguments();
-        
-		ar.put("help", parser.hasOption("h"));																// Help message.
-		ar.put("debug", Misc.parseInteger(parser.getOptionValue("v"), NagiosPlugin.DEBUG_LEVEL_1_EXTENDED));	// Level of verbosity.
-		ar.put("paconf", (String)parser.getOptionValue("f")); 												// Path of the ProActive xml configuration file.
-		ar.put("hostname", (String)parser.getOptionValue("H"));						 							// Host to be tested. Ignored.
-		ar.put("port", (String)parser.getOptionValue("x"));													// Port of the host to be tested. 
-		ar.put("critical", Misc.parseInteger(parser.getOptionValue("c"), null));							// Timeout in seconds for the job to be executed.
-		ar.put("warning", Misc.parseInteger(parser.getOptionValue("w"),(Integer)ar.get("critical")));		// Timeout in seconds for the warning message to be thrown.
-		ar.put("version", parser.hasOption("V"));															// Prints the version of the plugin.
-	
-		if ((Boolean)ar.get("help") == true)	
+		options.parseAll();
+		
+		if ((Boolean)options.getBoo("help") == true)	
 			NagiosPlugin.printMessageUsageAndExit("");
 		
-		if ((Boolean)ar.get("version") == true)
+		if ((Boolean)options.getBoo("version") == true)
 			NagiosPlugin.printVersionAndExit();
 		
 		
-		final PAMRProber jobp = new PAMRProber(ar);			// Create the prober.
+		final PAMRProber jobp = new PAMRProber(options);	// Create the prober.
 		
 		jobp.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
-	
-		jobp.initializeEnvironment();						// Initializes the environment for ProActive objects.
 		
-		for (String key: ar.keySet())						// Show all the arguments considered. 
-			logger.info("\t" + key + ":'" + ar.get(key) + "'");
+		jobp.initializeEnvironment();						// Initializes the environment for ProActive objects and prober.
 		
 		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.
 		
@@ -245,10 +220,10 @@ public class PAMRProber {
 		
 		NagiosReturnObject res = null;
 		try{								 // We execute the future using a timeout. 
-			res = proberFuture.get((Integer)ar.get("critical"), TimeUnit.SECONDS);
+			res = proberFuture.get(options.getInt("critical"), TimeUnit.SECONDS);
 			res.appendCurvesSection(tracer.getMeasurementsSummary("time_all"));
 		}catch(TimeoutException e){ 		// The execution took more time than expected. 
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+(Integer)ar.get("critical")+ " SEC (last status was: " + tracer.getLastStatusDescription() + ")", e);
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+options.getInt("critical")+ " SEC (last status was: " + tracer.getLastStatusDescription() + ")", e);
 			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
 		}catch(ExecutionException e){ 		// There was an unexpected problem with the execution of the prober. 
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
@@ -257,6 +232,6 @@ public class PAMRProber {
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.appendCurvesSection(tracer.getMeasurementsSummary(null));
 		}
-		NagiosPlugin.printAndExit(res, (Integer)ar.get("debug"));
+		NagiosPlugin.printAndExit(res, options.getInt("debug"));
 	}
 }

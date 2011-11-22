@@ -90,7 +90,6 @@ public class RMProber {
 			throw new IllegalArgumentException("The argument 'v' must be 0, 1, 2 or 3.");
 	}
 	
-	
 	/**
 	 * Probe the scheduler
 	 * A few calls are done against the Resource Manager (RM):
@@ -105,7 +104,9 @@ public class RMProber {
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws KeyException, LoginException, RMException{
 		// We add some reference values to be printed later in the summary for Nagios.
 		tracer.addNewReference("timeout_threshold", new Double(arguments.getInt("critical")));
-		tracer.addNewReference("time_all_warning_threshold", new Double(arguments.getInt("warning")));
+		if (arguments.getBoo("warning")==true){ // If the warning flag was given, then show it.
+			tracer.addNewReference("time_all_warning_threshold", new Double(arguments.getInt("warning")));
+		}
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
@@ -135,9 +136,7 @@ public class RMProber {
 		
 		NagiosReturnObject res = null;  
 		
-		String summary = "(obtained/required/critical/warning)=(" + 
-				obtainednodes + "/" + arguments.getValue("nodesrequired") + "/" + 
-				arguments.getValue("nodescritical") + "/" + arguments.getValue("nodeswarning") + ")";
+		String summary = "(obtained/required)=(" + obtainednodes + "/" + arguments.getValue("nodesrequired") + ")";
 		
 		Double time_all = tracer.getTotal();
 		
@@ -145,7 +144,7 @@ public class RMProber {
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL STATE, TOO FEW NODES OBTAINED " + summary);
 		}else if (obtainednodes < arguments.getInt("nodeswarning")){		
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "WARNING STATE, TOO FEW NODES OBTAINED " + summary);
-		}else if (time_all > arguments.getInt("warning")){			// If longer than timeoutwarnsec, warning message.
+		}else if (arguments.isGiven("warning") && time_all > arguments.getInt("warning")){ // If it took longer than timeoutwarnsec, throw a warning message.
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "WARNING STATE, " + obtainednodes + " NODE/S OBTAINED TOO SLOWLY");
 		}else{																	// Else everything was okay.
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, obtainednodes + " NODE/S OBTAINED OK");
@@ -164,10 +163,9 @@ public class RMProber {
 		options.addNewOption("h", "help", false);													// Help message.                                	
 		options.addNewOption("V", "version", false);                                                // Prints the version of the plugin.
 		options.addNewOption("v", "debug", true, new Integer(NagiosPlugin.DEBUG_LEVEL_1_EXTENDED)); // Level of verbosity.
-		options.addNewOption("w", "warning", true, new Integer(Integer.MAX_VALUE));                 // Timeout in seconds for the warning message to be thrown.
+		options.addNewOption("w", "warning", true);													// Timeout in seconds for the warning message to be thrown.
 		options.addNewOption("c", "critical", true);                                                // Timeout in seconds for the job to be executed.
 		
-                                                                                                                                                                                                                                        
 		options.addNewOption("u", "user", true);													// User.
 		options.addNewOption("p", "pass", true);                                                    // Pass.
 		options.addNewOption("r", "url", true);                                                     // Url of the Scheduler/RM.
@@ -176,8 +174,8 @@ public class RMProber {
 		options.addNewOption("x", "port"    , true);                                                // Port of the host to be tested. 
 		
 		options.addNewOption("q", "nodesrequired", true, new Integer(1));							// Amount of nodes to be asked to the Resource Manager.
-		options.addNewOption("b", "nodeswarning", true, new Integer(Integer.MAX_VALUE));			// Obtaining fewer nodes than this, a warning message will be thrown.
-		options.addNewOption("s", "nodescritical", true, new Integer(Integer.MAX_VALUE));			// Obtaining fewer nodes than this, a critical message will be thrown.
+		options.addNewOption("b", "nodeswarning", true, new Integer(1));							// Obtaining fewer nodes than this, a warning message will be thrown.
+		options.addNewOption("s", "nodescritical", true, new Integer(1));							// Obtaining fewer nodes than this, a critical message will be thrown.
 
 		options.parseAll();
 		
@@ -191,7 +189,7 @@ public class RMProber {
 		
 		jobp.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
 	
-		jobp.initializeEnvironment();						// Initializes the environment for ProActive objects.
+		jobp.initializeEnvironment();						// Initializes the environment for ProActive objects and prober.
 		
 		/* Now we prepare our probe to run it in a different thread. */
 		/* The probe consists in a node obtaining done from the Resource Manager. */

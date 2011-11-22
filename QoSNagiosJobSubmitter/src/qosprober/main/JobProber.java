@@ -115,7 +115,10 @@ public class JobProber {
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
 		// We add some reference values to be printed later in the summary for Nagios.
 		tracer.addNewReference("timeout_threshold", new Double(arguments.getInt("critical")));
-		tracer.addNewReference("time_all_warning_threshold", new Double(arguments.getInt("warning")));
+		if (arguments.getBoo("warning")==true){ // If the warning flag was given, then show it.
+			tracer.addNewReference("time_all_warning_threshold", new Double(arguments.getInt("warning")));
+		}
+		
 		
 		String jobname = arguments.getStr("jobname");							// Name of the job to be submitted to the scheduler.
 		
@@ -166,7 +169,7 @@ public class JobProber {
 			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: '" + jresult.toString() + "'.");
 			
 			if (jresult.toString().equals(expectedJobOutput)){ 		// Checked file, all OK.
-				if (tracer.getTotal() > arguments.getInt("warning")){
+				if (arguments.isGiven("warning") && tracer.getTotal() > arguments.getInt("warning")){
 					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "JOBID " + jobId + " TOO SLOW");
 				}else{
 					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "JOBID " + jobId + " OK");
@@ -191,7 +194,7 @@ public class JobProber {
 		options.addNewOption("h", "help", false);													// Help message.                                	
 		options.addNewOption("V", "version", false);                                                // Prints the version of the plugin.
 		options.addNewOption("v", "debug", true, new Integer(NagiosPlugin.DEBUG_LEVEL_1_EXTENDED)); // Level of verbosity.
-		options.addNewOption("w", "warning", true, new Integer(Integer.MAX_VALUE));                 // Timeout in seconds for the warning message to be thrown.
+		options.addNewOption("w", "warning", true);                                                 // Timeout in seconds for the warning message to be thrown.
 		options.addNewOption("c", "critical", true);                                                // Timeout in seconds for the job to be executed.
                                                                                                                                                                                                                                         
 		options.addNewOption("u", "user", true);													// User.
@@ -200,6 +203,7 @@ public class JobProber {
 		options.addNewOption("f", "paconf", true);                                                  // Path of the ProActive xml configuration file.
 		options.addNewOption("H", "hostname", true);                                                // Host to be tested. 
 		options.addNewOption("x", "port"    , true);                                                // Port of the host to be tested. 
+		
 		options.addNewOption("j", "jobname", true);                                                 // Name used to run the job in the Scheduler. 
 		options.addNewOption("d", "deleteallold", false);                                           // Delete all old jobs, not only the ones with the name 
 		options.addNewOption("g", "polling", false);                                                // Do polling or use an event based mechanism.
@@ -214,11 +218,11 @@ public class JobProber {
 			NagiosPlugin.printVersionAndExit();
 
 		
-		final JobProber jobp = new JobProber(options);			// Create the prober.
+		final JobProber jobp = new JobProber(options);		// Create the prober.
 		
 		jobp.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
 	
-		jobp.initializeEnvironment();						// Initializes the environment for ProActive objects.
+		jobp.initializeEnvironment();						// Initializes the environment for ProActive objects and prober.
 		
 		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
 		ExecutorService executor = Executors.newFixedThreadPool(1);
