@@ -81,15 +81,27 @@ public abstract class NagiosPlugin {
 		
 	}
 	
+	/**
+	 * Get set of arguments given by the user.
+	 * @return arguments. */
 	final protected Arguments getArgs(){
 		return arguments;
 	}
 	
+	/**
+	 * Initialize all the probe.
+	 * It consists in a basic initialization (inherent to any NagiosProbe related to ProActive)
+	 * and a more specific Prober initialization.
+	 * @throws Exception in case of any problem. */
 	final public void initializeAll() throws Exception{
 		initializeBasics(arguments);
 		initializeProber(arguments);
 	}
 	
+	/**
+	 * Basic initialization for any NagiosProbe related to ProActive.
+	 * @param ars arguments given by the user for this basic initialization.
+	 * @throws Exception in case of any error. */
 	final private void initializeBasics(Arguments ars) throws Exception{
 		ars.parseAll();
 
@@ -107,11 +119,13 @@ public abstract class NagiosPlugin {
 	}
 	
 	/**
-	 * Initialize this probe. */
+	 * Specific initialization for the probe. 
+	 * @param arg arguments/parameters to initialize the probe. */
 	protected abstract void initializeProber(Arguments arg) throws Exception; 
 	
 	/** 
 	 * Validate all the arguments given to this probe. 
+	 * @param args arguments to be validated.
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
 	public void validateArguments(Arguments args) throws IllegalArgumentException{
 		args.checkIsGiven("debug");
@@ -134,8 +148,11 @@ public abstract class NagiosPlugin {
 	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. */	 
 	public abstract NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception;
 	
-	
-	public void startProbeAndExit() throws Exception{
+	/**
+	 * Start with the probing session.
+	 * This method kills automatically the probe process when a conclusion/result about the entity
+	 * tested has been obtained. */
+	public void startProbeAndExit(){
 		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
 		
 		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.

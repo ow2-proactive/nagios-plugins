@@ -73,7 +73,6 @@ public class JobProber extends NagiosPlugin{
 		args.addNewOption("d", "deleteallold", false);	// Delete all old jobs, not only the ones with the name 
 		args.addNewOption("g", "polling", false);		// Do polling or use an event based mechanism.
 		args.addNewOption("z", "highpriority", false);	// Set high priority for the job (not normal priority).
-
 	}
 	
 	/**
