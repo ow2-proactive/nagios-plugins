@@ -94,20 +94,22 @@ public class PAEnvironmentInitializer {
 			}else{
 				logger.warn("The ProActive configuration file '"+paconf+"' was not found. Using default configuration.");
 			}
+		}else{
+			logger.info("No ProActive configuration file provided.");
 		}
 		
 		usePAConfFile = usepaconffilee;
 		
 		if (usepaconffilee == false){ // The PA configuration file was not given or was not found.
-			logger.info("Avoiding ProActive configuration file...");
+			logger.info("Avoiding ProActive configuration file for PAMR router...");
 			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
 			if (host!=null && port!=null){
 				pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
 				pac.setProperty("proactive.net.router.address", host, false);
 				pac.setProperty("proactive.net.router.port", port, false);
-				logger.info("Using 'hostname' and 'port' provided...");
+				logger.info("Using 'hostname' and 'port' provided for PAMR router...");
 			}else{
-				logger.info("Avoiding 'hostname' and 'port' provided...");
+				logger.info("Avoiding 'hostname' and 'port' provided for PAMR router...");
 			}
 		}
 	}

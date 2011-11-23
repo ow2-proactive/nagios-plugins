@@ -64,7 +64,7 @@ public class PAMRProber extends NagiosPlugin{
 	
 	/**
 	 * Initialize the ProActive environment for this probe. */
-	public void initializeProber() throws Exception{
+	public void initializeProber(Arguments arguments) throws Exception{
 		PAEnvironmentInitializer.initPAConfiguration(
 			arguments.getStr("paconf"),
 			arguments.getStr("hostname"),
@@ -74,8 +74,8 @@ public class PAMRProber extends NagiosPlugin{
 	/** 
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments() throws IllegalArgumentException{
-		super.validateArguments();
+	public void validateArguments(Arguments arguments) throws IllegalArgumentException{
+		super.validateArguments(arguments);
 	}
 	
 	/**
@@ -89,9 +89,9 @@ public class PAMRProber extends NagiosPlugin{
 	 * @throws Exception */	 
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception{
 		// We add some reference values to be printed later in the summary for Nagios.
-		tracer.addNewReference("timeout_threshold", new Double(arguments.getInt("critical")));
-		if (arguments.isGiven("warning")==true){ // If the warning flag was given, then show it.
-			tracer.addNewReference("time_all_warning_threshold", new Double(arguments.getInt("warning")));
+		tracer.addNewReference("timeout_threshold", new Double(getArgs().getInt("critical")));
+		if (getArgs().isGiven("warning")==true){ // If the warning flag was given, then show it.
+			tracer.addNewReference("time_all_warning_threshold", new Double(getArgs().getInt("warning")));
 		}
 		
     	String serverurl = null;
@@ -124,9 +124,9 @@ public class PAMRProber extends NagiosPlugin{
         if (PAEnvironmentInitializer.usingPAConfigurationFile() == true){		
         								// Depending on whether there is a ProActive configuration file, these are
         								// the parameters that we send to the client to get connected to the same router.
-	        qosprober.misc.PAMRMisc.runNewJVM(Client.class.getName(), serverurl + " " + arguments.getStr("paconf"));
+	        qosprober.misc.PAMRMisc.runNewJVM(Client.class.getName(), serverurl + " " + getArgs().getStr("paconf"));
         }else{
-        	qosprober.misc.PAMRMisc.runNewJVM(Client.class.getName(), serverurl + " " + arguments.getStr("hostname") + " " + arguments.getStr("port"));
+        	qosprober.misc.PAMRMisc.runNewJVM(Client.class.getName(), serverurl + " " + getArgs().getStr("hostname") + " " + getArgs().getStr("port"));
         }
         logger.info("Done.");
         
@@ -144,7 +144,7 @@ public class PAMRProber extends NagiosPlugin{
 		
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
 		
-		if (arguments.isGiven("warning") && tracer.getTotal() > arguments.getInt("warning")){ // If it took longer than timeoutwarnsec, throw a warning message.
+		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning")){ // If it took longer than timeoutwarnsec, throw a warning message.
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "PROBE TOO SLOW"));
 		}
 		

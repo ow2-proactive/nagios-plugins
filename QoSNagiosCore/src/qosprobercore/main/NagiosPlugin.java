@@ -60,7 +60,7 @@ public abstract class NagiosPlugin {
 	
 	protected static Logger logger =						// Logger. 
 			Logger.getLogger(NagiosPlugin.class.getName()); 
-	protected Arguments arguments; 							// Arguments given to the prober. 
+	private Arguments arguments; 							// Arguments given to the prober. 
 	
 	
 	/** 
@@ -81,48 +81,50 @@ public abstract class NagiosPlugin {
 		
 	}
 	
-	final public void initializeAll() throws Exception{
-		initializeBasics();
-		initializeProber();
+	final protected Arguments getArgs(){
+		return arguments;
 	}
 	
-	final private void initializeBasics() throws Exception{
-		arguments.parseAll();
+	final public void initializeAll() throws Exception{
+		initializeBasics(arguments);
+		initializeProber(arguments);
+	}
+	
+	final private void initializeBasics(Arguments ars) throws Exception{
+		ars.parseAll();
 
-		if (arguments.getBoo("help") == true)	
+		if (ars.getBoo("help") == true)	
 			NagiosPlugin.printMessageUsageAndExit("");
 		
-		if (arguments.getBoo("version") == true)
+		if (ars.getBoo("version") == true)
 			NagiosPlugin.printVersionAndExit();
 		
-		this.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
+		this.validateArguments(ars);					// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
 	
-		Misc.log4jConfiguration(arguments.getInt("debug"));	// Loading log4j configuration. 
+		Misc.log4jConfiguration(ars.getInt("debug"));	// Loading log4j configuration. 
 		
-		this.initializeProber();							// Initialize the environment for ProActive objects and prober.
-		
-		arguments.printArgumentsGiven();					// Print a list with the arguments given by the user. 
+		ars.printArgumentsGiven();						// Print a list with the arguments given by the user. 
 	}
 	
 	/**
 	 * Initialize this probe. */
-	protected abstract void initializeProber() throws Exception; 
+	protected abstract void initializeProber(Arguments arg) throws Exception; 
 	
 	/** 
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments() throws IllegalArgumentException{
-		arguments.checkIsGiven("debug");
-		arguments.checkIsValidInt("debug", 0, 3);
+	public void validateArguments(Arguments args) throws IllegalArgumentException{
+		args.checkIsGiven("debug");
+		args.checkIsValidInt("debug", 0, 3);
 		
-//		arguments.checkIsGiven("warning");								// Might not be given (there is a default value), so we don't check it.
-		arguments.checkIsValidInt("warning", 0, Integer.MAX_VALUE);
+//		args.checkIsGiven("warning");								// Might not be given (there is a default value), so we don't check it.
+		args.checkIsValidInt("warning", 0, Integer.MAX_VALUE);
 		
-		arguments.checkIsGiven("critical");
-		arguments.checkIsValidInt("critical", 0, Integer.MAX_VALUE);
+		args.checkIsGiven("critical");
+		args.checkIsValidInt("critical", 0, Integer.MAX_VALUE);
 		
-//		arguments.checkIsGiven("port");									// Might not be given (there is a default value), so we don't check it.
-		arguments.checkIsValidInt("port", 0, 65535);
+//		args.checkIsGiven("port");									// Might not be given (there is a default value), so we don't check it.
+		args.checkIsValidInt("port", 0, 65535);
 	}
 	
 	/**

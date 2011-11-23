@@ -78,7 +78,7 @@ public class JobProber extends NagiosPlugin{
 	
 	/**
 	 * Initialize the ProActive environment for this probe. */
-	public void initializeProber() throws Exception{
+	public void initializeProber(Arguments arguments) throws Exception{
 		/* Loading job's expected output. */
 		expectedJobOutput = Misc.readAllTextResource("/resources/expectedoutput.txt");
 	}
@@ -86,8 +86,8 @@ public class JobProber extends NagiosPlugin{
 	/** 
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments() throws IllegalArgumentException{
-		super.validateArguments();
+	public void validateArguments(Arguments arguments) throws IllegalArgumentException{
+		super.validateArguments(arguments);
 		arguments.checkIsGiven("url");
 		arguments.checkIsGiven("user");
 		arguments.checkIsGiven("pass");
@@ -103,13 +103,13 @@ public class JobProber extends NagiosPlugin{
 	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. */	 
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception{
 		// We add some reference values to be printed later in the summary for Nagios.
-		tracer.addNewReference("timeout_threshold", new Double(arguments.getInt("critical")));
-		if (arguments.isGiven("warning")==true){ // If the warning flag was given, then show it.
-			tracer.addNewReference("time_all_warning_threshold", new Double(arguments.getInt("warning")));
+		tracer.addNewReference("timeout_threshold", new Double(getArgs().getInt("critical")));
+		if (getArgs().isGiven("warning")==true){ // If the warning flag was given, then show it.
+			tracer.addNewReference("time_all_warning_threshold", new Double(getArgs().getInt("warning")));
 		}
 		
 		
-		String jobname = arguments.getStr("jobname");							// Name of the job to be submitted to the scheduler.
+		String jobname = getArgs().getStr("jobname");							// Name of the job to be submitted to the scheduler.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
@@ -118,18 +118,18 @@ public class JobProber extends NagiosPlugin{
 		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to the scheduler...");
 		
 		schedulerstub.init(														// We get connected to the Scheduler.
-				arguments.getStr("url"),  arguments.getStr("user"), 
-				arguments.getStr("pass"), arguments.getBoo("polling"));	
+				getArgs().getStr("url"),  getArgs().getStr("user"), 
+				getArgs().getStr("pass"), getArgs().getBoo("polling"));	
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_removing_old_jobs", "connected, removing old jobs...");	
 		
 		schedulerstub.removeOldProbeJobs(										// Removal of old probe jobs.
-				jobname,arguments.getBoo("deleteallold"));
+				jobname,getArgs().getBoo("deleteallold"));
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_submission", "connected, submitting job...");
 	
 		String jobId = schedulerstub.submitJob(									// Submission of the job.
-				jobname, JobProber.TASK_CLASS_NAME, arguments.getBoo("highpriority"));	
+				jobname, JobProber.TASK_CLASS_NAME, getArgs().getBoo("highpriority"));	
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_execution", "job " + jobId + " submitted, waiting for its execution...");
 		
@@ -164,7 +164,7 @@ public class JobProber extends NagiosPlugin{
 			}
 		}	
 		
-		if (arguments.isGiven("warning") && tracer.getTotal() > arguments.getInt("warning")){
+		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning")){
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "TOO SLOW"));
 		}
 		

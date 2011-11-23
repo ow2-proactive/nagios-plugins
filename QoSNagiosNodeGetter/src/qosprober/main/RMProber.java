@@ -71,7 +71,7 @@ public class RMProber extends NagiosPlugin{
 	
 	/**
 	 * Initialize the ProActive environment for this probe. */
-	public void initializeProber() throws Exception{
+	public void initializeProber(Arguments arguments) throws Exception{
 		PAEnvironmentInitializer.initPAConfiguration(
 			arguments.getStr("paconf"),
 			arguments.getStr("hostname"),
@@ -81,8 +81,8 @@ public class RMProber extends NagiosPlugin{
 	/** 
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments() throws IllegalArgumentException{
-		super.validateArguments();
+	public void validateArguments(Arguments arguments) throws IllegalArgumentException{
+		super.validateArguments(arguments);
 		arguments.checkIsGiven("url");
 		arguments.checkIsGiven("user");
 		arguments.checkIsGiven("pass");
@@ -99,9 +99,9 @@ public class RMProber extends NagiosPlugin{
 	 * @throws Exception */	 
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception{
 		// We add some reference values to be printed later in the summary for Nagios.
-		tracer.addNewReference("timeout_threshold", new Double(arguments.getInt("critical")));
-		if (arguments.isGiven("warning")==true){ // If the warning flag was given, then show it.
-			tracer.addNewReference("time_all_warning_threshold", new Double(arguments.getInt("warning")));
+		tracer.addNewReference("timeout_threshold", new Double(getArgs().getInt("critical")));
+		if (getArgs().isGiven("warning")==true){ // If the warning flag was given, then show it.
+			tracer.addNewReference("time_all_warning_threshold", new Double(getArgs().getInt("warning")));
 		}
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
@@ -111,8 +111,8 @@ public class RMProber extends NagiosPlugin{
 		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to RM...");
 		
 		rmstub.init(										// We get connected to the RM.
-				arguments.getStr("url"),  arguments.getStr("user"), 
-				arguments.getStr("pass"));	
+				getArgs().getStr("url"),  getArgs().getStr("user"), 
+				getArgs().getStr("pass"));	
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "connected to RM, getting status...");
 		
@@ -121,7 +121,7 @@ public class RMProber extends NagiosPlugin{
 		tracer.finishLastMeasurementAndStartNewOne("time_getting_nodes", "connected to RM, getting nodes...");
 		
 		NodeSet nodes = rmstub.getNodes(					// Request some nodes.
-				arguments.getInt("nodesrequired")); 	
+				getArgs().getInt("nodesrequired")); 	
 		int obtainednodes = nodes.size();
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "releasing nodes...");
@@ -138,15 +138,15 @@ public class RMProber extends NagiosPlugin{
 		
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
 		
-		int nodesrequired = arguments.getInt("nodesrequired");
+		int nodesrequired = getArgs().getInt("nodesrequired");
 		
 		Double time_all = tracer.getTotal();
 		
 		summary.addFact(obtainednodes + " NODE/S OBTAINED");
 		
-		if (obtainednodes < arguments.getInt("nodescritical")){									// Fewer nodes than criticalnodes.	
+		if (obtainednodes < getArgs().getInt("nodescritical")){									// Fewer nodes than criticalnodes.	
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TOO FEW NODES (" + nodesrequired + " REQUIRED, " + freenodes + " FREE)"));
-		}else if (obtainednodes < arguments.getInt("nodeswarning")){							// Fewer nodes than warningnodes.	
+		}else if (obtainednodes < getArgs().getInt("nodeswarning")){							// Fewer nodes than warningnodes.	
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING,  "TOO FEW NODES (" + nodesrequired + " REQUIRED, " + freenodes + " FREE)"));
 		}
 		
@@ -158,7 +158,7 @@ public class RMProber extends NagiosPlugin{
 							NagiosReturnObject.RESULT_2_CRITICAL, "PROBLEM: NODES (OBTAINED/REQUIRED/FREE)=("+obtainednodes+"/"+nodesrequired+"/"+freenodes+")"));
 		}
 		
-		if (arguments.isGiven("warning") && time_all > arguments.getInt("warning")){		// It took longer than timeoutwarnsec.
+		if (getArgs().isGiven("warning") && time_all > getArgs().getInt("warning")){		// It took longer than timeoutwarnsec.
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "NODE/S OBTAINED TOO SLOWLY"));
 		}																					// Everything was okay.
 		
