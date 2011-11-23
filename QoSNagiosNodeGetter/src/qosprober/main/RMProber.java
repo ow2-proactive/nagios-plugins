@@ -157,16 +157,19 @@ public class RMProber {
 		
 		// Having F free nodes, if W is the number of wanted nodes, I should get the min(F, W). 
 		//        4 free nodes,    3                  wanted nodes, I should get the min(4, 3)=3 nodes. 
-		
 		if (obtainednodes < Math.min(freenodes, nodesrequired)){
 			summary.addNagiosReturnObject(
 					new NagiosReturnObject(
 							NagiosReturnObject.RESULT_2_CRITICAL, "PROBLEM: NODES (OBTAINED/REQUIRED/FREE)=("+obtainednodes+"/"+nodesrequired+"/"+freenodes+")"));
 		}
 		
-		if (arguments.isGiven("warning") && time_all > arguments.getInt("warning")){			// It took longer than timeoutwarnsec.
+		if (arguments.isGiven("warning") && time_all > arguments.getInt("warning")){		// It took longer than timeoutwarnsec.
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "NODE/S OBTAINED TOO SLOWLY"));
 		}																					// Everything was okay.
+		
+		if (freenodes == 0){
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_3_UNKNOWN, "NO FREE NODES"));
+		}	
 		
 		if (summary.isAllOkay() == true){
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "OK"));
@@ -213,7 +216,9 @@ public class RMProber {
 		
 		jobp.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
 	
-		jobp.initializeEnvironment();						// Initializes the environment for ProActive objects and prober.
+		jobp.initializeEnvironment();						// Initialize the environment for ProActive objects and prober.
+		
+		options.printArgumentsGiven();						// Print a list with the arguments given by the user. 
 		
 		/* Now we prepare our probe to run it in a different thread. */
 		/* The probe consists in a node obtaining done from the Resource Manager. */

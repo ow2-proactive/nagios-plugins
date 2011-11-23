@@ -228,7 +228,9 @@ public class JobProber {
 		
 		jobp.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
 	
-		jobp.initializeEnvironment();						// Initializes the environment for ProActive objects and prober.
+		jobp.initializeEnvironment();						// Initialize the environment for ProActive objects and prober.
+		
+		options.printArgumentsGiven();						// Print a list with the arguments given by the user. 
 		
 		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
 		ExecutorService executor = Executors.newFixedThreadPool(1);

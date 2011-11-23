@@ -209,7 +209,9 @@ public class PAMRProber {
 		
 		jobp.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
 		
-		jobp.initializeEnvironment();						// Initializes the environment for ProActive objects and prober.
+		jobp.initializeEnvironment();						// Initialize the environment for ProActive objects and prober.
+		
+		options.printArgumentsGiven();						// Print a list with the arguments given by the user. 
 		
 		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.
 		
