@@ -152,6 +152,41 @@ public class Arguments {
 	}
 	
 	/**
+	 * Check that the provided key was provided by the user. 
+	 * @param key key of the argument. 
+	 * @throws IllegalArgumentException if something goes wrong. */
+	public void checkIsGiven(String key) throws IllegalArgumentException{
+		checkKey(key);
+		if (parser.getOptionValue(key) == null){
+			throw new IllegalArgumentException("The argument '" + key + "' is not given.");
+		}
+	}
+	
+	/**
+	 * Check that the provided key has a value that is valid as an Integer. If the value is null, just skips the checking. 
+	 * To check if the value is given use checkIsGiven.
+	 * @param key key of the argument. 
+	 * @param minincluded lower-bound. 
+	 * @param maxincluded upper-bound. 
+	 * @throws IllegalArgumentException if something goes wrong. */
+	public void checkIsValidInt(String key, Integer minincluded, Integer maxincluded) throws IllegalArgumentException{
+		checkKey(key);
+		String value = parser.getOptionValue(key);
+		if (value == null){
+			return;
+		}
+		Integer inte = null; 
+		try{
+			inte = Integer.parseInt(value);
+		}catch(Exception e){
+			throw new IllegalArgumentException("The argument '" + key + "' is not correct. " + e.getMessage());
+		}
+		if (inte < minincluded || inte > maxincluded){
+			throw new IllegalArgumentException("The argument '" + key + "' is out of the bounds [" + minincluded + ", " + maxincluded + "].");
+		}
+	}
+	
+	/**
 	 * Get a boolean provided the key.
 	 * @param key key of the argument.
 	 * @return whether this argument was provided or not. */
@@ -172,7 +207,7 @@ public class Arguments {
 	/**
 	 * Perform a checking on the given key (if it was not expected, it throws an exception).
 	 * @param key key to be checked. */
-	public void checkKey(String key){
+	private void checkKey(String key){
 		if (optionsLongOpt.contains(key)==false)
 			throw new RuntimeException("Problem trying to use key '" + key + "'.");
 	}

@@ -38,12 +38,19 @@
 package qosprobercore.main;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.log4j.Logger;
 import qosprobercore.misc.Misc;
 
 /**
  * Set of useful definitions and methods for any Nagios plugin. */
-public class NagiosPlugin {
+public abstract class NagiosPlugin {
 	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
 	
 	public static final int DEBUG_LEVEL_0_SILENT	= 0;	// Debug level, silent mode. 
@@ -51,7 +58,112 @@ public class NagiosPlugin {
 	public static final int DEBUG_LEVEL_2_VERBOSE	= 2;	// Debug level, similar to the previous one.
 	public static final int DEBUG_LEVEL_3_USER		= 3;	// Debug level, debugging only.
 	
-	private static Logger logger = Logger.getLogger(NagiosPlugin.class.getName()); // Logger.
+	protected static Logger logger =						// Logger. 
+			Logger.getLogger(NagiosPlugin.class.getName()); 
+	protected Arguments arguments; 							// Arguments given to the prober. 
+	
+	
+	/** 
+	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
+	 * @param args arguments to create this NagiosPlugin. */
+	public NagiosPlugin(Arguments args){
+		this.arguments = args;
+		
+		args.addNewOption("h", "help", false);													// Help message.                                	
+		args.addNewOption("V", "version", false);												// Prints the version of the plugin.
+		args.addNewOption("v", "debug", true, new Integer(NagiosPlugin.DEBUG_LEVEL_1_EXTENDED));// Level of verbosity.
+		args.addNewOption("w", "warning", true);												// Timeout in seconds for the warning message to be thrown.
+		args.addNewOption("c", "critical", true);												// Timeout in seconds for the job to be executed.
+		
+		args.addNewOption("f", "paconf", true);													// Path of the ProActive xml configuration file.
+		args.addNewOption("H", "hostname", true);												// Host to be tested. 
+		args.addNewOption("x", "port"    , true);												// Port of the host to be tested. 
+		
+	}
+	
+	final public void initializeAll() throws Exception{
+		initializeBasics();
+		initializeProber();
+	}
+	
+	final private void initializeBasics() throws Exception{
+		arguments.parseAll();
+
+		if (arguments.getBoo("help") == true)	
+			NagiosPlugin.printMessageUsageAndExit("");
+		
+		if (arguments.getBoo("version") == true)
+			NagiosPlugin.printVersionAndExit();
+		
+		this.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
+	
+		Misc.log4jConfiguration(arguments.getInt("debug"));	// Loading log4j configuration. 
+		
+		this.initializeProber();							// Initialize the environment for ProActive objects and prober.
+		
+		arguments.printArgumentsGiven();					// Print a list with the arguments given by the user. 
+	}
+	
+	/**
+	 * Initialize this probe. */
+	protected abstract void initializeProber() throws Exception; 
+	
+	/** 
+	 * Validate all the arguments given to this probe. 
+	 * @throws IllegalArgumentException in case a non-valid argument is given. */
+	public void validateArguments() throws IllegalArgumentException{
+		arguments.checkIsGiven("debug");
+		arguments.checkIsValidInt("debug", 0, 3);
+		
+//		arguments.checkIsGiven("warning");								// Might not be given (there is a default value), so we don't check it.
+		arguments.checkIsValidInt("warning", 0, Integer.MAX_VALUE);
+		
+		arguments.checkIsGiven("critical");
+		arguments.checkIsValidInt("critical", 0, Integer.MAX_VALUE);
+		
+//		arguments.checkIsGiven("port");									// Might not be given (there is a default value), so we don't check it.
+		arguments.checkIsValidInt("port", 0, 65535);
+	}
+	
+	/**
+	 * Probe the entity. 
+	 * Several calls are done against the entity, as needed to probe it. 
+	 * @param tracer tracer that lets keep track of the last status, and the time each call took to be executed.
+	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. */	 
+	public abstract NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception;
+	
+	
+	public void startProbeAndExit() throws Exception{
+		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
+		
+		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.
+		
+		ExecutorService executor = Executors.newFixedThreadPool(1);
+		Callable<NagiosReturnObject> proberCallable = new Callable<NagiosReturnObject>(){
+			public NagiosReturnObject call() throws Exception {
+				return probe(tracer);
+			}
+		};
+
+		// We submit to the executor the prober activity (and the prober will then submit a job to the scheduler in that activity). 
+		Future<NagiosReturnObject> proberFuture = executor.submit(proberCallable); // We ask to execute the probe.
+	
+		NagiosReturnObject res = null;
+		try{ 								// We execute the future using a timeout. 
+			res = proberFuture.get(arguments.getInt("critical"), TimeUnit.SECONDS);
+			res.addCurvesSection(tracer, "time_all");
+		}catch(TimeoutException e){
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF " + arguments.getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+			res.addCurvesSection(tracer, null);
+		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
+			res.addCurvesSection(tracer, null);
+		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
+			res.addCurvesSection(tracer, null);
+		}
+		NagiosPlugin.printAndExit(res, arguments.getInt("debug"));
+	}
 	
     /** 
      * Print a message in the stdout (for Nagios to use it) and return with the given error code. 
@@ -98,4 +210,5 @@ public class NagiosPlugin {
 		}
 	    System.exit(NagiosReturnObject.RESULT_0_OK);
 	}
+	
 }

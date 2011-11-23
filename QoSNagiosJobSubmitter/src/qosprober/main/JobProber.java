@@ -37,23 +37,11 @@
 
 package qosprober.main;
 
-import java.io.IOException;
-import java.security.KeyException;
-import java.util.Arrays;
-import java.util.concurrent.*;
-import javax.security.auth.login.LoginException;
 import qosprobercore.misc.Misc;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.log4j.Logger;
-import org.objectweb.proactive.ActiveObjectCreationException;
-import org.objectweb.proactive.core.node.NodeException;
-import org.ow2.proactive.scheduler.common.exception.SchedulerException;
 import org.ow2.proactive.scheduler.examples.WaitAndPrint;
-import qosprobercore.exceptions.InvalidProtocolException;
 import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
-import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.TimedStatusTracer;
 
@@ -63,46 +51,46 @@ import qosprobercore.main.TimedStatusTracer;
  *    -Job result retrieval
  *    -Job result comparison 
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
-public class JobProber {
+public class JobProber extends NagiosPlugin{
 
 	public static final String JOB_NAME_DEFAULT = 
-		"nagios_plugin_probe_job";							// Name of the probe job in the Scheduler, as the administrator will see it.
+		"nagios_plugin_probe_job";					// Name of the probe job in the Scheduler, as the administrator will see it.
 	public static final String TASK_CLASS_NAME = 
-		WaitAndPrint.class.getName();						// Class to be instantiated and executed as a task in the Scheduler.
-	public static Logger logger = 
-			Logger.getLogger(JobProber.class.getName()); 	// Logger.
-	public static String expectedJobOutput;					// The job output that is expected. It is used to check the right execution of the job. 
-	
-	private Arguments arguments; 							// Arguments given to the prober. 
+		WaitAndPrint.class.getName();				// Class to be instantiated and executed as a task in the Scheduler.
+	public static String expectedJobOutput;			// The job output that is expected. It is used to check the right execution of the job. 
 	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
-	 * @param args arguments to create this JobProber. */
-	public JobProber(Arguments args){
-		this.arguments = args;
+	 * @param args arguments to create this JobProber. 
+	 * @throws Exception */
+	public JobProber(Arguments args) throws Exception{
+		super(args);
+		args.addNewOption("u", "user", true);			// User.
+		args.addNewOption("p", "pass", true);			// Pass.
+		args.addNewOption("r", "url", true);			// Url of the Scheduler/RM.
+		
+		args.addNewOption("j", "jobname", true);		// Name used to run the job in the Scheduler. 
+		args.addNewOption("d", "deleteallold", false);	// Delete all old jobs, not only the ones with the name 
+		args.addNewOption("g", "polling", false);		// Do polling or use an event based mechanism.
+		args.addNewOption("z", "highpriority", false);	// Set high priority for the job (not normal priority).
+
 	}
 	
 	/**
 	 * Initialize the ProActive environment for this probe. */
-	public void initializeEnvironment() throws Exception{
-		Misc.log4jConfiguration(arguments.getInt("debug"));						// Loading log4j configuration. 
+	public void initializeProber() throws Exception{
 		/* Loading job's expected output. */
 		expectedJobOutput = Misc.readAllTextResource("/resources/expectedoutput.txt");
-		PAEnvironmentInitializer.initPAConfiguration(
-				arguments.getStr("paconf"),
-				arguments.getStr("hostname"),
-				arguments.getStr("port"));
 	}
 
 	/** 
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
 	public void validateArguments() throws IllegalArgumentException{
-		String[] notnull1 = {"url", "user", "pass", "critical"}; // These arguments should not be null.
-		Misc.allElementsAreNotNull(Arrays.asList(notnull1), arguments);
-		Integer debug = arguments.getInt("debug");
-		if (debug<0 || debug>3)
-			throw new IllegalArgumentException("The argument 'v' must be 0, 1, 2 or 3.");
+		super.validateArguments();
+		arguments.checkIsGiven("url");
+		arguments.checkIsGiven("user");
+		arguments.checkIsGiven("pass");
 	}
 	
 	/**
@@ -113,10 +101,10 @@ public class JobProber {
 	 * result of the test is told. 
 	 * @param tracer tracer that lets keep track of the last status, and the time each call took to be executed.
 	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. */	 
-	public NagiosReturnObject probe(TimedStatusTracer tracer) throws IllegalArgumentException, LoginException, KeyException, ActiveObjectCreationException, NodeException, HttpException, SchedulerException, InvalidProtocolException, IOException, Exception{
+	public NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception{
 		// We add some reference values to be printed later in the summary for Nagios.
 		tracer.addNewReference("timeout_threshold", new Double(arguments.getInt("critical")));
-		if (arguments.getBoo("warning")==true){ // If the warning flag was given, then show it.
+		if (arguments.isGiven("warning")==true){ // If the warning flag was given, then show it.
 			tracer.addNewReference("time_all_warning_threshold", new Double(arguments.getInt("warning")));
 		}
 		
@@ -194,77 +182,9 @@ public class JobProber {
 	 * The arguments/parameters are specified in the file /resources/usage.txt
 	 * @return Nagios error code. */
 	public static void main(String[] args) throws Exception{
-        final Arguments options = new Arguments(args);
-		/* Parsing of arguments. */
-		// short, long, hasargument, description
-		options.addNewOption("h", "help", false);													// Help message.                                	
-		options.addNewOption("V", "version", false);                                                // Prints the version of the plugin.
-		options.addNewOption("v", "debug", true, new Integer(NagiosPlugin.DEBUG_LEVEL_1_EXTENDED)); // Level of verbosity.
-		options.addNewOption("w", "warning", true);                                                 // Timeout in seconds for the warning message to be thrown.
-		options.addNewOption("c", "critical", true);                                                // Timeout in seconds for the job to be executed.
-                                                                                                                                                                                                                                        
-		options.addNewOption("u", "user", true);													// User.
-		options.addNewOption("p", "pass", true);                                                    // Pass.
-		options.addNewOption("r", "url", true);                                                     // Url of the Scheduler/RM.
-		options.addNewOption("f", "paconf", true);                                                  // Path of the ProActive xml configuration file.
-		options.addNewOption("H", "hostname", true);                                                // Host to be tested. 
-		options.addNewOption("x", "port"    , true);                                                // Port of the host to be tested. 
-		
-		options.addNewOption("j", "jobname", true);                                                 // Name used to run the job in the Scheduler. 
-		options.addNewOption("d", "deleteallold", false);                                           // Delete all old jobs, not only the ones with the name 
-		options.addNewOption("g", "polling", false);                                                // Do polling or use an event based mechanism.
-		options.addNewOption("z", "highpriority", false);                                           // Set high priority for the job (not normal priority).
-
-		options.parseAll();
-
-		if (options.getBoo("help") == true)	
-			NagiosPlugin.printMessageUsageAndExit("");
-		
-		if (options.getBoo("version") == true)
-			NagiosPlugin.printVersionAndExit();
-
-		
-		final JobProber jobp = new JobProber(options);		// Create the prober.
-		
-		jobp.validateArguments();							// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
-	
-		jobp.initializeEnvironment();						// Initialize the environment for ProActive objects and prober.
-		
-		options.printArgumentsGiven();						// Print a list with the arguments given by the user. 
-		
-		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
-		ExecutorService executor = Executors.newFixedThreadPool(1);
-		
-		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.
-		
-
-		Callable<NagiosReturnObject> proberCallable = new Callable<NagiosReturnObject>(){
-			public NagiosReturnObject call() throws Exception {
-				return jobp.probe(tracer);
-			}
-		};
-
-		// We submit to the executor the prober activity (and the prober will then submit a job to the scheduler in that activity). 
-		Future<NagiosReturnObject> proberFuture = executor.submit(proberCallable); // We ask to execute the probe.
-	
-		NagiosReturnObject res = null;
-		try{ 								// We execute the future using a timeout. 
-			res = proberFuture.get(options.getInt("critical"), TimeUnit.SECONDS);
-			res.addCurvesSection(tracer, "time_all");
-		}catch(TimeoutException e){
-			logger.info("Exception ", e); 	// The execution took more time than expected. 
-			res = new NagiosReturnObject(
-					NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF "+options.getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
-			res.addCurvesSection(tracer, null);
-		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
-			logger.info("Exception ", e);
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
-			res.addCurvesSection(tracer, null);
-		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
-			logger.info("Exception ", e);
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
-			res.addCurvesSection(tracer, null);
-		}
-		NagiosPlugin.printAndExit(res, options.getInt("debug"));
+        Arguments options = new Arguments(args);
+		JobProber prob = new JobProber(options);													// Create the prober.
+		prob.initializeAll();
+		prob.startProbeAndExit();																	// Start the probe.
 	}
 }

@@ -54,8 +54,8 @@ import org.ow2.proactive.utils.NodeSet;
  * Class that represents locally the remote Resource Manager. */
 public class RMStubProber {
 
-	public static Logger logger = Logger.getLogger(RMProber.class.getName()); // Logger.
-	private ResourceManager rmStub; // ResourceManager locally.
+	public static Logger logger = Logger.getLogger(RMProber.class.getName()); 	// Logger.
+	private ResourceManager rmStub; 											// ResourceManager locally.
 	
 	/**
 	 * Initialize the connection with the remote Resource Manager.
@@ -77,8 +77,8 @@ public class RMStubProber {
 	 * @param amountOfNodesRequired nodes to be requested to the RM.
 	 * @return the set with the nodes obtained. */
 	public NodeSet getNodes(int amountOfNodesRequired){
-		NodeSet ns = rmStub.getAtMostNodes(amountOfNodesRequired, null);
     	logger.info("Getting nodes...");					
+		NodeSet ns = rmStub.getAtMostNodes(amountOfNodesRequired, null);
 //		logger.info("\tListing nodes...");					// List the nodes obtained.
 //    	for(Node n:ns){
 //    		logger.info("\t\t - " + n.getNodeInformation().getName());

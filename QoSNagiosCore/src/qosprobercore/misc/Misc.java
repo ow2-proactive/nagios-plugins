@@ -44,12 +44,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collection;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-
-import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
 
 /** 
@@ -176,18 +173,5 @@ public class Misc {
 			ret = defaultvalue;
 		}
 		return ret;
-	}
-
-	/**
-	 * Check whether all the arguments whose names/keys are given by notnull, have a value (in the set 'target') different than null.
-	 * @param notnull set with the name of the keys that should not have a null value in 'target'.
-	 * @param target set to analyze
-	 * @throws IllegalArgumentException thrown in case a supposed non-null argument is indeed null. */
-	public static void allElementsAreNotNull(Collection<String> notnull, Arguments target) throws IllegalArgumentException{
-		for (String key:notnull){
-			if (target.getValue(key)==null){
-				throw new IllegalArgumentException("The argument '" + key + "' is null.");
-			}
-		}
 	}
 }
