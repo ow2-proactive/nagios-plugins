@@ -104,6 +104,8 @@ public abstract class NagiosPlugin {
 	 * @param ars arguments given by the user for this basic initialization.
 	 * @throws Exception in case of any error. */
 	final private void initializeBasics(Arguments ars) throws Exception{
+		Misc.createPolicyAndLoadIt();
+		
 		ars.parseAll();
 
 		if (ars.getBoo("help") == true)	

@@ -78,6 +78,7 @@ public class Misc {
     /** 
 	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
 	public static void createPolicyAndLoadIt() throws Exception{
+		logger.info("Loading java security policy...");
 		try{
 		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
 		    temp.deleteOnExit(); // Delete temp file when program exits.
@@ -88,6 +89,7 @@ public class Misc {
 		    out.close();
 		    String policypath = temp.getAbsolutePath(); 
 		    System.setProperty("java.security.policy", policypath); // Load security policy.
+			logger.info("Done.");
 		}catch(Exception e){
 			throw new Exception("Error while creating the security policy file. " + e.getMessage());
 		}
