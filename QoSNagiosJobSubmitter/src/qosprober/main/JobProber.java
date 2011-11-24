@@ -38,6 +38,8 @@
 package qosprober.main;
 
 import qosprobercore.misc.Misc;
+
+import org.ow2.proactive.resourcemanager.common.RMState;
 import org.ow2.proactive.scheduler.examples.WaitAndPrint;
 import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
@@ -59,6 +61,8 @@ public class JobProber extends NagiosPlugin{
 		WaitAndPrint.class.getName();				// Class to be instantiated and executed as a task in the Scheduler.
 	public static String expectedJobOutput;			// The job output that is expected. It is used to check the right execution of the job. 
 	
+	private RMStateGetter rmStateGetter; 
+	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
 	 * @param args arguments to create this JobProber. 
@@ -73,6 +77,7 @@ public class JobProber extends NagiosPlugin{
 		args.addNewOption("d", "deleteallold", false);	// Delete all old jobs, not only the ones with the name 
 		args.addNewOption("g", "polling", false);		// Do polling or use an event based mechanism.
 		args.addNewOption("z", "highpriority", false);	// Set high priority for the job (not normal priority).
+		args.addNewOption("R", "rm-checking", false);	// Performs extra checking on the RM to know availability of nodes and give more accurate results. 
 	}
 	
 	/**
@@ -80,6 +85,11 @@ public class JobProber extends NagiosPlugin{
 	public void initializeProber(Arguments arguments) throws Exception{
 		/* Loading job's expected output. */
 		expectedJobOutput = Misc.readAllTextResource("/resources/expectedoutput.txt");
+		if (getArgs().getBoo("rm-checking") == true){
+			rmStateGetter = new RMStateGetter(
+				getArgs().getStr("url"), 
+				getArgs().getStr("user"), getArgs().getStr("pass"));
+		}
 	}
 
 	/** 
@@ -106,8 +116,7 @@ public class JobProber extends NagiosPlugin{
 		if (getArgs().isGiven("warning")==true){ // If the warning flag was given, then show it.
 			tracer.addNewReference("time_all_warning_threshold", new Double(getArgs().getInt("warning")));
 		}
-		
-
+	
 		String jobname = getArgs().getStr("jobname");							// Name of the job to be submitted to the scheduler.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
@@ -175,6 +184,28 @@ public class JobProber extends NagiosPlugin{
 	}
 	
 	
+	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer timeout, TimedStatusTracer tracer, Exception e){
+		NagiosReturnObject ret;
+		
+		if (getArgs().getBoo("rm-checking") == true){
+			RMState state = rmStateGetter.getQueryResult();
+			if (state == null){
+				ret = new NagiosReturnObject(NagiosReturnObject.RESULT_3_UNKNOWN, "FREE NODES: UNKNOWN, TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+			}else {
+				Integer freenodes = state.getFreeNodesNumber();
+				logger.info("Free nodes: " + freenodes);
+				if (freenodes == 0){
+					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_3_UNKNOWN, "NO FREE NODES, TIMEOUT OF " + getArgs().getInt("critical") + " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+				}else{
+					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FREE NODES: " + freenodes + ", TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+				}
+			}
+		}else{
+			ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+		}
+		ret.addCurvesSection(tracer, null);
+		return ret;
+	}
 	
 	/**
 	 * Starting point.

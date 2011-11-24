@@ -58,10 +58,30 @@ public class RMStateGetter {
 	private ResourceManager rmStub; 												// ResourceManager locally.
 	private Future<RMState> future;
 	
+	public RMStateGetter(String url, String user, String pass){
+		logger.info("Executing checking...");
+		if (url.startsWith("pamr:")){
+			url = "pamr://0";	
+		}
+		final String url1 = url;
+		final String user1 = user;
+		final String pass1 = pass;
+		Callable<RMState> task = new Callable<RMState>(){
+			public RMState call() throws Exception{
+				init(url1, user1, pass1);
+				RMState ret = getRMState();
+				disconnect();
+				return ret;
+			}
+		};
+		ExecutorService executor = Executors.newFixedThreadPool(1);
+		future = executor.submit(task);
+	}
+	
 	/**
 	 * Initialize the connection with the remote Resource Manager.
 	 * Uses the url of the RM, and the user/pass to login to it. */
-	public void init(String url, String user, String pass) throws RMException, KeyException, LoginException{
+	private void init(String url, String user, String pass) throws RMException, KeyException, LoginException{
     	logger.info("Joining the Resource Manager...");
         RMAuthentication auth = RMConnection.join(url); 	// Join the RM.
         logger.info("Done.");
@@ -76,29 +96,19 @@ public class RMStateGetter {
 	/**
 	 * Release the given set of nodes.
 	 * @return state of the RM. */
-	public RMState getRMState(){
-		return rmStub.getState();
+	private RMState getRMState(){
+    	logger.info("Getting state...");
+		RMState ret = rmStub.getState();
+    	logger.info("Done.");
+		return ret;
 	}
 
 	/**
 	 * Disconnect from the Resource Manager. */
-	public void disconnect(){
+	private void disconnect(){
     	logger.info("Disconnecting...");					// Disconnecting from RM.
 		rmStub.disconnect();
     	logger.info("Done.");	
-	}
-	
-	public void performQuery(final String url, final String user, final String pass) throws Exception{
-		Callable<RMState> task = new Callable<RMState>(){
-			public RMState call() throws Exception{
-				init(url, user, pass);
-				RMState ret = getRMState();
-				disconnect();
-				return ret;
-			}
-		};
-		ExecutorService executor = Executors.newFixedThreadPool(1);
-		future = executor.submit(task);
 	}
 	
 	public RMState getQueryResult(){
@@ -108,11 +118,14 @@ public class RMStateGetter {
 		
 		RMState ret = null;
 		try {
-			ret = future.get();
-	    	logger.info("RMState obtained OK.");
-		} catch (InterruptedException e) {
-	    	logger.info("Problem getting RMState...", e);
-		} catch (ExecutionException e) {
+			if (future.isDone() == true){
+		    	logger.info("RMState was ready... Getting it...");
+				ret = future.get();
+		    	logger.info("RMState obtained OK.");
+			}else{
+		    	logger.info("RMState was not ready... Avoiding...");
+			}
+		} catch (Exception e) {
 	    	logger.info("Problem getting RMState...", e);
 		}
 		return ret;
