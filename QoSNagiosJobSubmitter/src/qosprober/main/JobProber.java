@@ -61,7 +61,8 @@ public class JobProber extends NagiosPlugin{
 		WaitAndPrint.class.getName();				// Class to be instantiated and executed as a task in the Scheduler.
 	public static String expectedJobOutput;			// The job output that is expected. It is used to check the right execution of the job. 
 	
-	private RMStateGetter rmStateGetter; 
+	private RMStateGetter rmStateGetter; 			// Used to find out the number of free nodes, and prevent telling critical
+													// errors because of timeout when actually there are no free nodes but everything is okay.
 	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
@@ -113,9 +114,9 @@ public class JobProber extends NagiosPlugin{
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception{
 		// We add some reference values to be printed later in the summary for Nagios.
 		tracer.addNewReference("timeout_threshold", new Double(getArgs().getInt("critical")));
-		if (getArgs().isGiven("warning")==true){ // If the warning flag was given, then show it.
+		if (getArgs().isGiven("warning")==true) // If the warning flag was given, then show it.
 			tracer.addNewReference("time_all_warning_threshold", new Double(getArgs().getInt("warning")));
-		}
+		
 	
 		String jobname = getArgs().getStr("jobname");							// Name of the job to be submitted to the scheduler.
 		
@@ -158,7 +159,6 @@ public class JobProber extends NagiosPlugin{
 		tracer.finishLastMeasurement();
 	
 		
-		
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
 		summary.addFact("JOBID " + jobId + ":" + jobname);
 		
@@ -167,18 +167,15 @@ public class JobProber extends NagiosPlugin{
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "NO JOB RESULT OBTAINED"));
 		}else{ 						// Non-timeout case. Result obtained.
 			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: '" + jresult.toString() + "'.");
-			if (jresult.toString().equals(expectedJobOutput) == false){ 
+			if (jresult.toString().equals(expectedJobOutput) == false) 
 				summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "OUTPUT CHECK FAILED"));
-			}
 		}	
 		
-		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning")){
+		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning"))
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "TOO SLOW"));
-		}
 		
-		if (summary.isAllOkay()){
+		if (summary.isAllOkay())
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "OK"));
-		}
 		
 		return summary.getSummaryOfAll();
 	}

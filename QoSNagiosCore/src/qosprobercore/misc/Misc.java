@@ -38,9 +38,7 @@
 package qosprobercore.misc;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -75,24 +73,6 @@ public class Misc {
 	    return ret;
 	}
     
-    /** 
-	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
-	public static void createPolicyAndLoadIt() throws Exception{
-		try{
-		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
-		    temp.deleteOnExit(); // Delete temp file when program exits.
-		    // Write to temp file.
-		    BufferedWriter out = new BufferedWriter(new FileWriter(temp));
-		    String policycontent = "grant {permission java.security.AllPermission;};";
-		    out.write(policycontent);
-		    out.close();
-		    String policypath = temp.getAbsolutePath(); 
-		    System.setProperty("java.security.policy", policypath); // Load security policy.
-		}catch(Exception e){
-			throw new Exception("Error while creating the security policy file. " + e.getMessage());
-		}
-	}
-
 	/**
 	 * Print the usage of the application. */
 	public static void printUsage(){

@@ -104,10 +104,11 @@ public abstract class NagiosPlugin {
 	 * @param ars arguments given by the user for this basic initialization.
 	 * @throws Exception in case of any error. */
 	final private void initializeBasics(Arguments ars) throws Exception{
-		Misc.createPolicyAndLoadIt();
 		
 		ars.parseAll();
 
+		PAEnvironmentInitializer.initPAConfiguration(getArgs().getStr("paconf"), getArgs().getStr("hostname"), getArgs().getStr("port"));
+		
 		if (ars.getBoo("help") == true)	
 			NagiosPlugin.printMessageUsageAndExit("");
 		
@@ -177,7 +178,7 @@ public abstract class NagiosPlugin {
 		}catch(TimeoutException e){
 			res = getNagiosReturnObjectForTimeoutException(arguments.getInt("critical"), tracer, e);
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
-			res = getNagiosReturnObjectForExecutionException(arguments.getInt("critical"), tracer, e);
+			res = getNagiosReturnObjectForExecutionException(tracer, e);
 		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
@@ -185,17 +186,29 @@ public abstract class NagiosPlugin {
 		printDumpAndExit(res, arguments.getInt("debug"));
 	}
 	
+	/**
+	 * Get the NagiosReturnObject with the format to be shown according to a Timeout problem arisen when probing. 
+	 * @param timeout as data useful to generate the message.
+	 * @param tracer as data useful to generate the message.
+	 * @param e as data useful to generate the message.
+	 * @return the NagiosReturnObject generated. */
 	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer timeout, TimedStatusTracer tracer, Exception e){
 		NagiosReturnObject ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF " + arguments.getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 		ret.addCurvesSection(tracer, null);
 		return ret;
 	}
 	
-	protected NagiosReturnObject getNagiosReturnObjectForExecutionException(Integer timeout, TimedStatusTracer tracer, Exception e){
+	/**
+	 * Get the NagiosReturnObject with the format to be shown according to an Execution problem arisen when probing. 
+	 * @param tracer as data useful to generate the message.
+	 * @param e as data useful to generate the message.
+	 * @return the NagiosReturnObject generated. */
+	protected NagiosReturnObject getNagiosReturnObjectForExecutionException(TimedStatusTracer tracer, Exception e){
 		NagiosReturnObject ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
 		ret.addCurvesSection(tracer, null);
 		return ret;
 	}
+	
     /** 
      * Print a message in the stdout (for Nagios to use it) and return with the given error code. 
      * Print a back-trace later only if the debug-level is appropriate. 

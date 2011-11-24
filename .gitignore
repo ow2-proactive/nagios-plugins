@@ -2,7 +2,7 @@
 *.class
 *.log
 /*/bin/resources/*.txt
+/*/bin/
 *.jar
 scheduler
 .metadata
-QoSNagiosJobSubmitter/test_job.xml.*

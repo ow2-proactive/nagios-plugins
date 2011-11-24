@@ -54,9 +54,8 @@ public class PAEnvironmentInitializer {
 	private static Boolean usePAConfFile = null;
 	
     /** 
-	 * Create a java.policy file to grant permissions, and load it in the current JVM. */
+	 * Create a java.policy file to grant permissions, and load it for the current JVM. */
 	public static void createPolicyAndLoadIt() throws Exception{
-		logger.info("Setting security policies... ");
 		try{
 		    File temp = File.createTempFile("javapolicy", ".policy"); // Create temp file.
 		    temp.deleteOnExit(); // Delete temp file when program exits.
@@ -70,7 +69,6 @@ public class PAEnvironmentInitializer {
 		}catch(Exception e){
 			throw new Exception("Error while creating the security policy file. " + e.getMessage());
 		}
-		logger.info("Done.");
 	}
 
 	/**
