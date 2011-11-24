@@ -1,17 +1,20 @@
+NAGIOS PLUGIN MANUAL 
+------ ------ ------
 
-SYNOPSIS
-   check_job_submission --url URL --user USER --pass PASS --critical TIMEOUT [OPTIONS]
-
-DESCRIPTION
+DESCRIPTION OF THE PLUGIN
 
 Nagios plugin to probe the responsiveness of a ProActive based scheduler grid.
 It uses a simple job probe submission to test a grid concerning its responsiveness, and status in general.   
+
+
+SYNOPSIS
+
+   check_job_submission --url URL --user USER --pass PASS --critical TIMEOUT [OPTIONS]
    
+SPECIFIC NAGIOS PLUGIN FLAGS 
+
 Mandatory arguments to long options are mandatory for short options too.
    
-   -v, --debug LEVELOFVERBOSITY
-      Verbose debugging mode level. The default value is 1. Value 3: the plugin will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
-       
    -u, --user USER
       Username to get connected to the Scheduler.
       
@@ -21,21 +24,6 @@ Mandatory arguments to long options are mandatory for short options too.
    -r, --url URL
       URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
       It should have a format like 'rmi://shainese.inria.fr:1099/' 
-      
-   -f, --paconf PACONF
-      ProActive configuration file (usually ProActiveConfiguration.xml). Used if a PAMR router is present behind a protected server.
-      
-   -H, --hostname HOSTNAME
-      PAMR router hostname to use to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
-      
-   -x, --port PORT
-      PAMR router port to be used to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
-      
-   -w, --warning WARNING
-      In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status. It is important to note that the probe is not killed with this timeout.  
-      
-   -c, --critical CRITICAL
-      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
       
    -d, --deleteallold
       Delete all old jobs of this user, no matter their name. For testing purposes.
@@ -49,23 +37,3 @@ Mandatory arguments to long options are mandatory for short options too.
    -z, --highpriority
       Set the priority of the job to high (normal is default).
        
-   -V, --version
-      Print the version of the plugin. 
-      
-   -h, --help 
-      Print this message. 
-
-NAGIOS OUTPUT INTERPRETATION
-
-   SERVICE STATUS: JOBID <jobid> <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
-	
-   where
-      - jobid is the id of the probe job.
-      - status is a message regarding to the result of the test and job 'jobid' used as probe job.
-      - TIME is the time (in seconds) that was spent for the activity described by key* for the probe job. 
-	
-EXECUTION EXAMPLE
-
-   General cases
-      check_job_submission --url pamr://1 --user demo --pass demo --critical 60 --paconf /tmp/ProActiveConfiguration.xml
-

@@ -1,50 +1,18 @@
+NAGIOS PLUGIN MANUAL 
+------ ------ ------
 
-SYNOPSIS
-
-   check_pamr_router --critical TIMEOUT (-f PACONF | -H PAMRROUTERHOSTNAME -x PAMRROUTERPORT) [OPTIONS]
-
-DESCRIPTION
+DESCRIPTION OF THE PLUGIN
 
 Nagios plugin to probe the PAMR router behavior. 
 It creates two JVM with Active objects that communicate with each other. They exchange information that necessarily traverses the PAMR router.
 If the connection with the PAMR router is not possible, or this message exchange is not correctly done, then the plugin tells the anomaly to Nagios.
+
+SYNOPSIS
+
+   check_pamr_router --critical TIMEOUT (-f PACONF | -H PAMRROUTERHOSTNAME -x PAMRROUTERPORT) [OPTIONS]
    
+SPECIFIC NAGIOS PLUGIN FLAGS 
+
 Mandatory arguments to long options are mandatory for short options too.
-   
-   -v, --debug LEVELOFVERBOSITY
-      Verbose debugging mode level. Default value is 1. Value 3: it will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
-       
-   -f, --paconf PACONF
-      ProActive configuration file (usually ProActiveConfiguration.xml).
-      
-   -H, --hostname PAMRROUTERHOSTNAME
-      Hostname to be tested. Ignored if a ProActive configuration file is provided. 
-      
-   -x, --port PAMRROUTERPORT
-      Port to be used to get connected to the RM. Ignored if a ProActive configuration file is provided. 
-      
-   -w, --warning WARNING
-      In seconds. If the overall test time exceeds this value, then the plugin will tell to Nagios a warning status.  
-      
-   -c, --critical CRITICAL
-      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
-      
-   -V, --version
-      Print the version of the plugin. 
-      
-   -h, --help
-      Print this message.
 
-NAGIOS OUTPUT INTERPRETATION
-
-   SERVICE STATUS: <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
-	
-   where
-      - status is a message regarding to the result of the test.
-      - TIME is the time (in seconds) that was spent for the activity described by key* for the probe. 
-	
-EXECUTION EXAMPLE
-
-   General cases
-      check_pamr_router --paconf /tmp/ProActiveConfiguration.xml --critical 100
- 
+[There are no specific flags.]

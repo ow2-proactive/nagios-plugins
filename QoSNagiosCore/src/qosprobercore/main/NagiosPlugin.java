@@ -78,6 +78,7 @@ public abstract class NagiosPlugin {
 		args.addNewOption("f", "paconf", true);													// Path of the ProActive xml configuration file.
 		args.addNewOption("H", "hostname", true);												// Host to be tested. 
 		args.addNewOption("x", "port"    , true);												// Port of the host to be tested. 
+		args.addNewOption("S", "dump-script" , true);											// Script to be executed in case of any problem. 
 		
 	}
 	
@@ -181,7 +182,7 @@ public abstract class NagiosPlugin {
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
 		}
-		NagiosPlugin.printAndExit(res, arguments.getInt("debug"));
+		printDumpAndExit(res, arguments.getInt("debug"));
 	}
 	
     /** 
@@ -189,22 +190,39 @@ public abstract class NagiosPlugin {
      * Print a back-trace later only if the debug-level is appropriate. 
      * @param obj object to take the information from.
      * @param debuglevel level of verbosity. */
-    public synchronized static void printAndExit(NagiosReturnObject obj, int debuglevel){
+    private synchronized void printDumpAndExit(NagiosReturnObject obj, int debuglevel){
     	Throwable exc = obj.getException();
+        System.out.println(NAG_OUTPUT_PREFIX + obj.getWholeMessage());
+        
+        Dumper du = new Dumper(arguments.getStr("dump-script"));
+        du.dump(obj);
+        
         switch(debuglevel){
             case DEBUG_LEVEL_0_SILENT:
-                System.out.println(NAG_OUTPUT_PREFIX + obj.getWholeMessage());
                 break;
             default:
-                System.out.println(NAG_OUTPUT_PREFIX + obj.getWholeMessage());
                 if (exc!=null){
 	                exc.printStackTrace(System.out);
                 }
                 break;
         }
+        
         System.exit(obj.getErrorCode());
     }
     
+	/**
+	 * Print the version of the plugin and the exits the application. */
+	private static void printVersionAndExit(){
+		String usage = null;
+		try {
+			usage = Misc.readAllTextResource("/resources/version.txt");
+			System.err.println(usage);
+		} catch (IOException e) {
+			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
+		}
+	    System.exit(NagiosReturnObject.RESULT_0_OK);
+	}
+	
 	/**
 	 * Used when a parameter given by the user is wrong. 
 	 * Print a message, then the usage of the application, and the exits the application. 
@@ -215,19 +233,6 @@ public abstract class NagiosPlugin {
 		}
 	    Misc.printUsage();
 	    System.exit(NagiosReturnObject.RESULT_2_CRITICAL);
-	}
-	
-	/**
-	 * Print the version of the plugin and the exits the application. */
-	public static void printVersionAndExit(){
-		String usage = null;
-		try {
-			usage = Misc.readAllTextResource("/resources/version.txt");
-			System.err.println(usage);
-		} catch (IOException e) {
-			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
-		}
-	    System.exit(NagiosReturnObject.RESULT_0_OK);
 	}
 	
 }

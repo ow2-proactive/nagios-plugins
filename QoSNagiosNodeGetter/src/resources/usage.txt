@@ -1,26 +1,29 @@
+NAGIOS PLUGIN MANUAL 
+------ ------ ------
+
+DESCRIPTION OF THE PLUGIN
+
+Nagios plugin to probe the responsiveness of a ProActive based Resource Manager (RM).
+It simply obtains a given number of nodes from the RM and releases them.  
+   
 
 SYNOPSIS
 
    check_node_obtaining --url URL --user USER --pass PASS --critical TIMEOUT [OPTIONS]
 
-DESCRIPTION
+SPECIFIC NAGIOS PLUGIN FLAGS 
 
-Nagios plugin to probe the responsiveness of a ProActive based Resource Manager (RM).
-It simply obtains a given number of nodes from the RM and releases them.  
-   
 Mandatory arguments to long options are mandatory for short options too.
-   
-   -v, --debug LEVELOFVERBOSITY
-      Verbose debugging mode level. Default value is 1. Value 3: it will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
-       
+
    -u, --user USER
-      Username to get connected to the RM.
+      Username to get connected to the Scheduler.
       
    -p, --pass PASS
-      Password to get connected to the RM.
+      Password to get connected to the Scheduler.
       
    -r, --url URL
-      URL to get connected to the RM. Can be 'pamr://0' if already specified the RM in the ProActive configuration file.
+      URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
+      It should have a format like 'rmi://shainese.inria.fr:1099/' 
            
    -q, --nodesrequired AMOUNT_OF_NODES_TO_ASK_FOR
       Amount of nodes that will be requested to the Resource Manager.
@@ -30,38 +33,3 @@ Mandatory arguments to long options are mandatory for short options too.
 
    -s, --nodescritical NODESCRITICAL
       If the amount of nodes obtained is strictly smaller than NODESCRITICAL, then a critical message will be told to Nagios.
-
-   -f, --paconf PACONF
-      ProActive configuration file (usually ProActiveConfiguration.xml). Necessary if a PAMR router is present.
-      
-   -H, --hostname HOSTNAME
-      Hostname of the PAMR router. Ignored if a ProActive configuration file is provided. 
-      
-   -x, --port PORT
-      Port where the PAMR router service is exposed. Ignored if a ProActive configuration file is provided. 
-      
-   -w, --warning WARNING
-      In seconds. If the overall test time exceeds this value, then the plugin will tell to Nagios a warning status.  
-      
-   -c, --critical CRITICAL
-      Timeout (in seconds) to wait for the test until it is killed and critical status is told to Nagios.
-      
-   -V, --version
-      Print the version of the plugin. 
-   
-   -h, --help
-      Print this message.
-      
-NAGIOS OUTPUT INTERPRETATION
-
-   SERVICE STATUS: <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
-	
-   where
-      - status is a message regarding to the result of the test.
-      - TIME is the time (in seconds) that was spent for the activity described by key* for the probe. 
-	
-EXECUTION EXAMPLE
-
-   General cases
-      check_node_obtaining --url pamr://0 --user d --pass p --critical 100 --paconf /tmp/ProActiveConfiguration.xml 
-

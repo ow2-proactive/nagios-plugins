@@ -1,0 +1,38 @@
+GENERAL NAGIOS PLUGIN FLAGS 
+
+   -h, --help 
+      Print this message. 
+      
+   -V, --version
+      Print the version of the plugin. 
+
+   -v, --debug LEVELOFVERBOSITY
+      Verbose debugging mode level. The default value is 1. Value 3: the plugin will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
+       
+   -w, --warning WARNING
+      In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status. It is important to note that the probe is not killed with this timeout.  
+      
+   -c, --critical CRITICAL
+      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
+      
+   -f, --paconf PACONF
+      ProActive configuration file (usually ProActiveConfiguration.xml). Used if a PAMR router is present behind a protected server.
+      
+   -H, --hostname HOSTNAME
+      PAMR router hostname to use to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
+      
+   -x, --port PORT
+      PAMR router port to be used to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
+      
+   -S, --dump-script SCRIPT-PATH
+      Path of a script that is executed whenever an abnormal (not 0 return code) is thrown by the probe. It helps to dump the situation of the entity tested.  
+      
+NAGIOS OUTPUT INTERPRETATION
+
+   SERVICE STATUS: JOBID <jobid> <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
+	
+   where
+      - jobid is the id of the probe job.
+      - status is a message regarding to the result of the test and job 'jobid' used as probe job.
+      - TIME is the time (in seconds) that was spent for the activity described by key* for the probe job. 
+      

@@ -96,9 +96,10 @@ public class Misc {
 	/**
 	 * Print the usage of the application. */
 	public static void printUsage(){
-		String usage = null;
+		String usage = ""; 
 		try {
-			usage = Misc.readAllTextResource("/resources/usage.txt");
+			usage = usage + Misc.readAllTextResource("/resources/usage.txt");
+			usage = usage + Misc.readAllTextResource("/resources/core/usage.txt");
 			System.err.println(usage);
 		} catch (IOException e) {
 			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
