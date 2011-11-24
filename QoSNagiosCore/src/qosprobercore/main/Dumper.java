@@ -1,7 +1,5 @@
 package qosprobercore.main;
 
-import java.io.IOException;
-
 import org.apache.log4j.Logger;
 
 public class Dumper {
@@ -17,7 +15,7 @@ public class Dumper {
 		logger.info("Dumping with command '" + command + "'...");
 		try {
 			Runtime.getRuntime().exec(command);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			logger.warn(e.getMessage());
 		}
 	}

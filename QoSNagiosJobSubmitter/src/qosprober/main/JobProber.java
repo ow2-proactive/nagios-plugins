@@ -107,7 +107,7 @@ public class JobProber extends NagiosPlugin{
 			tracer.addNewReference("time_all_warning_threshold", new Double(getArgs().getInt("warning")));
 		}
 		
-		
+
 		String jobname = getArgs().getStr("jobname");							// Name of the job to be submitted to the scheduler.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");

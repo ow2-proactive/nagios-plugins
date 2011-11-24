@@ -86,7 +86,7 @@ public class SchedulerStubProberJava {
 	 * @param pass, password to access the scheduler.
 	 * */
 	public void init(String url, String user, String pass, boolean polling) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, HttpException, IOException{
-		logger.info("Joining the scheduler...");
+		logger.info("Joining the scheduler at '" + url + "'...");
         SchedulerAuthenticationInterface auth = SchedulerConnection.join(url);
         logger.info("Done.");
         logger.info("Logging in...");

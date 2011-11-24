@@ -173,11 +173,9 @@ public abstract class NagiosPlugin {
 			res = proberFuture.get(arguments.getInt("critical"), TimeUnit.SECONDS);
 			res.addCurvesSection(tracer, "time_all");
 		}catch(TimeoutException e){
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF " + arguments.getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
-			res.addCurvesSection(tracer, null);
+			res = getNagiosReturnObjectForTimeoutException(arguments.getInt("critical"), tracer, e);
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
-			res.addCurvesSection(tracer, null);
+			res = getNagiosReturnObjectForExecutionException(arguments.getInt("critical"), tracer, e);
 		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
@@ -185,6 +183,17 @@ public abstract class NagiosPlugin {
 		printDumpAndExit(res, arguments.getInt("debug"));
 	}
 	
+	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer timeout, TimedStatusTracer tracer, Exception e){
+		NagiosReturnObject ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF " + arguments.getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+		ret.addCurvesSection(tracer, null);
+		return ret;
+	}
+	
+	protected NagiosReturnObject getNagiosReturnObjectForExecutionException(Integer timeout, TimedStatusTracer tracer, Exception e){
+		NagiosReturnObject ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
+		ret.addCurvesSection(tracer, null);
+		return ret;
+	}
     /** 
      * Print a message in the stdout (for Nagios to use it) and return with the given error code. 
      * Print a back-trace later only if the debug-level is appropriate. 
@@ -194,8 +203,10 @@ public abstract class NagiosPlugin {
     	Throwable exc = obj.getException();
         System.out.println(NAG_OUTPUT_PREFIX + obj.getWholeMessage());
         
-        Dumper du = new Dumper(arguments.getStr("dump-script"));
-        du.dump(obj);
+        if (obj.getErrorCode()!= NagiosReturnObject.RESULT_0_OK && arguments.isGiven("dump-script")){
+	        Dumper du = new Dumper(arguments.getStr("dump-script"));
+	        du.dump(obj);
+        }
         
         switch(debuglevel){
             case DEBUG_LEVEL_0_SILENT:
