@@ -59,7 +59,7 @@ public class RMStateGetter {
 	private Future<RMState> future;
 	
 	public RMStateGetter(String url, String user, String pass){
-		logger.info("Executing checking...");
+		logger.info("Executing RMState check...");
 		if (url.startsWith("pamr:")){
 			url = "pamr://0";	
 		}

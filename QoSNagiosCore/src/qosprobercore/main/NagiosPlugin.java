@@ -107,6 +107,8 @@ public abstract class NagiosPlugin {
 		
 		ars.parseAll();
 
+		Misc.log4jConfiguration(ars.getInt("debug"));	// Loading log4j configuration. 
+		
 		PAEnvironmentInitializer.initPAConfiguration(getArgs().getStr("paconf"), getArgs().getStr("hostname"), getArgs().getStr("port"));
 		
 		if (ars.getBoo("help") == true)	
@@ -117,7 +119,6 @@ public abstract class NagiosPlugin {
 		
 		this.validateArguments(ars);					// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
 	
-		Misc.log4jConfiguration(ars.getInt("debug"));	// Loading log4j configuration. 
 		
 		ars.printArgumentsGiven();						// Print a list with the arguments given by the user. 
 	}

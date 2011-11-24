@@ -89,6 +89,7 @@ public class PAEnvironmentInitializer {
 			if (new File(paconf).exists()==true){
 				System.setProperty("proactive.configuration", paconf);
 				usepaconffilee = true;
+				logger.info("The ProActive configuration file '"+paconf+"' was is being used.");
 			}else{
 				logger.warn("The ProActive configuration file '"+paconf+"' was not found. Using default configuration.");
 			}
