@@ -58,6 +58,8 @@ public class RMStubProber {
 	public static Logger logger = Logger.getLogger(RMProber.class.getName()); 	// Logger.
 	private ResourceManager rmStub; 											// ResourceManager locally.
 	
+	public RMStubProber(){}
+	
 	/**
 	 * Initialize the connection with the remote Resource Manager.
 	 * Uses the url of the RM, and the user/pass to login to it. */
@@ -110,6 +112,6 @@ public class RMStubProber {
 	public void disconnect(){
     	logger.info("Disconnecting...");					// Disconnecting from RM.
 		BooleanWrapper ret = rmStub.disconnect();
-    	logger.info("Done (returned '" + ret + "'.");	
+    	logger.info("Done (returned '" + ret + "').");	
 	}
 }

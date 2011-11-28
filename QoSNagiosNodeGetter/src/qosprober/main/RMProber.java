@@ -37,7 +37,15 @@
 
 package qosprober.main;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.ow2.proactive.utils.NodeSet;
+
 import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
 import qosprobercore.main.NagiosReturnObject;
@@ -52,6 +60,8 @@ import qosprobercore.main.TimedStatusTracer;
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
 public class RMProber extends NagiosPlugin{
 
+	private final ExecutorService THREAD_POOL = Executors.newSingleThreadExecutor();
+	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
 	 * @param args arguments to create this RMProber. 
@@ -97,7 +107,7 @@ public class RMProber extends NagiosPlugin{
 	 *   - disconnect
 	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. 
 	 * @throws Exception */	 
-	public NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception{
+	public NagiosReturnObject probe(final TimedStatusTracer tracer) throws Exception{
 		// We add some reference values to be printed later in the summary for Nagios.
 		tracer.addNewReference("timeout_threshold", new Double(getArgs().getInt("critical")));
 		if (getArgs().isGiven("warning")==true){ // If the warning flag was given, then show it.
@@ -106,32 +116,82 @@ public class RMProber extends NagiosPlugin{
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
-		RMStubProber rmstub = new RMStubProber();			// We get connected to the RM through this stub. 
+		final RMStubProber rmstub = new RMStubProber();			// We get connected to the RM through this stub. 
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to RM...");
 		
-		rmstub.init(										// We get connected to the RM.
-				getArgs().getStr("url"),  getArgs().getStr("user"), 
-				getArgs().getStr("pass"));	
+		FutureTask<Integer> taskfree = new FutureTask<Integer>(
+			new Callable<Integer>(){
+				public Integer call() throws Exception {
+					System.out.println("Thread: " + Thread.currentThread());
+					rmstub.init(										// We get connected to the RM.
+						getArgs().getStr("url"),  getArgs().getStr("user"), 
+						getArgs().getStr("pass"));	
+	
+					tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "connected to RM, getting status...");
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "connected to RM, getting status...");
+					int freenodes = rmstub.getRMState().getFreeNodesNumber(); // Get the amount of free nodes.
 		
-		int freenodes = rmstub.getRMState().getFreeNodesNumber(); // Get the amount of free nodes.
+					return freenodes;
+				}
+			}
+		);
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_getting_nodes", "connected to RM, getting nodes...");
+		THREAD_POOL.execute(taskfree);
+		Double freenodes = Double.NaN;
+		try{
+			freenodes = new Double(taskfree.get(10000, TimeUnit.MILLISECONDS));
+		}catch(TimeoutException e){
+			taskfree.cancel(true);
+			System.out.println("Timeout where expected111");
+			e.printStackTrace();
+		}
 		
-		NodeSet nodes = rmstub.getNodes(					// Request some nodes.
-				getArgs().getInt("nodesrequired")); 	
-		int obtainednodes = nodes.size();
+		FutureTask<Integer> taskobta = new FutureTask<Integer>(
+			new Callable<Integer>(){
+				public Integer call() throws Exception {
+					tracer.finishLastMeasurementAndStartNewOne("time_getting_nodes", "connected to RM, getting nodes...");
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "releasing nodes...");
-    	
-    	rmstub.releaseNodes(nodes);							// Release the nodes obtained.
-    	
-		tracer.finishLastMeasurementAndStartNewOne("time_disconn", "disconnecting...");
-    	
-    	rmstub.disconnect();								// Disconnect from the Resource Manager.
-    				
+					NodeSet nodes = rmstub.getNodes(					// Request some nodes.
+						getArgs().getInt("nodesrequired")); 	
+					int obtainednodes = nodes.size();
+					tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "releasing nodes...");
+					System.out.println("releasing nodes...");
+			    	rmstub.releaseNodes(nodes);							// Release the nodes obtained.
+			System.out.println("delete this!!!!!!..");
+			Thread.sleep(40000);
+			    	return obtainednodes;
+				}
+			}
+		);
+		THREAD_POOL.execute(taskobta);
+		
+		Double obtainednodes = Double.NaN;
+		try{
+			obtainednodes = new Double(taskobta.get(10000, TimeUnit.MILLISECONDS));
+		}catch(TimeoutException e){
+			taskobta.cancel(true);
+			System.out.println("Timeout where expected111");
+			e.printStackTrace();
+		}
+		
+		
+		FutureTask<Object> taskdisc = new FutureTask<Object>(
+			new Callable<Object>(){
+				public Object call() throws Exception {
+					tracer.finishLastMeasurementAndStartNewOne("time_disconn", "disconnecting...");
+			    	rmstub.disconnect();								// Disconnect from the Resource Manager.
+			    	return new Object();
+				}
+			}
+		);
+		THREAD_POOL.execute(taskdisc);
+		try{
+			Object obj2 = (Object) taskdisc.get(30000, TimeUnit.MILLISECONDS);
+		}catch(TimeoutException e){
+			taskdisc.cancel(true);
+			e.printStackTrace();
+		}
 		tracer.finishLastMeasurement();
 		
 		
