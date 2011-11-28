@@ -142,7 +142,12 @@ public class RMProber extends NagiosPlugin{
 		
 		Double time_all = tracer.getTotal();
 		
-		summary.addFact(obtainednodes + " NODE/S OBTAINED");
+		summary.addFact("NODE/S OBTAINED=" + obtainednodes + " REQUIRED=" + nodesrequired + " FREE=" +  freenodes);
+	
+		tracer.addNewReference("nodes_required", nodesrequired);
+		tracer.addNewReference("nodes_free", freenodes);
+		tracer.addNewReference("nodes_obtained", obtainednodes);
+		
 		
 		if (obtainednodes < getArgs().getInt("nodescritical")){									// Fewer nodes than criticalnodes.	
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TOO FEW NODES (" + nodesrequired + " REQUIRED, " + freenodes + " FREE)"));

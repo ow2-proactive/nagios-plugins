@@ -40,6 +40,7 @@ package qosprober.main;
 import java.security.KeyException;
 import javax.security.auth.login.LoginException;
 import org.apache.log4j.Logger;
+import org.objectweb.proactive.core.util.wrapper.BooleanWrapper;
 import org.ow2.proactive.authentication.crypto.CredData;
 import org.ow2.proactive.authentication.crypto.Credentials;
 import org.ow2.proactive.resourcemanager.authentication.RMAuthentication;
@@ -61,7 +62,7 @@ public class RMStubProber {
 	 * Initialize the connection with the remote Resource Manager.
 	 * Uses the url of the RM, and the user/pass to login to it. */
 	public void init(String url, String user, String pass) throws RMException, KeyException, LoginException{
-    	logger.info("Joining the Resource Manager...");
+    	logger.info("Joining the Resource Manager at '" + url + "'...");
         RMAuthentication auth = RMConnection.join(url); 	// Join the RM.
         logger.info("Done.");
         logger.info("Creating credentials...");
@@ -79,6 +80,7 @@ public class RMStubProber {
 	public NodeSet getNodes(int amountOfNodesRequired){
     	logger.info("Getting nodes...");					
 		NodeSet ns = rmStub.getAtMostNodes(amountOfNodesRequired, null);
+		logger.info("\tNodes obtained: " + ns.size());
 //		logger.info("\tListing nodes...");					// List the nodes obtained.
 //    	for(Node n:ns){
 //    		logger.info("\t\t - " + n.getNodeInformation().getName());
@@ -107,7 +109,7 @@ public class RMStubProber {
 	 * Disconnect from the Resource Manager. */
 	public void disconnect(){
     	logger.info("Disconnecting...");					// Disconnecting from RM.
-		rmStub.disconnect();
-    	logger.info("Done.");	
+		BooleanWrapper ret = rmStub.disconnect();
+    	logger.info("Done (returned '" + ret + "'.");	
 	}
 }

@@ -136,7 +136,7 @@ public class TimedStatusTracer {
 	 * @param label label of the new entry.
 	 * @param time_sec value of the new entry. */
 	public synchronized void addNewReference(String label, Number time_sec){
-		timingMeasurementsReference.put((String)label, time_sec);
+		timingMeasurementsReference.put((String)label, new Double(time_sec.doubleValue()));
 	}
 	
 	/**

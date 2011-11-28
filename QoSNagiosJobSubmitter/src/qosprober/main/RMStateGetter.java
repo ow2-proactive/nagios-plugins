@@ -42,6 +42,7 @@ import java.util.concurrent.*;
 
 import javax.security.auth.login.LoginException;
 import org.apache.log4j.Logger;
+import org.objectweb.proactive.core.util.wrapper.BooleanWrapper;
 import org.ow2.proactive.authentication.crypto.CredData;
 import org.ow2.proactive.authentication.crypto.Credentials;
 import org.ow2.proactive.resourcemanager.authentication.RMAuthentication;
@@ -107,8 +108,8 @@ public class RMStateGetter {
 	 * Disconnect from the Resource Manager. */
 	private void disconnect(){
     	logger.info("Disconnecting...");					// Disconnecting from RM.
-		rmStub.disconnect();
-    	logger.info("Done.");	
+		BooleanWrapper ret = rmStub.disconnect();
+    	logger.info("Done (returned '" + ret + "'.");	
 	}
 	
 	public RMState getQueryResult(){

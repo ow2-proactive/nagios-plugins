@@ -62,7 +62,7 @@ public class Client {
     private Server server;													// Stub of the server. 
     
     private static final String MY_MESSAGE = 
-    		PAMRMisc.generateFibString(PAMRProber.MESSAGE_LENGTH);				// Message to send to the server.
+    		PAMRMisc.generateFibString(PAMRProber.MESSAGE_LENGTH);			// Message to send to the server.
     
     public Client() {}														// Empty constructor. ProActive needs it.
 
@@ -140,6 +140,7 @@ public class Client {
         logger.info("Sending message to '" + serverurl + "'...");
         booleanvalue = client.sendMessageToServer();
         logger.info("Done.");
+        
         
         System.exit(0);
     }
