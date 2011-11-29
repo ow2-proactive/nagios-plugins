@@ -39,7 +39,6 @@ package qosprober.main;
 
 import java.security.KeyException;
 import java.util.concurrent.*;
-
 import javax.security.auth.login.LoginException;
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.core.util.wrapper.BooleanWrapper;
@@ -57,11 +56,17 @@ public class RMStateGetter {
 
 	public static Logger logger = Logger.getLogger(RMStateGetter.class.getName()); 	// Logger.
 	private ResourceManager rmStub; 												// ResourceManager locally.
-	private Future<RMState> future;
+	private Future<RMState> future;													// Future output of the RMStateGetter.
 	
+	/**
+	 * Constructor of the RM State Getter class.
+	 * @param url url of the RM.
+	 * @param user user to get connected to the RM.
+	 * @param pass pass to get connected to the RM. */
 	public RMStateGetter(String url, String user, String pass){
-		logger.info("Executing RMState check...");
+		logger.info("Executing RMState check parallely...");
 		if (url.startsWith("pamr:")){
+			logger.info("PAMR protocol detected, using 'pamr://0' for RM instead...");
 			url = "pamr://0";	
 		}
 		final String url1 = url;
@@ -83,7 +88,7 @@ public class RMStateGetter {
 	 * Initialize the connection with the remote Resource Manager.
 	 * Uses the url of the RM, and the user/pass to login to it. */
 	private void init(String url, String user, String pass) throws RMException, KeyException, LoginException{
-    	logger.info("Joining the Resource Manager...");
+    	logger.info("Joining the Resource Manager at '" + url + "'...");
         RMAuthentication auth = RMConnection.join(url); 	// Join the RM.
         logger.info("Done.");
         logger.info("Creating credentials...");
@@ -109,19 +114,18 @@ public class RMStateGetter {
 	private void disconnect(){
     	logger.info("Disconnecting...");					// Disconnecting from RM.
 		BooleanWrapper ret = rmStub.disconnect();
-    	logger.info("Done (returned '" + ret + "'.");	
+    	logger.info("Done (returned '" + ret + "').");	
 	}
 	
+	/**
+	 * Get the result of the query, a description of the state of the RM
+	 * @return state of the RM, or null if it was not possible to get it in the given time. */
 	public RMState getQueryResult(){
-		if (future == null){
-			throw new RuntimeException("Cannot get any result, before you have to performQuery(...)...");
-		}
-		
 		RMState ret = null;
 		try {
 			if (future.isDone() == true){
 		    	logger.info("RMState was ready... Getting it...");
-				ret = future.get();
+				ret = future.get();									// In the best case, we return something different than null.
 		    	logger.info("RMState obtained OK.");
 			}else{
 		    	logger.info("RMState was not ready... Avoiding...");

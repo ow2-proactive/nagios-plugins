@@ -10,4 +10,4 @@ echo To see what is going on, you can also add the flag --debug 3
 echo '*************************************'
 echo Probing, default timeout: 60 seconds...
 
-./check_node_obtaining --timeout 60 --debug 3
+./check_node_obtaining -c 60 --debug 3

@@ -133,7 +133,7 @@ public abstract class NagiosPlugin {
 	 * @param args arguments to be validated.
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
 	public void validateArguments(Arguments args) throws IllegalArgumentException{
-		args.checkIsGiven("debug");
+//		args.checkIsGiven("debug");
 		args.checkIsValidInt("debug", 0, 3);
 		
 //		args.checkIsGiven("warning");								// Might not be given (there is a default value), so we don't check it.
@@ -156,7 +156,8 @@ public abstract class NagiosPlugin {
 	/**
 	 * Start with the probing session.
 	 * This method kills automatically the probe process when a conclusion/result about the entity
-	 * tested has been obtained. */
+	 * tested has been obtained. 
+	 * The timeout mechanism is automatically handled by this method. */
 	public void startProbeAndExit(){
 		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
 		
@@ -188,10 +189,36 @@ public abstract class NagiosPlugin {
 	}
 	
 	/**
+	 * Start with the probing session.
+	 * This method kills automatically the probe process when a conclusion/result about the entity
+	 * tested has been obtained. 
+	 * The timeout mechanism is NOT handled by this method. */
+	public void startProbeAndExitManualTimeout(){
+		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
+		
+		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.
+		
+		NagiosReturnObject res = null;
+
+		try{ 								// We execute the future using a timeout. 
+			res = this.probe(tracer);
+			res.addCurvesSection(tracer, "time_all");
+		}catch(TimeoutException e){
+			res = getNagiosReturnObjectForTimeoutException(arguments.getInt("critical"), tracer, e);
+		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
+			res = getNagiosReturnObjectForExecutionException(tracer, e);
+		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
+			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
+			res.addCurvesSection(tracer, null);
+		}
+		printDumpAndExit(res, arguments.getInt("debug"));
+	}
+	
+	/**
 	 * Get the NagiosReturnObject with the format to be shown according to a Timeout problem arisen when probing. 
-	 * @param timeout as data useful to generate the message.
-	 * @param tracer as data useful to generate the message.
-	 * @param e as data useful to generate the message.
+	 * @param timeout given by the user as useful data to generate the message.
+	 * @param tracer as useful data to generate the message.
+	 * @param e as useful data to generate the message.
 	 * @return the NagiosReturnObject generated. */
 	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer timeout, TimedStatusTracer tracer, Exception e){
 		NagiosReturnObject ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF " + arguments.getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);

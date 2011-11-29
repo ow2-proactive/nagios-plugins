@@ -122,6 +122,15 @@ public class TimedStatusTracer {
 	}
 	
 	/**
+	 * Erases previous started measurement and start a new one. Also changes the last status.
+	 * @param newlabel label to be used for the new measurement. 
+	 * @param currentStatus	current status to be set from now on. */
+	public synchronized void killLastMeasurementAndStartNewOne(String newlabel, String currentStatus){
+		startNewMeasurement(newlabel);
+		setLastStatusDescription(currentStatus);
+	}
+	
+	/**
 	 * Finish previous started measurement and start a new one.
 	 * It also adds a current status, so in case of timeout we can retrieve it and tell the user where the process got stuck.
 	 * @param newlabel new label to be used with the new measurement.

@@ -211,6 +211,7 @@ public class Arguments {
 		if (optionsLongOpt.contains(key)==false)
 			throw new RuntimeException("Problem trying to use key '" + key + "'.");
 	}
+	
 	/**
 	 * Simple put method.
 	 * @param key key to be used for the new entry.
@@ -228,14 +229,17 @@ public class Arguments {
 		return parser.getOptionValue(key);
 	}
 	
+	/**
+	 * Tell whether the key has been given by the user or not.
+	 * @param key to analyse.
+	 * @return true if the user provided this key (with or without value). */
 	private Boolean isPresent(String key){
 		return parser.hasOption(key);
 	}
 	
 	/**
 	 * Get the whole key set.
-	 * @return key set.
-	 */
+	 * @return key set. */
 	private List<String> keySet(){
 		return optionsLongOpt;
 	}

@@ -29,10 +29,9 @@ GENERAL NAGIOS PLUGIN FLAGS
       
 NAGIOS OUTPUT INTERPRETATION
 
-   SERVICE STATUS: JOBID <jobid> <status> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
+   SERVICE STATUS: <status description> | key1=<TIME>s key2=<TIME>s ... keyn=<TIME>s
 	
    where
-      - jobid is the id of the probe job.
-      - status is a message regarding to the result of the test and job 'jobid' used as probe job.
-      - TIME is the time (in seconds) that was spent for the activity described by key* for the probe job. 
+      - status is a message regarding to the result of the test.
+      - TIME is the time (in seconds) that was spent for the activity described by key* for the probe. 
       

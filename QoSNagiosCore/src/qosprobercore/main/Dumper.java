@@ -11,7 +11,7 @@ public class Dumper {
 	}
 	
 	public void dump(NagiosReturnObject obj){
-    	String command = " " + scriptpath + " " + obj.getErrorCode();
+    	String command = " " + scriptpath + " " + obj.getErrorCode() + " " + obj.getWholeMessage();
 		logger.info("Dumping with command '" + command + "'...");
 		try {
 			Runtime.getRuntime().exec(command);

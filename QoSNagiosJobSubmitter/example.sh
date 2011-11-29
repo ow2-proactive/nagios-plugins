@@ -13,4 +13,4 @@ echo There are no other special parameters needed. Nagios parameters are optiona
 echo To see what is going on, you can also add the flag --debug 3
 echo '*************************************'
 echo Probing, default timeout: 60 seconds...
-./check_job_submission --timeout 300 --debug 3 --jobname test --hostname node0 --port 8090
+./check_job_submission --critical 300 --debug 3 --jobname test --hostname node0 --port 8090

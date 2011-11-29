@@ -10,4 +10,4 @@ echo To see what is going on, you can also add the flag --debug 3
 echo '*************************************'
 echo Probing, default timeout: 60 seconds...
 
-./check_pamr_router -H node0 -t 60
+./check_pamr_router -H node0 -c 60 -v 3

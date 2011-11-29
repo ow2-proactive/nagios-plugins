@@ -43,9 +43,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import org.ow2.proactive.utils.NodeSet;
-
 import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
 import qosprobercore.main.NagiosReturnObject;
@@ -60,7 +58,9 @@ import qosprobercore.main.TimedStatusTracer;
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
 public class RMProber extends NagiosPlugin{
 
-	private final ExecutorService THREAD_POOL = Executors.newSingleThreadExecutor();
+	private final ExecutorService THREAD_POOL = Executors.newSingleThreadExecutor(); 	// The rights to manage the RM nodes will be given to this thread.
+	private Runnable disconnectRunnable;												// Special mechanism to disconnect from RM (and unlock locked nodes)
+																						// even though a timeout is reached (best effort approach).
 	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
@@ -105,9 +105,10 @@ public class RMProber extends NagiosPlugin{
 	 *   - get node/s
 	 *   - release node/s
 	 *   - disconnect
-	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. 
+	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. 
 	 * @throws Exception */	 
 	public NagiosReturnObject probe(final TimedStatusTracer tracer) throws Exception{
+		Boolean timeout = false;
 		// We add some reference values to be printed later in the summary for Nagios.
 		tracer.addNewReference("timeout_threshold", new Double(getArgs().getInt("critical")));
 		if (getArgs().isGiven("warning")==true){ // If the warning flag was given, then show it.
@@ -116,85 +117,63 @@ public class RMProber extends NagiosPlugin{
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
-		final RMStubProber rmstub = new RMStubProber();			// We get connected to the RM through this stub. 
+		final RMStubProber rmstub = new RMStubProber();							// We get connected to the RM through this stub. 
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to RM...");
+		this.setQuickDesconnectMechanism(rmstub);
 		
-		FutureTask<Integer> taskfree = new FutureTask<Integer>(
-			new Callable<Integer>(){
-				public Integer call() throws Exception {
-					System.out.println("Thread: " + Thread.currentThread());
-					rmstub.init(										// We get connected to the RM.
+		FutureTask<Object[]> task = new FutureTask<Object[]>(
+			new Callable<Object[]>(){
+				public Object[] call() throws Exception {
+					tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to RM...");
+					
+					rmstub.init(												// We get connected to the RM.
 						getArgs().getStr("url"),  getArgs().getStr("user"), 
 						getArgs().getStr("pass"));	
 	
 					tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "connected to RM, getting status...");
 		
-					int freenodes = rmstub.getRMState().getFreeNodesNumber(); // Get the amount of free nodes.
+					int freenodes = rmstub.getRMState().getFreeNodesNumber();	// Get the amount of free nodes.
 		
-					return freenodes;
-				}
-			}
-		);
-		
-		THREAD_POOL.execute(taskfree);
-		Double freenodes = Double.NaN;
-		try{
-			freenodes = new Double(taskfree.get(10000, TimeUnit.MILLISECONDS));
-		}catch(TimeoutException e){
-			taskfree.cancel(true);
-			System.out.println("Timeout where expected111");
-			e.printStackTrace();
-		}
-		
-		FutureTask<Integer> taskobta = new FutureTask<Integer>(
-			new Callable<Integer>(){
-				public Integer call() throws Exception {
 					tracer.finishLastMeasurementAndStartNewOne("time_getting_nodes", "connected to RM, getting nodes...");
 		
-					NodeSet nodes = rmstub.getNodes(					// Request some nodes.
+					NodeSet nodes = rmstub.getNodes(							// Request some nodes.
 						getArgs().getInt("nodesrequired")); 	
-					int obtainednodes = nodes.size();
+					int obtainednodes = nodes.size();							// Get the amount of obtained nodes.
+					
 					tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "releasing nodes...");
-					System.out.println("releasing nodes...");
-			    	rmstub.releaseNodes(nodes);							// Release the nodes obtained.
-			System.out.println("delete this!!!!!!..");
-			Thread.sleep(40000);
-			    	return obtainednodes;
-				}
-			}
-		);
-		THREAD_POOL.execute(taskobta);
-		
-		Double obtainednodes = Double.NaN;
-		try{
-			obtainednodes = new Double(taskobta.get(10000, TimeUnit.MILLISECONDS));
-		}catch(TimeoutException e){
-			taskobta.cancel(true);
-			System.out.println("Timeout where expected111");
-			e.printStackTrace();
-		}
-		
-		
-		FutureTask<Object> taskdisc = new FutureTask<Object>(
-			new Callable<Object>(){
-				public Object call() throws Exception {
+					
+			    	rmstub.releaseNodes(nodes);									// Release the nodes obtained.
+			
 					tracer.finishLastMeasurementAndStartNewOne("time_disconn", "disconnecting...");
+					
 			    	rmstub.disconnect();								// Disconnect from the Resource Manager.
-			    	return new Object();
+			    	
+					tracer.finishLastMeasurement();
+					
+					Object[] ret = {new Integer(freenodes), new Integer(obtainednodes)};
+			    	return ret; 
 				}
 			}
 		);
-		THREAD_POOL.execute(taskdisc);
+		THREAD_POOL.execute(task);
+		
+		Integer obtainednodes = null;
+		Integer freenodes = null;
+		Object[] ret = null;
 		try{
-			Object obj2 = (Object) taskdisc.get(30000, TimeUnit.MILLISECONDS);
+			ret = task.get(getArgs().getInt("critical"), TimeUnit.SECONDS);
+			freenodes     = (Integer)ret[0];
+			obtainednodes = (Integer)ret[1];
 		}catch(TimeoutException e){
-			taskdisc.cancel(true);
-			e.printStackTrace();
+			task.cancel(true);
+			timeout = true;
 		}
-		tracer.finishLastMeasurement();
 		
 		
+		if (timeout==true){
+			executeDisconnectMechanism();
+			throw new TimeoutException("TIMEOUT OF " + getArgs().getInt("critical") + " SEC.");
+		}
 		
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
 		
@@ -202,7 +181,7 @@ public class RMProber extends NagiosPlugin{
 		
 		Double time_all = tracer.getTotal();
 		
-		summary.addFact("NODE/S OBTAINED=" + obtainednodes + " REQUIRED=" + nodesrequired + " FREE=" +  freenodes);
+		summary.addFact("NODE/S FREE=" +  freenodes + " REQUIRED=" + nodesrequired + " OBTAINED=" + obtainednodes);
 	
 		tracer.addNewReference("nodes_required", nodesrequired);
 		tracer.addNewReference("nodes_free", freenodes);
@@ -210,9 +189,9 @@ public class RMProber extends NagiosPlugin{
 		
 		
 		if (obtainednodes < getArgs().getInt("nodescritical")){									// Fewer nodes than criticalnodes.	
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TOO FEW NODES (" + nodesrequired + " REQUIRED, " + freenodes + " FREE)"));
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TOO FEW NODES OBTAINED"));
 		}else if (obtainednodes < getArgs().getInt("nodeswarning")){							// Fewer nodes than warningnodes.	
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING,  "TOO FEW NODES (" + nodesrequired + " REQUIRED, " + freenodes + " FREE)"));
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING,  "TOO FEW NODES OBTAINED"));
 		}
 		
 		// Having F free nodes, if W is the number of wanted nodes, I should get the min(F, W). 
@@ -239,6 +218,20 @@ public class RMProber extends NagiosPlugin{
 		
 	}
 
+	public void executeDisconnectMechanism(){
+			THREAD_POOL.execute(disconnectRunnable);
+	}
+	
+	public void setQuickDesconnectMechanism(final RMStubProber stub){
+		Runnable disc = new Runnable(){
+			public void run(){
+		    	stub.quickDisconnect();								// Disconnect from the Resource Manager.
+			}
+		};
+		this.disconnectRunnable = disc;
+		Runtime.getRuntime().addShutdownHook(new Thread(disc));
+	}
+	
 	/**
 	 * Starting point.
 	 * The arguments/parameters are specified in the file /resources/usage.txt
@@ -247,6 +240,6 @@ public class RMProber extends NagiosPlugin{
         final Arguments options = new Arguments(args);
 		RMProber prob = new RMProber(options);														// Create the prober.
 		prob.initializeAll();
-		prob.startProbeAndExit();																	// Start the probe.
+		prob.startProbeAndExitManualTimeout();														// Start the probe.
 	}
 }	

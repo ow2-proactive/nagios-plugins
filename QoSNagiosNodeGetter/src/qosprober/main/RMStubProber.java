@@ -114,4 +114,16 @@ public class RMStubProber {
 		BooleanWrapper ret = rmStub.disconnect();
     	logger.info("Done (returned '" + ret + "').");	
 	}
+	
+	/**
+	 * Disconnect from the Resource Manager (quick way). */
+	public void quickDisconnect(){
+    	logger.info("Quick disconnecting...");					// Disconnecting from RM.
+    	try{
+			rmStub.disconnect();
+    	}catch(Exception e){
+    		logger.info("Problem with quick disconnection: " + e.getMessage());
+    	}
+    	logger.info("Done.");	
+	}
 }
