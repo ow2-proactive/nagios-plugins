@@ -16,13 +16,13 @@ GENERAL NAGIOS PLUGIN FLAGS
       Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
       
    -f, --paconf PACONF
-      ProActive configuration file (usually ProActiveConfiguration.xml). Used if a PAMR router is present behind a protected server.
+      ProActive configuration file (usually ProActiveConfiguration.xml). Used if a PAMR router is present behind a protected server. Ignored if not pertinent.
       
    -H, --hostname HOSTNAME
-      PAMR router hostname to use to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
+      PAMR router hostname to use to get connected to the entity tested. Ignored if not pertinent or a ProActive configuration file is provided. 
       
    -x, --port PORT
-      PAMR router port to be used to get connected to the Scheduler. Ignored if a ProActive configuration file is provided. 
+      PAMR router port to be used to get connected to the entity tested. Ignored if not pertinent or a ProActive configuration file is provided. 
       
    -S, --dump-script SCRIPT-PATH
       Path of a script that is executed whenever an abnormal (not 0 return code) is thrown by the probe. It helps to dump the situation of the entity tested.  

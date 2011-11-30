@@ -67,16 +67,16 @@ public class RESTProber extends NagiosPlugin{
 	public void validateArguments(Arguments arguments) throws IllegalArgumentException{
 		super.validateArguments(arguments);
 		arguments.checkIsGiven("url");
+		if (arguments.getStr("url").contains("scheduler") == false){
+			logger.warn("The URL seems to be incorrect since it does not contain the string 'scheduler'.");
+		}
 		arguments.checkIsGiven("user");
 		arguments.checkIsGiven("pass");
 	}
 	
 	/**
-	 * Probe the scheduler
-	 * Several calls are done against the scheduler: join, remove old jobs, submit job, get job status (based on 
-	 * polling or in events, depends on the protocol chosen), get job result, remove job, disconnect.
-	 * After a correct disconnection call, the output of the job is compared with a given correct output, and the 
-	 * result of the test is told. 
+	 * Probe the REST API. 
+	 * Several calls are done against the REST API, like isConnected and getVersion.
 	 * @param tracer tracer that lets keep track of the last status, and the time each call took to be executed.
 	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. */	 
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception{
@@ -87,23 +87,33 @@ public class RESTProber extends NagiosPlugin{
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
-		RestStubProber schedulerstub = new RestStubProber();	// We create directly the stub prober.
+		RestStubProber reststub = new RestStubProber();			// We create directly the stub prober.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to the scheduler...");
 		
-		schedulerstub.init(										// We get connected to the Scheduler.
+		reststub.init(											// We get connected to the Scheduler.
 				getArgs().getStr("url"),  getArgs().getStr("user"), 
 				getArgs().getStr("pass"));	
 		
+		tracer.finishLastMeasurementAndStartNewOne("time_transactions", "connected, asking isconnected and version...");
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_disconnection", "connected, disconnecting...");
+		Boolean connected = reststub.isConnected();				// Check whether we are connected or not to the scheduler.
 		
-		schedulerstub.disconnect();												// Getting disconnected from the Scheduler.
+		String version = reststub.getVersion();					// Get the version of the REST API.
+		
+		tracer.finishLastMeasurementAndStartNewOne("time_disconnection", "disconnecting...");
+		
+		reststub.disconnect();									// Getting disconnected from the Scheduler.
 		
 		tracer.finishLastMeasurement();
 	
-		
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
+		
+		summary.addFact("Connected:" + connected);
+		logger.info("Version: " + version);
+		
+		if (connected == false)
+			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "COULD NOT CONNECT TO SCHEDULER"));
 		
 		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning"))
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "TOO SLOW"));

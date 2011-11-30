@@ -27,6 +27,5 @@
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/hibernate-annotations.jar"/>
 	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/Projects/ProActiveScheduling-3.1.0_server/dist/lib/commons-cli-1.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/QoSNagiosCore"/>
-	<classpathentry kind="lib" path="/auto/sop-nas2a/u/sop-nas2a/vol/home_oasis/mjost/workspace/misc/thirds/gson-1.7.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

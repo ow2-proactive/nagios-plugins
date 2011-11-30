@@ -1,28 +1,13 @@
 package qosprober.main;
 
 import java.net.URI;
-import javax.security.auth.login.LoginException;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.log4j.Logger;
-import org.objectweb.proactive.ActiveObjectCreationException;
-import org.objectweb.proactive.core.node.NodeException;
-import org.ow2.proactive.scheduler.common.exception.NotConnectedException;
-import org.ow2.proactive.scheduler.common.exception.PermissionException;
-import org.ow2.proactive.scheduler.common.exception.SchedulerException;
-import org.ow2.proactive.scheduler.common.exception.UnknownJobException;
 import java.io.IOException;
-import java.security.KeyException;
-
-//import com.google.gson.ExclusionStrategy;
-//import com.google.gson.FieldAttributes;
-//import com.google.gson.Gson;
-//import com.google.gson.GsonBuilder;
-//import com.google.gson.InstanceCreator;
 
 /** 
  * Class that connects the test with the real scheduler, works as a stub. 
@@ -39,16 +24,20 @@ public class RestStubProber{
 	
 	/**
 	 * Constructor method. */
-	public RestStubProber() throws Exception{
-	}
+	public RestStubProber(){}
 	
 	/** 
 	 * Initialize the connection/session with the scheduler.
-	 * @param protocolStr, protocol to be used to get connected to the scheduler. 
-	 * @param url, url of the scheduler. 
+	 * @param url, url of the scheduler for REST API. 
 	 * @param user, username to access the scheduler.
-	 * @param pass, password to access the scheduler. */
-	public void init(String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, HttpException, IOException{
+	 * @param pass, password to access the scheduler. 
+	 * @throws IOException 
+	 * @throws HttpException */
+	public void init(String url, String user, String pass) throws HttpException, IOException {
+		if (url.endsWith("/")){
+			url = url.substring(0, url.length()-1);
+		}
+	    logger.info("Connecting at '" + url + "'...");
 	    uri = URI.create(url);
 	    PostMethod methodLogin = new PostMethod(uri.toString() + "/login");
 	    methodLogin.addParameter("username", user);
@@ -57,47 +46,54 @@ public class RestStubProber{
 	    client.executeMethod(methodLogin);
 	    sessionId = methodLogin.getResponseBodyAsString();
 	    logger.info("Logged in with sessionId: " + sessionId);
+	    logger.info("Done.");
 	}
 	
 	/**
-	 * Get the result of the job. 
-	 * @param jobId, the ID of the job. 
-	 * @return The raw output of the job. */
-	public String getJobResult(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{
- 
-	    GetMethod method = new GetMethod(uri.toString()+ "/jobs/" + jobId + "/result");
+	 * Get a boolean telling if the prober is still connected to the scheduler through REST API or not. 
+	 * @return a boolean telling if we are connected to the scheduler. 
+	 * @throws IOException 
+	 * @throws HttpException */
+	public Boolean isConnected() throws HttpException, IOException{
+	    logger.info("Asking if connected...");
+	    GetMethod method = new GetMethod(uri.toString()+  "/isconnected");
 	    method.addRequestHeader("sessionid", sessionId);
 	    HttpClient client = new HttpClient();
 	    client.executeMethod(method);
 	    String response = method.getResponseBodyAsString();
-	    logger.info("Job result: " + response);
-	    //Gson gsonn = new GsonBuilder().setExclusionStrategies(new MyExclusionStrategy()).serializeNulls().create();
-	    //JobResultImpl ret = gsonn.fromJson(response, JobResultImpl.class);
-	    System.out.println("RESULTS NOT PARSED");
-	    logger.warn("RESULTS NOT PARSED");
-		return "RESULTS NOT PARSED";
+	    logger.info("IsConnected result: " + response);
+	    logger.info("Done.");
+		return Boolean.parseBoolean(response);
 	}
 	
-	/** 
-	 * Remove the job from the Scheduler. No leftovers of the job in the server.
-	 * This is specially useful to delete the probe job, so we do not contaminate what the administrator sees.
-	 * @param jobId, the ID of the job. */
-	public void removeJob(String jobId) throws Exception, NotConnectedException, UnknownJobException, PermissionException{
-		DeleteMethod method = new DeleteMethod(uri.toString()+ "/jobs/" + jobId);
+	/**
+	 * Get the version of the REST API. 
+	 * @return the version. 
+	 * @throws IOException 
+	 * @throws HttpException */
+	public String getVersion() throws HttpException, IOException{
+	    logger.info("Asking version...");
+	    GetMethod method = new GetMethod(uri.toString()+  "/version");
 	    method.addRequestHeader("sessionid", sessionId);
 	    HttpClient client = new HttpClient();
-		client.executeMethod(method);
-		String response = method.getResponseBodyAsString();
-	    logger.info("Delete job response: " + response);
+	    client.executeMethod(method);
+	    String response = method.getResponseBodyAsString();
+	    logger.info("Version result: " + response);
+	    logger.info("Done.");
+		return response;
 	}
-	
+
 	/** 
-	 * Disconnect from the Scheduler. */
-	public void disconnect() throws NotConnectedException, PermissionException, HttpException, IOException{	
+	 * Disconnect from the Scheduler. 
+	 * @throws IOException 
+	 * @throws HttpException */
+	public void disconnect() throws HttpException, IOException{	
+	    logger.info("Disconnecting...");
 	    PutMethod method = new PutMethod(uri.toString() + "/disconnect");
 	    method.addRequestHeader("sessionid", sessionId);
 	    HttpClient client = new HttpClient();
 	    client.executeMethod(method);
+	    logger.info("Done.");
 	}
 
 }

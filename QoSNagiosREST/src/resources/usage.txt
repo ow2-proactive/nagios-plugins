@@ -3,13 +3,13 @@ NAGIOS PLUGIN MANUAL
 
 DESCRIPTION OF THE PLUGIN
 
-Nagios plugin to probe the responsiveness of a ProActive based scheduler grid.
-It uses a simple job probe submission to test a grid concerning its responsiveness, and status in general.   
+Nagios plugin to probe the responsiveness of a ProActive based scheduler grid through REST API.
+It gets connected to the Scheduler, gets its version, and disconnects from it (all through REST API).   
 
 
 SYNOPSIS
 
-   check_job_submission --url URL --user USER --pass PASS --critical TIMEOUT [OPTIONS]
+   check_rest_api --url URL --user USER --pass PASS --critical TIMEOUT [OPTIONS]
    
 SPECIFIC NAGIOS PLUGIN FLAGS 
 
@@ -22,18 +22,6 @@ Mandatory arguments to long options are mandatory for short options too.
       Password to get connected to the Scheduler.
       
    -r, --url URL
-      URL to be used to get connected to the Scheduler. Can be 'pamr://1' if already specified the Scheduler in the ProActive configuration file.
-      It should have a format like 'rmi://shainese.inria.fr:1099/' 
+      URL to be used to get connected to the Scheduler. 
+      It should have a format like ' http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' 
       
-   -d, --deleteallold
-      Delete all old jobs of this user, no matter their name. For testing purposes.
-   
-   -j, --jobname JOBNAME
-      Change the default name of the probe job. For testing purposes. 
-      
-   -g, --polling 
-      Wait for the events like job finish and job removal by doing polling (and not using an event based mechanism). 
-
-   -z, --highpriority
-      Set the priority of the job to high (normal is default).
-       
