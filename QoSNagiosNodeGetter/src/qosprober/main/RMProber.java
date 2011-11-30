@@ -81,11 +81,12 @@ public class RMProber extends NagiosPlugin{
 	
 	/**
 	 * Initialize the ProActive environment for this probe. */
-	public void initializeProber(Arguments arguments) throws Exception{
+	public void initializeProber() throws Exception{
+		super.initializeProber();
 		PAEnvironmentInitializer.initPAConfiguration(
-			arguments.getStr("paconf"),
-			arguments.getStr("hostname"),
-			arguments.getStr("port"));
+			getArgs().getStr("paconf"),
+			getArgs().getStr("hostname"),
+			getArgs().getStr("port"));
 	}
 	
 	/** 
@@ -146,7 +147,7 @@ public class RMProber extends NagiosPlugin{
 			
 					tracer.finishLastMeasurementAndStartNewOne("time_disconn", "disconnecting...");
 					
-			    	rmstub.disconnect();								// Disconnect from the Resource Manager.
+			    	rmstub.disconnect();										// Disconnect from the Resource Manager.
 			    	
 					tracer.finishLastMeasurement();
 					
@@ -218,10 +219,16 @@ public class RMProber extends NagiosPlugin{
 		
 	}
 
+	/**
+	 * Execute a quick disconnection mechanism to release quickly all the nodes that were possibly obtained during the probe. */
 	public void executeDisconnectMechanism(){
 			THREAD_POOL.execute(disconnectRunnable);
 	}
 	
+	/**
+	 * Configure all what is needed to be able to execute the quick disconnection mechanism to release quickly all the nodes that were
+	 * possibly obtained during the probe.
+	 * @param stub stub of the RM that should be disconnected quickly. */
 	public void setQuickDesconnectMechanism(final RMStubProber stub){
 		Runnable disc = new Runnable(){
 			public void run(){
@@ -239,7 +246,7 @@ public class RMProber extends NagiosPlugin{
 	public static void main(String[] args) throws Exception{
         final Arguments options = new Arguments(args);
 		RMProber prob = new RMProber(options);														// Create the prober.
-		prob.initializeAll();
+		prob.initializeProber();
 		prob.startProbeAndExitManualTimeout();														// Start the probe.
 	}
 }	

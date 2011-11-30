@@ -90,16 +90,6 @@ public abstract class NagiosPlugin {
 	}
 	
 	/**
-	 * Initialize all the probe.
-	 * It consists in a basic initialization (inherent to any NagiosProbe related to ProActive)
-	 * and a more specific Prober initialization.
-	 * @throws Exception in case of any problem. */
-	final public void initializeAll() throws Exception{
-		initializeBasics(arguments);
-		initializeProber(arguments);
-	}
-	
-	/**
 	 * Basic initialization for any NagiosProbe related to ProActive.
 	 * @param ars arguments given by the user for this basic initialization.
 	 * @throws Exception in case of any error. */
@@ -109,8 +99,8 @@ public abstract class NagiosPlugin {
 
 		Misc.log4jConfiguration(ars.getInt("debug"));	// Loading log4j configuration. 
 		
-		PAEnvironmentInitializer.initPAConfiguration(getArgs().getStr("paconf"), getArgs().getStr("hostname"), getArgs().getStr("port"));
-		
+		PAEnvironmentInitializer.createPolicyAndLoadIt();	// Security policy procedure.
+
 		if (ars.getBoo("help") == true)	
 			NagiosPlugin.printMessageUsageAndExit("");
 		
@@ -126,7 +116,9 @@ public abstract class NagiosPlugin {
 	/**
 	 * Specific initialization for the probe. 
 	 * @param arg arguments/parameters to initialize the probe. */
-	protected abstract void initializeProber(Arguments arg) throws Exception; 
+	public void initializeProber() throws Exception{ 
+		initializeBasics(getArgs());
+	}
 	
 	/** 
 	 * Validate all the arguments given to this probe. 

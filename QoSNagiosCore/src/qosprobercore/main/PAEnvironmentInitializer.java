@@ -78,9 +78,6 @@ public class PAEnvironmentInitializer {
 	 * @param port port where the PAMR router service is exposed.
 	 * @throws Exception */
 	public static void initPAConfiguration(String paconf, String host, String port) throws Exception{
-		/* Security policy procedure. */
-		createPolicyAndLoadIt();
-
 		/* Load ProActive configuration. */
 		boolean usepaconffilee = false;
 		/* Check whether to use or not the ProActive configuration file. */

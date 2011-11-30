@@ -45,6 +45,7 @@ import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosPlugin;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.NagiosReturnObject;
+import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.TimedStatusTracer;
 
 /** 
@@ -83,7 +84,12 @@ public class JobProber extends NagiosPlugin{
 	
 	/**
 	 * Initialize the ProActive environment for this probe. */
-	public void initializeProber(Arguments arguments) throws Exception{
+	public void initializeProber() throws Exception{
+		super.initializeProber();
+		PAEnvironmentInitializer.initPAConfiguration(
+			getArgs().getStr("paconf"),
+			getArgs().getStr("hostname"),
+			getArgs().getStr("port"));
 		/* Loading job's expected output. */
 		expectedJobOutput = Misc.readAllTextResource("/resources/expectedoutput.txt");
 		if (getArgs().getBoo("rm-checking") == true){
@@ -211,7 +217,7 @@ public class JobProber extends NagiosPlugin{
 	public static void main(String[] args) throws Exception{
         Arguments options = new Arguments(args);
 		JobProber prob = new JobProber(options);													// Create the prober.
-		prob.initializeAll();
+		prob.initializeProber();
 		prob.startProbeAndExit();																	// Start the probe.
 	}
 }
