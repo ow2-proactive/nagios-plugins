@@ -1,0 +1,12 @@
+
+		Runnable onexit = new Runnable(){
+			public void run(){
+				try{
+					disconnect();
+				}catch(Exception e){
+					logger.info("Failure with hook: " + e.getMessage());
+				}
+			}
+		};
+		Thread th = new Thread(onexit, "onexit");
+		Runtime.getRuntime().addShutdownHook(th);
