@@ -38,6 +38,10 @@
 package qosprober.main;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.objectweb.proactive.ActiveObjectCreationException;
@@ -100,30 +104,54 @@ public class Client {
      * Start the client. */
     public static void main(String args[]) throws Exception{
     	
-    	//Misc.log4jConfiguration2();							// Use in case you want to see what happened with the client (dumps in file 'output'). 
-    	
     	logger.info("Started PAMR client-side probe...");
-    	
-    	// Two possible argument-format for this module:
-    	// SERVERURL PACONFIGURATIONFILE				(2 arguments, assume PA conf. file is given).
-    	// SERVERURL PAMRADDRESS PAMRPORT				(3 arguments, assume server address and port are given).
-    	
-		String serverurl = args[0];
-    	if (args.length == 2){									// Specific way to communicate either ProActive conf. file or host&port.
-	    	logger.info("Loading ProActive configuration file...");
-	    	String paconffile = args[1];
-	    	System.setProperty("proactive.configuration", paconffile);
-    	}else{
-    		logger.info("Avoiding ProActive configuration file...");
-    		String pamrhost = args[1];
-    		String pamrport = args[2];	
-			ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
-			pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
-			pac.setProperty("proactive.net.router.address", pamrhost, false);
-			pac.setProperty("proactive.net.router.port", pamrport, false);
+    
+    	try{
+	    	// Two possible argument-format for this module:
+	    	// SERVERURL PACONFIGURATIONFILE				(2 arguments, assume PA conf. file is given).
+	    	// SERVERURL PAMRADDRESS PAMRPORT				(3 arguments, assume server address and port are given).
+	    	Integer timeout; 
+			final String serverurl = args[0];
+	    	if (args.length == 3){									// Specific way to communicate either ProActive conf. file or host&port.
+		    	logger.info("Loading ProActive configuration file...");
+		    	String paconffile = args[1];
+		    	timeout = Integer.parseInt(args[2]);
+		    	System.setProperty("proactive.configuration", paconffile);
+	    	}else{
+	    		logger.info("Avoiding ProActive configuration file...");
+	    		String pamrhost = args[1];
+	    		String pamrport = args[2];	
+		    	timeout = Integer.parseInt(args[3]);
+				ProActiveConfiguration pac = ProActiveConfiguration.getInstance();	
+				pac.setProperty("proactive.communication.protocol", COMMUNICATION_PROTOCOL, false);
+				pac.setProperty("proactive.net.router.address", pamrhost, false);
+				pac.setProperty("proactive.net.router.port", pamrport, false);
+	    	}
+	    	logger.info("Done.");
+	    	
+	    	ExecutorService executor = Executors.newSingleThreadExecutor();
+	    	Runnable probe = new Runnable(){
+	    		public void run(){
+	    			try {
+						Client.probe(serverurl);
+					} catch (Exception e) {
+						throw new RuntimeException(e.getMessage());
+					}
+	    		}
+	    	};
+	    	@SuppressWarnings("rawtypes")
+			Future future = executor.submit(probe);
+	    	future.get(timeout, TimeUnit.SECONDS);
+	    	logger.info("Nothing happened in the timeout period... Exiting...");
+	        System.exit(0);
+    	}catch(Exception e){
+    		e.printStackTrace();
+    		System.exit(0);
     	}
-    	
-    	logger.info("Done.");
+    }
+    
+    public static void probe(String serverurl) throws Exception{
+    	logger.info("Probing...");
     	
     	logger.info("Setting up security policy...");
     	PAEnvironmentInitializer.createPolicyAndLoadIt();
@@ -140,8 +168,6 @@ public class Client {
         logger.info("Sending message to '" + serverurl + "'...");
         booleanvalue = client.sendMessageToServer();
         logger.info("Done.");
-        
-        
-        System.exit(0);
     }
+    
 }
