@@ -61,14 +61,16 @@ public abstract class NagiosPlugin {
 	protected static Logger logger =						// Logger. 
 			Logger.getLogger(NagiosPlugin.class.getName()); 
 	private Arguments arguments; 							// Arguments given to the prober. 
+	private String probeID;									// ID of the current probe (RM, Scheduler, etc.).
 	
 	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
+	 * @param probeid id of the current prober (RM, Scheduler, etc.).
 	 * @param args arguments to create this NagiosPlugin. */
-	public NagiosPlugin(Arguments args){
+	public NagiosPlugin(String probeid, Arguments args){
 		this.arguments = args;
-		
+		this.probeID = probeid;
 		args.addNewOption("h", "help", false);													// Help message.                                	
 		args.addNewOption("V", "version", false);												// Prints the version of the plugin.
 		args.addNewOption("v", "debug", true, new Integer(NagiosPlugin.DEBUG_LEVEL_1_EXTENDED));// Level of verbosity.
@@ -177,7 +179,7 @@ public abstract class NagiosPlugin {
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
 		}
-		printDumpAndExit(res, arguments.getInt("debug"));
+		printDumpAndExit(res, arguments.getInt("debug"), probeID);
 	}
 	
 	/**
@@ -203,7 +205,7 @@ public abstract class NagiosPlugin {
 			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
 		}
-		printDumpAndExit(res, arguments.getInt("debug"));
+		printDumpAndExit(res, arguments.getInt("debug"), probeID);
 	}
 	
 	/**
@@ -233,13 +235,14 @@ public abstract class NagiosPlugin {
      * Print a message in the stdout (for Nagios to use it) and return with the given error code. 
      * Print a back-trace later only if the debug-level is appropriate. 
      * @param obj object to take the information from.
-     * @param debuglevel level of verbosity. */
-    private synchronized void printDumpAndExit(NagiosReturnObject obj, int debuglevel){
+     * @param debuglevel level of verbosity. 
+     * @param source id of the specific caller probe (RM, Scheduler, etc.). */
+    private synchronized void printDumpAndExit(NagiosReturnObject obj, int debuglevel, String source){
     	Throwable exc = obj.getException();
         System.out.println(NAG_OUTPUT_PREFIX + obj.getWholeMessage());
         
         if (obj.getErrorCode()!= NagiosReturnObject.RESULT_0_OK && arguments.isGiven("dump-script")){
-	        Dumper du = new Dumper(arguments.getStr("dump-script"));
+	        Dumper du = new Dumper(arguments.getStr("dump-script"), source);
 	        du.dump(obj);
         }
         

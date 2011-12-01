@@ -67,7 +67,7 @@ public class RMProber extends NagiosPlugin{
 	 * @param args arguments to create this RMProber. 
 	 * @throws Exception */
 	public RMProber(Arguments args) throws Exception{
-		super(args);
+		super("RM", args);
 		
 		args.addNewOption("u", "user", true);							// User.
 		args.addNewOption("p", "pass", true);							// Pass.

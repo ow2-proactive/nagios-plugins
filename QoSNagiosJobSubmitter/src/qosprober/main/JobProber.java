@@ -70,7 +70,7 @@ public class JobProber extends NagiosPlugin{
 	 * @param args arguments to create this JobProber. 
 	 * @throws Exception */
 	public JobProber(Arguments args) throws Exception{
-		super(args);
+		super("SCHEDULER", args);
 		args.addNewOption("u", "user", true);			// User.
 		args.addNewOption("p", "pass", true);			// Pass.
 		args.addNewOption("r", "url", true);			// Url of the Scheduler/RM.

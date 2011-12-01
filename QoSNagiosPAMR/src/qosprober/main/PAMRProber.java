@@ -59,7 +59,7 @@ public class PAMRProber extends NagiosPlugin{
 	 * @param args arguments to create this PAMRProber. 
 	 * @throws Exception */
 	public PAMRProber(Arguments args) throws Exception{
-		super(args);
+		super("PAMR", args);
 	}
 	
 	/**
