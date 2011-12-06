@@ -73,7 +73,7 @@ public abstract class NagiosBasicPlugin {
 		this.probeID = probeid;
 		args.addNewOption("h", "help", false);													// Help message.                                	
 		args.addNewOption("V", "version", false);												// Prints the version of the plugin.
-		args.addNewOption("v", "debug", true, new Integer(NagiosPlugin.DEBUG_LEVEL_1_EXTENDED));// Level of verbosity.
+		args.addNewOption("v", "debug", true, new Integer(PANagiosPlugin.DEBUG_LEVEL_1_EXTENDED));// Level of verbosity.
 		args.addNewOption("w", "warning", true);												// Timeout in seconds for the warning message to be thrown.
 		args.addNewOption("c", "critical", true);												// Timeout in seconds for the job to be executed.
 		args.addNewOption("S", "dump-script" , true);											// Script to be executed in case of any problem. 

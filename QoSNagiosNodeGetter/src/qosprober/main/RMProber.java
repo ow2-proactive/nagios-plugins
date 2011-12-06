@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.ow2.proactive.utils.NodeSet;
 import qosprobercore.main.Arguments;
-import qosprobercore.main.NagiosPlugin;
+import qosprobercore.main.PANagiosPlugin;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.PAEnvironmentInitializer;
@@ -56,7 +56,7 @@ import qosprobercore.main.TimedStatusTracer;
  *    -Node obtaining
  *    -Node retrieval 
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
-public class RMProber extends NagiosPlugin{
+public class RMProber extends PANagiosPlugin{
 
 	private final ExecutorService THREAD_POOL = Executors.newSingleThreadExecutor(); 	// The rights to manage the RM nodes will be given to this thread.
 	private Runnable disconnectRunnable;												// Special mechanism to disconnect from RM (and unlock locked nodes)

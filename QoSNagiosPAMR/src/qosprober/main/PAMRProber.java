@@ -39,7 +39,7 @@ package qosprober.main;
 
 import qosprober.misc.PAMRMisc;
 import qosprobercore.main.Arguments;
-import qosprobercore.main.NagiosPlugin;
+import qosprobercore.main.PANagiosPlugin;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.PAEnvironmentInitializer;
@@ -48,7 +48,7 @@ import qosprobercore.main.TimedStatusTracer;
 /** 
  * This is a general Nagios plugin class that performs a test on the PAMR Router of ProActive based grids.
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
-public class PAMRProber extends NagiosPlugin{
+public class PAMRProber extends PANagiosPlugin{
 	
 	public final static String SERVER_NAME = "server";		// Name that the server will use to register itself.
     public final static String PREFIX_URL = "pamr://";		// Prefix that is expected in a URL given by the registered server.

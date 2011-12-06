@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
 
 /**
  * Set of useful definitions and methods for any Nagios plugin. */
-public abstract class NagiosPlugin extends NagiosBasicPlugin {
+public abstract class PANagiosPlugin extends NagiosBasicPlugin {
 	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
 	
 	public static final int DEBUG_LEVEL_0_SILENT	= 0;	// Debug level, silent mode. 
@@ -50,14 +50,14 @@ public abstract class NagiosPlugin extends NagiosBasicPlugin {
 	public static final int DEBUG_LEVEL_3_USER		= 3;	// Debug level, debugging only.
 	
 	protected static Logger logger =						// Logger. 
-			Logger.getLogger(NagiosPlugin.class.getName()); 
+			Logger.getLogger(PANagiosPlugin.class.getName()); 
 	
 	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
 	 * @param probeid id of the current prober (RM, Scheduler, etc.).
 	 * @param args arguments to create this NagiosPlugin. */
-	public NagiosPlugin(String probeid, Arguments args){
+	public PANagiosPlugin(String probeid, Arguments args){
 		super(probeid, args);
 		args.addNewOption("f", "paconf", true);													// Path of the ProActive xml configuration file.
 		args.addNewOption("H", "hostname", true);												// Host to be tested. 

@@ -105,7 +105,7 @@ public class Arguments {
 	        Parser parserrr = new GnuParser();
 	        parser = parserrr.parse(options, arguments);
         }catch(MissingOptionException ex){
-	        NagiosPlugin.printMessageUsageAndExit(ex.getMessage());	
+	        PANagiosPlugin.printMessageUsageAndExit(ex.getMessage());	
         }
 	}
 	

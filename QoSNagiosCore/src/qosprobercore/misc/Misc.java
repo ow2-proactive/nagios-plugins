@@ -45,7 +45,7 @@ import java.io.InputStreamReader;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-import qosprobercore.main.NagiosPlugin;
+import qosprobercore.main.PANagiosPlugin;
 
 /** 
  * This class is supposed to have multiple minor functionalities. */
@@ -124,7 +124,7 @@ public class Misc {
 	 * @param debuglevel debug level (or verbosity level) to be used when loading log4j properties. */
 	public static void log4jConfiguration(int debuglevel){
 		System.setProperty("log4j.configuration", "");
-		if (debuglevel == NagiosPlugin.DEBUG_LEVEL_3_USER){
+		if (debuglevel == PANagiosPlugin.DEBUG_LEVEL_3_USER){
 			// We load the log4j.properties file. 
 			File file = new File("log4j.properties");
 			if (file.exists() == true){

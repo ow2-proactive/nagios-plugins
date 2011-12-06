@@ -38,12 +38,12 @@
 package qosprober.main;
 
 import qosprobercore.main.Arguments;
-import qosprobercore.main.NagiosPlugin;
+import qosprobercore.main.PANagiosPlugin;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.TimedStatusTracer;
 
-public class RESTProber extends NagiosPlugin{
+public class RESTProber extends PANagiosPlugin{
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
 	 * @param args arguments to create this JobProber. 

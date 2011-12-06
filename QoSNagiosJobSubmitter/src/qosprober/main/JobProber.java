@@ -42,7 +42,7 @@ import qosprobercore.misc.Misc;
 import org.ow2.proactive.resourcemanager.common.RMState;
 import org.ow2.proactive.scheduler.examples.WaitAndPrint;
 import qosprobercore.main.Arguments;
-import qosprobercore.main.NagiosPlugin;
+import qosprobercore.main.PANagiosPlugin;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.PAEnvironmentInitializer;
@@ -54,7 +54,7 @@ import qosprobercore.main.TimedStatusTracer;
  *    -Job result retrieval
  *    -Job result comparison 
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
-public class JobProber extends NagiosPlugin{
+public class JobProber extends PANagiosPlugin{
 
 	public static final String JOB_NAME_DEFAULT = 
 		"nagios_plugin_probe_job";					// Name of the probe job in the Scheduler, as the administrator will see it.
