@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
 
 /**
  * Set of useful definitions and methods for any Nagios plugin. */
-public abstract class PANagiosPlugin extends NagiosBasicPlugin {
+public abstract class PANagiosPlugin extends ElementalNagiosPlugin {
 	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
 	
 	public static final int DEBUG_LEVEL_0_SILENT	= 0;	// Debug level, silent mode. 

@@ -50,7 +50,7 @@ import qosprobercore.misc.Misc;
 
 /**
  * Set of useful definitions and methods for any Nagios plugin. */
-public abstract class NagiosBasicPlugin {
+public abstract class ElementalNagiosPlugin {
 	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
 	
 	public static final int DEBUG_LEVEL_0_SILENT	= 0;	// Debug level, silent mode. 
@@ -59,7 +59,7 @@ public abstract class NagiosBasicPlugin {
 	public static final int DEBUG_LEVEL_3_USER		= 3;	// Debug level, debugging only.
 	
 	protected static Logger logger =						// Logger. 
-			Logger.getLogger(NagiosBasicPlugin.class.getName()); 
+			Logger.getLogger(ElementalNagiosPlugin.class.getName()); 
 	protected Arguments arguments; 							// Arguments given to the prober. 
 	protected String probeID;								// ID of the current probe (RM, Scheduler, etc.).
 	
@@ -68,7 +68,7 @@ public abstract class NagiosBasicPlugin {
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
 	 * @param probeid id of the current prober (RM, Scheduler, etc.).
 	 * @param args arguments to create this NagiosPlugin. */
-	public NagiosBasicPlugin(String probeid, Arguments args){
+	public ElementalNagiosPlugin(String probeid, Arguments args){
 		this.arguments = args;
 		this.probeID = probeid;
 		args.addNewOption("h", "help", false);													// Help message.                                	
@@ -98,10 +98,10 @@ public abstract class NagiosBasicPlugin {
 		Misc.log4jConfiguration(ars.getInt("debug"));	// Loading log4j configuration. 
 
 		if (ars.getBoo("help") == true)	
-			NagiosBasicPlugin.printMessageUsageAndExit("");
+			ElementalNagiosPlugin.printMessageUsageAndExit("");
 		
 		if (ars.getBoo("version") == true)
-			NagiosBasicPlugin.printVersionAndExit();
+			ElementalNagiosPlugin.printVersionAndExit();
 		
 		this.validateArguments(ars);					// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
 		
