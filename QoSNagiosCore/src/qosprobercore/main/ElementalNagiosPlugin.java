@@ -38,18 +38,12 @@
 package qosprobercore.main;
 
 import java.io.IOException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import org.apache.log4j.Logger;
 import qosprobercore.misc.Misc;
 
 /**
- * Set of useful definitions and methods for any Nagios plugin. */
+ * Class to be inherited by any Elemental Nagios plugin. */
 public abstract class ElementalNagiosPlugin {
 	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
 	
@@ -77,7 +71,6 @@ public abstract class ElementalNagiosPlugin {
 		args.addNewOption("w", "warning", true);												// Timeout in seconds for the warning message to be thrown.
 		args.addNewOption("c", "critical", true);												// Timeout in seconds for the job to be executed.
 		args.addNewOption("S", "dump-script" , true);											// Script to be executed in case of any problem. 
-		
 	}
 	
 	/**
@@ -92,19 +85,13 @@ public abstract class ElementalNagiosPlugin {
 	 * @param ars arguments given by the user for this basic initialization.
 	 * @throws Exception in case of any error. */
 	protected void initializeBasics(Arguments ars) throws Exception{
-		
 		ars.parseAll();
-
 		Misc.log4jConfiguration(ars.getInt("debug"));	// Loading log4j configuration. 
-
 		if (ars.getBoo("help") == true)	
 			ElementalNagiosPlugin.printMessageUsageAndExit("");
-		
 		if (ars.getBoo("version") == true)
 			ElementalNagiosPlugin.printVersionAndExit();
-		
 		this.validateArguments(ars);					// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
-		
 		ars.printArgumentsGiven();						// Print a list with the arguments given by the user. 
 	}
 	
@@ -122,10 +109,8 @@ public abstract class ElementalNagiosPlugin {
 	public void validateArguments(Arguments args) throws IllegalArgumentException{
 //		args.checkIsGiven("debug");
 		args.checkIsValidInt("debug", 0, 3);
-		
 //		args.checkIsGiven("warning");								// Might not be given (there is a default value), so we don't check it.
 		args.checkIsValidInt("warning", 0, Integer.MAX_VALUE);
-		
 		args.checkIsGiven("critical");
 		args.checkIsValidInt("critical", 0, Integer.MAX_VALUE);
 	}

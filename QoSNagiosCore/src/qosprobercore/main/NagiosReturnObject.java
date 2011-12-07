@@ -42,16 +42,20 @@ package qosprobercore.main;
  * who controls/monitors the plugin via Nagios. */
 public class NagiosReturnObject {
 	// Nagios exit codes.
-	public static final Integer RESULT_0_OK = 0; 				// Nagios code. Execution successfully. 
-	public static final Integer RESULT_1_WARNING = 1; 			// Nagios code. Warning. 
-	public static final Integer RESULT_2_CRITICAL = 2; 			// Nagios code. Critical problem in the tested entity.
-	public static final Integer RESULT_3_UNKNOWN = 3; 			// Nagios code. Unknown state of the tested entity.
+	public static final Integer RESULT_0_OK = 0; 		// Nagios code. Execution successfully. 
+	public static final Integer RESULT_1_WARNING = 1; 	// Nagios code. Warning. 
+	public static final Integer RESULT_2_CRITICAL = 2; 	// Nagios code. Critical problem in the tested entity.
+	public static final Integer RESULT_3_UNKNOWN = 3; 	// Nagios code. Unknown state of the tested entity.
 	
-	private String errorMessage;							// Message to be told to Nagios.
-	private String curvesSection;							// Curves section for Nagios to use to generate curves. 
-	private int errorCode;									// Error code to be told to Nagios.
-	private Throwable exception;							// Exception to be told to Nagios.
-
+	private String errorMessage;						// Message to be told to Nagios.
+	private String curvesSection;						// Curves section for Nagios to use to generate curves. 
+	private int errorCode;								// Error code to be told to Nagios.
+	private Throwable exception;						// Exception to be told to Nagios.
+	
+	/**
+	 * Basic constructor of the NagiosReturnObject class. No exception is present.
+	 * @param errorCode error code to be returned.
+	 * @param errorMessage message to be returned to the user (through Nagios). */
 	public NagiosReturnObject(Integer errorCode, String errorMessage){
 		this(errorCode, errorMessage, null);
 	}

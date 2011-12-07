@@ -187,6 +187,8 @@ public class JobProber extends PANagiosPlugin{
 	}
 	
 	
+	/**
+	 * We rewrite the method since the output depends on whether we haver or not some RM results. */
 	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer timeout, TimedStatusTracer tracer, Exception e){
 		NagiosReturnObject ret;
 		

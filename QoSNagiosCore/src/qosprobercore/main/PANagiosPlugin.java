@@ -40,18 +40,11 @@ package qosprobercore.main;
 import org.apache.log4j.Logger;
 
 /**
- * Set of useful definitions and methods for any Nagios plugin. */
+ * Class to be inherited by any Nagios plugin that is strongly related to ProActive. */
 public abstract class PANagiosPlugin extends ElementalNagiosPlugin {
-	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
-	
-	public static final int DEBUG_LEVEL_0_SILENT	= 0;	// Debug level, silent mode. 
-	public static final int DEBUG_LEVEL_1_EXTENDED 	= 1;	// Debug level, more than silent mode. Shows backtraces if error. 
-	public static final int DEBUG_LEVEL_2_VERBOSE	= 2;	// Debug level, similar to the previous one.
-	public static final int DEBUG_LEVEL_3_USER		= 3;	// Debug level, debugging only.
 	
 	protected static Logger logger =						// Logger. 
 			Logger.getLogger(PANagiosPlugin.class.getName()); 
-	
 	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
@@ -71,7 +64,6 @@ public abstract class PANagiosPlugin extends ElementalNagiosPlugin {
 	 * @throws Exception in case of any error. */
 	protected void initializeBasics(Arguments ars) throws Exception{
 		super.initializeBasics(getArgs());
-		
 		PAEnvironmentInitializer.createPolicyAndLoadIt();	// Security policy procedure.
 	}
 	
@@ -81,9 +73,7 @@ public abstract class PANagiosPlugin extends ElementalNagiosPlugin {
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
 	public void validateArguments(Arguments args) throws IllegalArgumentException{
 		super.validateArguments(getArgs());
-		
 //		args.checkIsGiven("port");									// Might not be given (there is a default value), so we don't check it.
 		args.checkIsValidInt("port", 0, 65535);
 	}
-	
 }
