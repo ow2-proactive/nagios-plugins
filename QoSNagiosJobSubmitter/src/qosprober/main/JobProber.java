@@ -183,7 +183,7 @@ public class JobProber extends PANagiosPlugin{
 		if (summary.isAllOkay())
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "OK"));
 		
-		return summary.getSummaryOfAll();
+		return summary.getSummaryOfAllWithTimeAll(tracer);
 	}
 	
 	
@@ -192,20 +192,20 @@ public class JobProber extends PANagiosPlugin{
 	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer timeout, TimedStatusTracer tracer, Exception e){
 		NagiosReturnObject ret;
 		
-		if (getArgs().getBoo("rm-checking") == true){
+		if (getArgs().getBoo("rm-checking") == true){ 	// Checking of the RM activated.
 			RMState state = rmStateGetter.getQueryResult();
-			if (state == null){
+			if (state == null){									// We still do not have any result.
 				ret = new NagiosReturnObject(NagiosReturnObject.RESULT_3_UNKNOWN, "FREE NODES: UNKNOWN, TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
-			}else {
+			}else{												// We already have a result.
 				Integer freenodes = state.getFreeNodesNumber();
 				logger.info("Free nodes: " + freenodes);
-				if (freenodes == 0){
+				if (freenodes == 0){							
 					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_3_UNKNOWN, "NO FREE NODES, TIMEOUT OF " + getArgs().getInt("critical") + " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 				}else{
 					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FREE NODES: " + freenodes + ", TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 				}
 			}
-		}else{
+		}else{											// Checking of the RM deactivated.
 			ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 		}
 		ret.addCurvesSection(tracer, null);

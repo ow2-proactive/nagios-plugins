@@ -39,26 +39,47 @@ package qosprobercore.main;
 
 import java.util.ArrayList;
 
+/**
+ * Class that builds a summary NagiosReturnObject from all the collected 
+ * data about the current situation of the probe. */
 public class NagiosReturnObjectSummaryMaker{
 	
 	private ArrayList<NagiosReturnObject> list;
 	private ArrayList<String> facts;
 
+	/**
+	 * Main constructor. */
 	public NagiosReturnObjectSummaryMaker(){
 		list = new ArrayList<NagiosReturnObject>();
 		facts = new ArrayList<String>();
 	}
 	
-	public void addNagiosReturnObject(NagiosReturnObject nro){
-		if (nro.getException()!=null)
+	/**
+	 * Add information regarding one aspect of the current situation of the probe.
+	 * It might be a warning regarding time, a warning regarding an expected result,
+	 * a critical status, or even an unknown status.
+	 * The messages of all NagiosReturnObjects given will be included in the output-line of the
+	 * Nagios probe, and the error code used at the end will be the most weighted one.
+	 * @param nrobj NagiosReturnObject with the information about one aspect of the current probe. */
+	public void addNagiosReturnObject(NagiosReturnObject nrobj){
+		if (nrobj.getException()!=null)
 			throw new RuntimeException("NagiosReturnObjects with Exceptions are not supposed to be added here.");
-		list.add(nro);
+		list.add(nrobj);
 	}
 	
+	/**
+	 * Add one fact statement to the output of this Nagios probe.
+	 * This will unconditionally appear on the output-line of the Nagios probe.
+	 * This is intended to be used to tell the administrator information about the probe, 
+	 * just for them to know some further details about the test.
+	 * @param fact the information the administrator is supposed to know. */
 	public void addFact(String fact){
 		facts.add(fact);
 	}
 	
+	/**
+	 * Tell whether all the given NagiosReturnObjects were telling no problem.
+	 * @return true if everything is okay. */
 	public Boolean isAllOkay(){
 		Integer code = NagiosReturnObject.RESULT_0_OK;
 		for (NagiosReturnObject o: list){
@@ -67,6 +88,9 @@ public class NagiosReturnObjectSummaryMaker{
 		return code.equals(NagiosReturnObject.RESULT_0_OK);
 	}
 	
+	/**
+	 * Get a summary of all the given NagiosReturnObjects.
+	 * @return the summary. */
 	public NagiosReturnObject getSummaryOfAll(){
 		String message = "";
 		Integer code = NagiosReturnObject.RESULT_0_OK;
@@ -80,6 +104,34 @@ public class NagiosReturnObjectSummaryMaker{
 		return new NagiosReturnObject(code, message);
 	}
 	
+	/**
+	 * Get a summary of all the given NagiosReturnObjects.
+	 * Also includes a time_all curve with the sum of all the times registered by the
+	 * provided TimedStatusTracer.
+	 * @return the summary. */
+	public NagiosReturnObject getSummaryOfAllWithTimeAll(TimedStatusTracer tracer){
+		String message = "";
+		Integer code = NagiosReturnObject.RESULT_0_OK;
+		for (String o: facts){
+			message = (message.isEmpty()?"":message + ", ") + o;
+		}	
+		for (NagiosReturnObject o: list){
+			message = (message.isEmpty()?"":message + ", ") + o.getErrorMessage();
+			code = mostRelevantNagiosCode(code, o.getErrorCode());
+		}	
+		NagiosReturnObject ret = new NagiosReturnObject(code, message);
+		ret.addCurvesSection(tracer, "time_all");
+		return ret;
+	}
+	/**
+	 * Retrieve the most important NagiosCode between the two provided.
+	 * The definition of important is in increasing order, as follows:
+	 * ok, warning, critical, unknown
+	 * So if mostRelevantNagiosCode(warning,unknown)=unknown 
+	 * @param a NagiosCode1.
+	 * @param b NagiosCode2.
+	 * @return the most important between NagiosCode1 and NagiosCode2.
+	 */
 	private Integer mostRelevantNagiosCode(Integer a, Integer b){
 		if (a.equals(b)){
 			return a;

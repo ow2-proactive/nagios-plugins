@@ -39,7 +39,12 @@ package qosprobercore.main;
 
 /**
  * It behaves as a structure where to put all the information that will be told to the administrator
- * who controls/monitors the plugin via Nagios. */
+ * who controls/monitors the plugin via Nagios. 
+ * It contains 
+ * - an error message, 
+ * - an error code, 
+ * - (possibly) a set of curve values and,
+ * - (possibly) an exception.*/
 public class NagiosReturnObject {
 	// Nagios exit codes.
 	public static final Integer RESULT_0_OK = 0; 		// Nagios code. Execution successfully. 
@@ -48,8 +53,8 @@ public class NagiosReturnObject {
 	public static final Integer RESULT_3_UNKNOWN = 3; 	// Nagios code. Unknown state of the tested entity.
 	
 	private String errorMessage;						// Message to be told to Nagios.
-	private String curvesSection;						// Curves section for Nagios to use to generate curves. 
 	private int errorCode;								// Error code to be told to Nagios.
+	private String curvesSection;						// Curves section for Nagios to use to generate curves. 
 	private Throwable exception;						// Exception to be told to Nagios.
 	
 	/**
@@ -82,9 +87,14 @@ public class NagiosReturnObject {
 	
 	/**
 	 * Get the whole message with the format 'errorMessage | curves_section_string'.
+	 * If there is not curves section, then the format is 'errorMessage'.
 	 * @return the whole message. */
 	public String getWholeMessage(){
-		return errorMessage + " | " + curvesSection;
+		if (curvesSection.isEmpty() == true){
+			return errorMessage;
+		}else{
+			return errorMessage + " | " + curvesSection;
+		}
 	}
 	
 	/**

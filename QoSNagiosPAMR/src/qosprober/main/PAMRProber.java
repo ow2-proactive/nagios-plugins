@@ -153,7 +153,7 @@ public class PAMRProber extends PANagiosPlugin{
 			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK,"OK"));
 		}
 		
-		return summary.getSummaryOfAll();
+		return summary.getSummaryOfAllWithTimeAll(tracer);
 	}
 	
 	/**

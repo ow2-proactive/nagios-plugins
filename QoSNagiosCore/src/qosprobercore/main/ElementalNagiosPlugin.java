@@ -145,7 +145,6 @@ public abstract class ElementalNagiosPlugin {
 		NagiosReturnObject res = null;
 		try{ 								// We execute the future using a timeout. 
 			res = proberFuture.get(arguments.getInt("critical"), TimeUnit.SECONDS);
-			res.addCurvesSection(tracer, "time_all");
 		}catch(TimeoutException e){
 			res = getNagiosReturnObjectForTimeoutException(arguments.getInt("critical"), tracer, e);
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
@@ -171,7 +170,6 @@ public abstract class ElementalNagiosPlugin {
 
 		try{ 								// We execute the future using a timeout. 
 			res = this.probe(tracer);
-			res.addCurvesSection(tracer, "time_all");
 		}catch(TimeoutException e){
 			res = getNagiosReturnObjectForTimeoutException(arguments.getInt("critical"), tracer, e);
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
