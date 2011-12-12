@@ -42,10 +42,10 @@ import qosprobercore.misc.Misc;
 import org.ow2.proactive.resourcemanager.common.RMState;
 import org.ow2.proactive.scheduler.examples.WaitAndPrint;
 import qosprobercore.main.Arguments;
+import qosprobercore.main.NagiosMiniStatus;
 import qosprobercore.main.PANagiosPlugin;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.NagiosReturnObject;
-import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.TimedStatusTracer;
 
 /** 
@@ -86,10 +86,6 @@ public class JobProber extends PANagiosPlugin{
 	 * Initialize the ProActive environment for this probe. */
 	public void initializeProber() throws Exception{
 		super.initializeProber();
-		PAEnvironmentInitializer.initPAConfiguration(
-			getArgs().getStr("paconf"),
-			getArgs().getStr("hostname"),
-			getArgs().getStr("port"));
 		/* Loading job's expected output. */
 		expectedJobOutput = Misc.readAllTextResource("/resources/expectedoutput.txt");
 		if (getArgs().getBoo("rm-checking") == true){
@@ -170,18 +166,18 @@ public class JobProber extends PANagiosPlugin{
 		
 		if (jresult==null){ 		// No job result obtained... It must never happen, but we check just in case.
 			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: NO OUTPUT");
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "NO JOB RESULT OBTAINED"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "NO JOB RESULT OBTAINED"));
 		}else{ 						// Non-timeout case. Result obtained.
 			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: '" + jresult.toString() + "'.");
 			if (jresult.toString().equals(expectedJobOutput) == false) 
-				summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "OUTPUT CHECK FAILED"));
+				summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "OUTPUT CHECK FAILED"));
 		}	
 		
 		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning"))
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "TOO SLOW"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING, "TOO SLOW"));
 		
 		if (summary.isAllOkay())
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "OK"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, "OK"));
 		
 		return summary.getSummaryOfAllWithTimeAll(tracer);
 	}
@@ -195,18 +191,18 @@ public class JobProber extends PANagiosPlugin{
 		if (getArgs().getBoo("rm-checking") == true){ 	// Checking of the RM activated.
 			RMState state = rmStateGetter.getQueryResult();
 			if (state == null){									// We still do not have any result.
-				ret = new NagiosReturnObject(NagiosReturnObject.RESULT_3_UNKNOWN, "FREE NODES: UNKNOWN, TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+				ret = new NagiosReturnObject(RESULT_3_UNKNOWN, "FREE NODES: UNKNOWN, TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 			}else{												// We already have a result.
 				Integer freenodes = state.getFreeNodesNumber();
 				logger.info("Free nodes: " + freenodes);
 				if (freenodes == 0){							
-					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_3_UNKNOWN, "NO FREE NODES, TIMEOUT OF " + getArgs().getInt("critical") + " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+					ret = new NagiosReturnObject(RESULT_3_UNKNOWN, "NO FREE NODES, TIMEOUT OF " + getArgs().getInt("critical") + " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 				}else{
-					ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FREE NODES: " + freenodes + ", TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+					ret = new NagiosReturnObject(RESULT_2_CRITICAL, "FREE NODES: " + freenodes + ", TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 				}
 			}
 		}else{											// Checking of the RM deactivated.
-			ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+			ret = new NagiosReturnObject(RESULT_2_CRITICAL, "TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 		}
 		ret.addCurvesSection(tracer, null);
 		return ret;

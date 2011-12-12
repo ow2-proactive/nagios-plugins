@@ -47,6 +47,13 @@ import qosprobercore.misc.Misc;
 public abstract class ElementalNagiosPlugin {
 	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
 	
+	// Nagios exit codes.
+	public static final Integer RESULT_0_OK = 0; 		// Nagios code. Execution successfully. 
+	public static final Integer RESULT_1_WARNING = 1; 	// Nagios code. Warning. 
+	public static final Integer RESULT_2_CRITICAL = 2; 	// Nagios code. Critical problem in the tested entity.
+	public static final Integer RESULT_3_UNKNOWN = 3; 	// Nagios code. Unknown state of the tested entity.
+	
+	// Nagios debug levels.
 	public static final int DEBUG_LEVEL_0_SILENT	= 0;	// Debug level, silent mode. 
 	public static final int DEBUG_LEVEL_1_EXTENDED 	= 1;	// Debug level, more than silent mode. Shows backtraces if error. 
 	public static final int DEBUG_LEVEL_2_VERBOSE	= 2;	// Debug level, similar to the previous one.
@@ -74,36 +81,23 @@ public abstract class ElementalNagiosPlugin {
 	}
 	
 	/**
-	 * Get set of arguments given by the user.
-	 * @return arguments. */
-	final protected Arguments getArgs(){
-		return arguments;
-	}
-	
-	/**
-	 * Basic initialization for any NagiosProbe related to ProActive.
-	 * @param ars arguments given by the user for this basic initialization.
-	 * @throws Exception in case of any error. */
-	protected void initializeBasics(Arguments ars) throws Exception{
-		ars.parseAll();
-		Misc.log4jConfiguration(ars.getInt("debug"));	// Loading log4j configuration. 
-		if (ars.getBoo("help") == true)	
-			ElementalNagiosPlugin.printMessageUsageAndExit("");
-		if (ars.getBoo("version") == true)
-			ElementalNagiosPlugin.printVersionAndExit();
-		this.validateArguments(ars);					// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
-		ars.printArgumentsGiven();						// Print a list with the arguments given by the user. 
-	}
-	
-	/**
 	 * Specific initialization for the probe. 
+	 * This method can be overwritten, but must be called during initialization.
 	 * @param arg arguments/parameters to initialize the probe. */
 	public void initializeProber() throws Exception{ 
-		initializeBasics(getArgs());
+		getArgs().parseAll();
+		Misc.log4jConfiguration(getArgs().getInt("debug"));	// Loading log4j configuration. 
+		if (getArgs().getBoo("help") == true)	
+			ElementalNagiosPlugin.printMessageUsageAndExit("");
+		if (getArgs().getBoo("version") == true)
+			ElementalNagiosPlugin.printVersionAndExit();
+		this.validateArguments(getArgs());				// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
+		getArgs().printArgumentsGiven();				// Print a list with the arguments given by the user. 
 	}
 	
 	/** 
 	 * Validate all the arguments given to this probe. 
+	 * This method can be overwritten, but must be called during validation.
 	 * @param args arguments to be validated.
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
 	public void validateArguments(Arguments args) throws IllegalArgumentException{
@@ -116,18 +110,26 @@ public abstract class ElementalNagiosPlugin {
 	}
 	
 	/**
-	 * Probe the entity. 
+	 * Probe the entity.  
+	 * This method needs to be implemented.
 	 * Several calls are done against the entity, as needed to probe it. 
 	 * @param tracer tracer that lets keep track of the last status, and the time each call took to be executed.
 	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. */	 
 	public abstract NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception;
 	
 	/**
+	 * Get set of arguments given by the user.
+	 * @return arguments. */
+	final protected Arguments getArgs(){
+		return arguments;
+	}
+	
+	/**
 	 * Start with the probing session.
 	 * This method kills automatically the probe process when a conclusion/result about the entity
 	 * tested has been obtained. 
 	 * The timeout mechanism is automatically handled by this method. */
-	public void startProbeAndExit(){
+	final public void startProbeAndExit(){
 		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
 		
 		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.
@@ -150,7 +152,7 @@ public abstract class ElementalNagiosPlugin {
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
 			res = getNagiosReturnObjectForExecutionException(tracer, e);
 		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
+			res = new NagiosReturnObject(RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
 		}
 		printDumpAndExit(res, arguments.getInt("debug"), probeID);
@@ -161,7 +163,7 @@ public abstract class ElementalNagiosPlugin {
 	 * This method kills automatically the probe process when a conclusion/result about the entity
 	 * tested has been obtained. 
 	 * The timeout mechanism is NOT handled by this method. */
-	public void startProbeAndExitManualTimeout(){
+	final public void startProbeAndExitManualTimeout(){
 		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
 		
 		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.
@@ -175,7 +177,7 @@ public abstract class ElementalNagiosPlugin {
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
 			res = getNagiosReturnObjectForExecutionException(tracer, e);
 		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
-			res = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
+			res = new NagiosReturnObject(RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
 		}
 		printDumpAndExit(res, arguments.getInt("debug"), probeID);
@@ -188,7 +190,7 @@ public abstract class ElementalNagiosPlugin {
 	 * @param e as useful data to generate the message.
 	 * @return the NagiosReturnObject generated. */
 	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer timeout, TimedStatusTracer tracer, Exception e){
-		NagiosReturnObject ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TIMEOUT OF " + arguments.getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+		NagiosReturnObject ret = new NagiosReturnObject(RESULT_2_CRITICAL, "TIMEOUT OF " + arguments.getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 		ret.addCurvesSection(tracer, null);
 		return ret;
 	}
@@ -199,7 +201,7 @@ public abstract class ElementalNagiosPlugin {
 	 * @param e as data useful to generate the message.
 	 * @return the NagiosReturnObject generated. */
 	protected NagiosReturnObject getNagiosReturnObjectForExecutionException(TimedStatusTracer tracer, Exception e){
-		NagiosReturnObject ret = new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
+		NagiosReturnObject ret = new NagiosReturnObject(RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
 		ret.addCurvesSection(tracer, null);
 		return ret;
 	}
@@ -214,7 +216,7 @@ public abstract class ElementalNagiosPlugin {
     	Throwable exc = obj.getException();
         System.out.println(NAG_OUTPUT_PREFIX + obj.getWholeMessage());
         
-        if (obj.getErrorCode()!= NagiosReturnObject.RESULT_0_OK && arguments.isGiven("dump-script")){
+        if (obj.getErrorCode()!= RESULT_0_OK && arguments.isGiven("dump-script")){
 	        Dumper du = new Dumper(arguments.getStr("dump-script"), source);
 	        du.dump(obj);
         }
@@ -242,7 +244,7 @@ public abstract class ElementalNagiosPlugin {
 		} catch (IOException e) {
 			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
 		}
-	    System.exit(NagiosReturnObject.RESULT_0_OK);
+	    System.exit(RESULT_0_OK);
 	}
 	
 	/**
@@ -254,7 +256,7 @@ public abstract class ElementalNagiosPlugin {
 			System.out.println(mainmessage);
 		}
 	    Misc.printUsage();
-	    System.exit(NagiosReturnObject.RESULT_2_CRITICAL);
+	    System.exit(RESULT_2_CRITICAL);
 	}
 	
 }

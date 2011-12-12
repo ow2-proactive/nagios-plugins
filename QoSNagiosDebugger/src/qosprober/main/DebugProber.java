@@ -41,10 +41,10 @@ import org.ow2.proactive.resourcemanager.common.RMState;
 
 import qosprobercore.history.HistoryDataManager;
 import qosprobercore.main.Arguments;
+import qosprobercore.main.NagiosMiniStatus;
 import qosprobercore.main.PANagiosPlugin;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
-import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.TimedStatusTracer;
 
 /** 
@@ -71,10 +71,6 @@ public class DebugProber extends PANagiosPlugin{
 	 * Initialize the ProActive environment for this probe. */
 	public void initializeProber() throws Exception{
 		super.initializeProber();
-		PAEnvironmentInitializer.initPAConfiguration(
-			getArgs().getStr("paconf"),
-			getArgs().getStr("hostname"),
-			getArgs().getStr("port"));
 	}
 	
 	/** 
@@ -96,7 +92,7 @@ public class DebugProber extends PANagiosPlugin{
 		try{
 			historyManager = new HistoryDataManager<HistoryElement>("data");
 		}catch(Exception e){
-			return new NagiosReturnObject(NagiosReturnObject.RESULT_3_UNKNOWN, "Could not lock history file, other process has it. Overlapping probes...");
+			return new NagiosReturnObject(RESULT_3_UNKNOWN, "Could not lock history file, other process has it. Overlapping probes...");
 		}
 		
 		HistoryElement history = historyManager.get(new HistoryElement(0));
@@ -130,11 +126,11 @@ public class DebugProber extends PANagiosPlugin{
 		summary.addFact("NODE/S ALIVE=" + alivenodes + " FREE=" + freenodes + " JOB/S RUNNING=" + jobsnumber);
 		
 		if (jobsnumber == 0 && busynodes != 0){
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "NO JOBS AND " + busynodes + " BUSY NODES"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "NO JOBS AND " + busynodes + " BUSY NODES"));
 		}
 		
 		if (summary.isAllOkay() == true){
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "OK"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, "OK"));
 		}
 		
 		return summary.getSummaryOfAll();

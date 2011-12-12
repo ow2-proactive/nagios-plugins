@@ -44,13 +44,13 @@ import java.util.ArrayList;
  * data about the current situation of the probe. */
 public class NagiosReturnObjectSummaryMaker{
 	
-	private ArrayList<NagiosReturnObject> list;
+	private ArrayList<NagiosMiniStatus> miniStatusList;
 	private ArrayList<String> facts;
 
 	/**
 	 * Main constructor. */
 	public NagiosReturnObjectSummaryMaker(){
-		list = new ArrayList<NagiosReturnObject>();
+		miniStatusList = new ArrayList<NagiosMiniStatus>();
 		facts = new ArrayList<String>();
 	}
 	
@@ -60,11 +60,9 @@ public class NagiosReturnObjectSummaryMaker{
 	 * a critical status, or even an unknown status.
 	 * The messages of all NagiosReturnObjects given will be included in the output-line of the
 	 * Nagios probe, and the error code used at the end will be the most weighted one.
-	 * @param nrobj NagiosReturnObject with the information about one aspect of the current probe. */
-	public void addNagiosReturnObject(NagiosReturnObject nrobj){
-		if (nrobj.getException()!=null)
-			throw new RuntimeException("NagiosReturnObjects with Exceptions are not supposed to be added here.");
-		list.add(nrobj);
+	 * @param nrobj NagiosMiniStatus with the information about one aspect of the current probe. */
+	public void addMiniStatus(NagiosMiniStatus nrobj){
+		miniStatusList.add(nrobj);
 	}
 	
 	/**
@@ -81,11 +79,11 @@ public class NagiosReturnObjectSummaryMaker{
 	 * Tell whether all the given NagiosReturnObjects were telling no problem.
 	 * @return true if everything is okay. */
 	public Boolean isAllOkay(){
-		Integer code = NagiosReturnObject.RESULT_0_OK;
-		for (NagiosReturnObject o: list){
+		Integer code = ElementalNagiosPlugin.RESULT_0_OK;
+		for (NagiosMiniStatus o: miniStatusList){
 			code = mostRelevantNagiosCode(code, o.getErrorCode());
 		}	
-		return code.equals(NagiosReturnObject.RESULT_0_OK);
+		return code.equals(ElementalNagiosPlugin.RESULT_0_OK);
 	}
 	
 	/**
@@ -93,11 +91,11 @@ public class NagiosReturnObjectSummaryMaker{
 	 * @return the summary. */
 	public NagiosReturnObject getSummaryOfAll(){
 		String message = "";
-		Integer code = NagiosReturnObject.RESULT_0_OK;
+		Integer code = ElementalNagiosPlugin.RESULT_0_OK;
 		for (String o: facts){
 			message = (message.isEmpty()?"":message + ", ") + o;
 		}	
-		for (NagiosReturnObject o: list){
+		for (NagiosMiniStatus o: miniStatusList){
 			message = (message.isEmpty()?"":message + ", ") + o.getErrorMessage();
 			code = mostRelevantNagiosCode(code, o.getErrorCode());
 		}	
@@ -111,11 +109,11 @@ public class NagiosReturnObjectSummaryMaker{
 	 * @return the summary. */
 	public NagiosReturnObject getSummaryOfAllWithTimeAll(TimedStatusTracer tracer){
 		String message = "";
-		Integer code = NagiosReturnObject.RESULT_0_OK;
+		Integer code = ElementalNagiosPlugin.RESULT_0_OK;
 		for (String o: facts){
 			message = (message.isEmpty()?"":message + ", ") + o;
 		}	
-		for (NagiosReturnObject o: list){
+		for (NagiosMiniStatus o: miniStatusList){
 			message = (message.isEmpty()?"":message + ", ") + o.getErrorMessage();
 			code = mostRelevantNagiosCode(code, o.getErrorCode());
 		}	
@@ -145,12 +143,12 @@ public class NagiosReturnObjectSummaryMaker{
 		/*    01 02 03 10    12 13 20 21    23 30 31 32    */
 		/*             10          20 21       30 31 32    */
 		/*             wo          co cw       uo uw uc    */
-		if (a == NagiosReturnObject.RESULT_1_WARNING && b == NagiosReturnObject.RESULT_0_OK)          {return NagiosReturnObject.RESULT_1_WARNING;}
-		if (a == NagiosReturnObject.RESULT_2_CRITICAL&& b == NagiosReturnObject.RESULT_0_OK)          {return NagiosReturnObject.RESULT_2_CRITICAL;}
-		if (a == NagiosReturnObject.RESULT_2_CRITICAL&& b == NagiosReturnObject.RESULT_1_WARNING)     {return NagiosReturnObject.RESULT_2_CRITICAL;}
-		if (a == NagiosReturnObject.RESULT_3_UNKNOWN && b == NagiosReturnObject.RESULT_0_OK)          {return NagiosReturnObject.RESULT_3_UNKNOWN;}
-		if (a == NagiosReturnObject.RESULT_3_UNKNOWN && b == NagiosReturnObject.RESULT_1_WARNING)     {return NagiosReturnObject.RESULT_3_UNKNOWN;}
-		if (a == NagiosReturnObject.RESULT_3_UNKNOWN && b == NagiosReturnObject.RESULT_2_CRITICAL)    {return NagiosReturnObject.RESULT_3_UNKNOWN;}
+		if (a == ElementalNagiosPlugin.RESULT_1_WARNING && b == ElementalNagiosPlugin.RESULT_0_OK)          {return ElementalNagiosPlugin.RESULT_1_WARNING;}
+		if (a == ElementalNagiosPlugin.RESULT_2_CRITICAL&& b == ElementalNagiosPlugin.RESULT_0_OK)          {return ElementalNagiosPlugin.RESULT_2_CRITICAL;}
+		if (a == ElementalNagiosPlugin.RESULT_2_CRITICAL&& b == ElementalNagiosPlugin.RESULT_1_WARNING)     {return ElementalNagiosPlugin.RESULT_2_CRITICAL;}
+		if (a == ElementalNagiosPlugin.RESULT_3_UNKNOWN && b == ElementalNagiosPlugin.RESULT_0_OK)          {return ElementalNagiosPlugin.RESULT_3_UNKNOWN;}
+		if (a == ElementalNagiosPlugin.RESULT_3_UNKNOWN && b == ElementalNagiosPlugin.RESULT_1_WARNING)     {return ElementalNagiosPlugin.RESULT_3_UNKNOWN;}
+		if (a == ElementalNagiosPlugin.RESULT_3_UNKNOWN && b == ElementalNagiosPlugin.RESULT_2_CRITICAL)    {return ElementalNagiosPlugin.RESULT_3_UNKNOWN;}
 		throw new RuntimeException("Configuration not expected: " + a + ":" + b);
 	}
 }

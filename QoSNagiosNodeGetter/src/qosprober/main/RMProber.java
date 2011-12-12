@@ -45,10 +45,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.ow2.proactive.utils.NodeSet;
 import qosprobercore.main.Arguments;
+import qosprobercore.main.NagiosMiniStatus;
 import qosprobercore.main.PANagiosPlugin;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
-import qosprobercore.main.PAEnvironmentInitializer;
 import qosprobercore.main.TimedStatusTracer;
 
 /** 
@@ -83,10 +83,6 @@ public class RMProber extends PANagiosPlugin{
 	 * Initialize the ProActive environment for this probe. */
 	public void initializeProber() throws Exception{
 		super.initializeProber();
-		PAEnvironmentInitializer.initPAConfiguration(
-			getArgs().getStr("paconf"),
-			getArgs().getStr("hostname"),
-			getArgs().getStr("port"));
 	}
 	
 	/** 
@@ -190,29 +186,29 @@ public class RMProber extends PANagiosPlugin{
 		
 		
 		if (obtainednodes < getArgs().getInt("nodescritical")){									// Fewer nodes than criticalnodes.	
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "TOO FEW NODES OBTAINED"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "TOO FEW NODES OBTAINED"));
 		}else if (obtainednodes < getArgs().getInt("nodeswarning")){							// Fewer nodes than warningnodes.	
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING,  "TOO FEW NODES OBTAINED"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING,  "TOO FEW NODES OBTAINED"));
 		}
 		
 		// Having F free nodes, if W is the number of wanted nodes, I should get the min(F, W). 
 		//        4 free nodes,    3                  wanted nodes, I should get the min(4, 3)=3 nodes. 
 		if (obtainednodes < Math.min(freenodes, nodesrequired)){
-			summary.addNagiosReturnObject(
-					new NagiosReturnObject(
-							NagiosReturnObject.RESULT_2_CRITICAL, "PROBLEM: NODES (OBTAINED/REQUIRED/FREE)=("+obtainednodes+"/"+nodesrequired+"/"+freenodes+")"));
+			summary.addMiniStatus(
+					new NagiosMiniStatus(
+							RESULT_2_CRITICAL, "PROBLEM: NODES (OBTAINED/REQUIRED/FREE)=("+obtainednodes+"/"+nodesrequired+"/"+freenodes+")"));
 		}
 		
 		if (getArgs().isGiven("warning") && time_all > getArgs().getInt("warning")){		// It took longer than timeoutwarnsec.
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "NODE/S OBTAINED TOO SLOWLY"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING, "NODE/S OBTAINED TOO SLOWLY"));
 		}																					// Everything was okay.
 		
 		if (freenodes == 0){
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_3_UNKNOWN, "NO FREE NODES"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_3_UNKNOWN, "NO FREE NODES"));
 		}	
 		
 		if (summary.isAllOkay() == true){
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "OK"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, "OK"));
 		}
 		
 		return summary.getSummaryOfAllWithTimeAll(tracer);

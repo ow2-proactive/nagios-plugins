@@ -107,10 +107,11 @@ public class PAMRMisc {
     
     /**
      * Run a new JVM with the given arguments. */
-    public static void runNewJVM(String classname, String arguments) throws IOException{
+    public static void runNewJVM(String jvmparams, String classname, String arguments) throws IOException{
     	String command = PAMRMisc.getJavaHome() + "/bin/java" 	+ " " + 
+    						jvmparams						+ " " + 
     						"-cp " + PAMRMisc.getClasspath() 	+ " " + 
-    						classname 						+ " " + 
+    						classname 							+ " " + 
     						arguments;
     	// The command would be something like:
     	//	/tmp/JDK/bin/java -cp bin:../otherbins package.ClassToExecute [arguments]

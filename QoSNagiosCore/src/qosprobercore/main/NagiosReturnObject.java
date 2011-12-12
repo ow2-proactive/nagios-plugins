@@ -46,11 +46,6 @@ package qosprobercore.main;
  * - (possibly) a set of curve values and,
  * - (possibly) an exception.*/
 public class NagiosReturnObject {
-	// Nagios exit codes.
-	public static final Integer RESULT_0_OK = 0; 		// Nagios code. Execution successfully. 
-	public static final Integer RESULT_1_WARNING = 1; 	// Nagios code. Warning. 
-	public static final Integer RESULT_2_CRITICAL = 2; 	// Nagios code. Critical problem in the tested entity.
-	public static final Integer RESULT_3_UNKNOWN = 3; 	// Nagios code. Unknown state of the tested entity.
 	
 	private String errorMessage;						// Message to be told to Nagios.
 	private int errorCode;								// Error code to be told to Nagios.

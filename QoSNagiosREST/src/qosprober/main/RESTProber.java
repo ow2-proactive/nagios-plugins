@@ -38,12 +38,13 @@
 package qosprober.main;
 
 import qosprobercore.main.Arguments;
-import qosprobercore.main.PANagiosPlugin;
+import qosprobercore.main.ElementalNagiosPlugin;
+import qosprobercore.main.NagiosMiniStatus;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.TimedStatusTracer;
 
-public class RESTProber extends PANagiosPlugin{
+public class RESTProber extends ElementalNagiosPlugin{
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
 	 * @param args arguments to create this JobProber. 
@@ -113,13 +114,13 @@ public class RESTProber extends PANagiosPlugin{
 		logger.info("Version: " + version);
 		
 		if (connected == false)
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_2_CRITICAL, "COULD NOT CONNECT TO SCHEDULER"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "COULD NOT CONNECT TO SCHEDULER"));
 		
 		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning"))
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "TOO SLOW"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING, "TOO SLOW"));
 		
 		if (summary.isAllOkay())
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK, "OK"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, "OK"));
 		
 		return summary.getSummaryOfAllWithTimeAll(tracer);
 	}

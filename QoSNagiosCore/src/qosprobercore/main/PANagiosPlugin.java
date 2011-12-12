@@ -62,9 +62,13 @@ public abstract class PANagiosPlugin extends ElementalNagiosPlugin {
 	 * Basic initialization for any NagiosProbe related to ProActive.
 	 * @param ars arguments given by the user for this basic initialization.
 	 * @throws Exception in case of any error. */
-	protected void initializeBasics(Arguments ars) throws Exception{
-		super.initializeBasics(getArgs());
-		PAEnvironmentInitializer.createPolicyAndLoadIt();	// Security policy procedure.
+	public void initializeProber() throws Exception{
+		super.initializeProber();
+		PAEnvironmentInitializer.createPolicyAndLoadIt();										// Security policy procedure.
+		PAEnvironmentInitializer.initPAConfiguration(											// PAMR router configuration.
+			getArgs().getStr("paconf"),
+			getArgs().getStr("hostname"),
+			getArgs().getStr("port"));
 	}
 	
 	/** 

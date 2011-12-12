@@ -39,6 +39,7 @@ package qosprober.main;
 
 import qosprober.misc.PAMRMisc;
 import qosprobercore.main.Arguments;
+import qosprobercore.main.NagiosMiniStatus;
 import qosprobercore.main.PANagiosPlugin;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
@@ -66,10 +67,6 @@ public class PAMRProber extends PANagiosPlugin{
 	 * Initialize the ProActive environment for this probe. */
 	public void initializeProber() throws Exception{
 		super.initializeProber();
-		PAEnvironmentInitializer.initPAConfiguration(
-			getArgs().getStr("paconf"),
-			getArgs().getStr("hostname"),
-			getArgs().getStr("port"));
 	}
 	
 	/** 
@@ -125,9 +122,11 @@ public class PAMRProber extends PANagiosPlugin{
         if (PAEnvironmentInitializer.usingPAConfigurationFile() == true){		
         								// Depending on whether there is a ProActive configuration file, these are
         								// the parameters that we send to the client to get connected to the same router.
-	        qosprober.misc.PAMRMisc.runNewJVM(Client.class.getName(), serverurl + " " + getArgs().getStr("paconf") + " " + getArgs().getInt("critical"));
+	        qosprober.misc.PAMRMisc.runNewJVM("-Xmx40m", Client.class.getName(), 
+	        		serverurl + " " + getArgs().getStr("paconf") + " " + getArgs().getInt("critical"));
         }else{
-        	qosprober.misc.PAMRMisc.runNewJVM(Client.class.getName(), serverurl + " " + getArgs().getStr("hostname") + " " + getArgs().getStr("port") + " " + getArgs().getInt("critical"));
+        	qosprober.misc.PAMRMisc.runNewJVM("-Xmx40m", Client.class.getName(), 
+        			serverurl + " " + getArgs().getStr("hostname") + " " + getArgs().getStr("port") + " " + getArgs().getInt("critical"));
         }
         logger.info("Done.");
         
@@ -146,11 +145,11 @@ public class PAMRProber extends PANagiosPlugin{
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
 		
 		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning")){ // If it took longer than timeoutwarnsec, throw a warning message.
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_1_WARNING, "PROBE TOO SLOW"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING, "PROBE TOO SLOW"));
 		}
 		
 		if (summary.isAllOkay() == true){	// If everything went okay...
-			summary.addNagiosReturnObject(new NagiosReturnObject(NagiosReturnObject.RESULT_0_OK,"OK"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK,"OK"));
 		}
 		
 		return summary.getSummaryOfAllWithTimeAll(tracer);
