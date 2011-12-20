@@ -255,7 +255,7 @@ public class SchedulerStubProberJava {
 		logger.debug("\tGetting list of jobs...");
 		
 		if (jobname == null){
-			throw new IllegalArgumentException("'name' argument cannot be null");
+			throw new IllegalArgumentException("'jobname' argument cannot be null");
 		}
 		
 		SchedulerState st = schedulerStub.getState(true);

@@ -74,8 +74,8 @@ public class JobProber extends PANagiosPlugin{
 		args.addNewOption("u", "user", true);			// User.
 		args.addNewOption("p", "pass", true);			// Pass.
 		args.addNewOption("r", "url", true);			// Url of the Scheduler/RM.
-		
-		args.addNewOption("j", "jobname", true);		// Name used to run the job in the Scheduler. 
+		args.addNewOption("j", "jobname", true, 
+				JOB_NAME_DEFAULT);						// Name used to run the job in the Scheduler. 
 		args.addNewOption("d", "deleteallold", false);	// Delete all old jobs, not only the ones with the name 
 		args.addNewOption("g", "polling", false);		// Do polling or use an event based mechanism.
 		args.addNewOption("z", "highpriority", false);	// Set high priority for the job (not normal priority).

@@ -64,6 +64,7 @@ public class DebugProber extends PANagiosPlugin{
 		args.addNewOption("p", "pass", true);							// Pass.
 		args.addNewOption("r", "url-sched", true);						// Url of the Scheduler.
 		args.addNewOption("R", "url-rm", true);							// Url of the RM.
+		args.addNewOption("W", "history", true);						// History file.
 		
 	}
 	
@@ -82,6 +83,7 @@ public class DebugProber extends PANagiosPlugin{
 		arguments.checkIsGiven("url-rm");
 		arguments.checkIsGiven("user");
 		arguments.checkIsGiven("pass");
+		arguments.checkIsGiven("history");
 	}
 	
 	/**
@@ -90,9 +92,9 @@ public class DebugProber extends PANagiosPlugin{
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception{
 		HistoryDataManager <HistoryElement> historyManager; 
 		try{
-			historyManager = new HistoryDataManager<HistoryElement>("data");
+			historyManager = new HistoryDataManager<HistoryElement>(getArgs().getStr("history"));
 		}catch(Exception e){
-			return new NagiosReturnObject(RESULT_3_UNKNOWN, "Could not lock history file, other process has it. Overlapping probes...");
+			return new NagiosReturnObject(RESULT_3_UNKNOWN, "Problem locking history file... " + e.getMessage());
 		}
 		
 		HistoryElement history = historyManager.get(new HistoryElement(0));
