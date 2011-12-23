@@ -39,7 +39,7 @@ package qosprober.main;
 
 import org.ow2.proactive.resourcemanager.common.RMState;
 
-import qosprobercore.history.HistoryDataManager;
+//import qosprobercore.history.HistoryDataManager;
 import qosprobercore.main.Arguments;
 import qosprobercore.main.NagiosMiniStatus;
 import qosprobercore.main.PANagiosPlugin;
@@ -48,9 +48,9 @@ import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.TimedStatusTracer;
 
 /** 
- * This is a general Nagios plugin class that performs a test on the RM, by doing:
- *    -Node obtaining
- *    -Node retrieval 
+ * This is a general Nagios plugin class that performs a test on the RM and Scheduler seeking out potential bugs
+ * that the team came across over time. It gets information from both entities and tells if there are incoherent 
+ * status.
  *  After that, a short summary regarding the result of the test is shown using Nagios format. */
 public class DebugProber extends PANagiosPlugin{
 	
@@ -90,27 +90,27 @@ public class DebugProber extends PANagiosPlugin{
 	 * Probe both scheduler and RM to detect buggy situation.
 	 * @throws Exception */	 
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception{
-		HistoryDataManager <HistoryElement> historyManager; 
-		try{
-			historyManager = new HistoryDataManager<HistoryElement>(getArgs().getStr("history"));
-		}catch(Exception e){
-			return new NagiosReturnObject(RESULT_3_UNKNOWN, "Problem locking history file... " + e.getMessage());
-		}
+//		HistoryDataManager <HistoryElement> historyManager; 
+//		try{
+//			historyManager = new HistoryDataManager<HistoryElement>(getArgs().getStr("history"));
+//		}catch(Exception e){
+//			return new NagiosReturnObject(RESULT_3_UNKNOWN, "Problem locking history file... " + e.getMessage());
+//		}
 		
-		HistoryElement history = historyManager.get(new HistoryElement(0));
+//		HistoryElement history = historyManager.get(new HistoryElement(0));
 
-		logger.info("History element value: " + history.getData());
-		historyManager.set(new HistoryElement(history.getData() + 1));
-		historyManager.release();
+//		logger.info("History element value: " + history.getData());
+//		historyManager.set(new HistoryElement(history.getData() + 1));
+//		historyManager.release();
 		
-		RMStubProber rmstub = new RMStubProber();						// We get connected to the RM through this stub. 
-		SchedulerStubProber schedstub = new SchedulerStubProber();		// We get connected to the Scheduler through this stub.
+		RMStubProber rmstub = new RMStubProber();					// We get connected to the RM through this stub. 
+		SchedulerStubProber schedstub = new SchedulerStubProber();	// We get connected to the Scheduler through this stub.
 		
-		rmstub.init(										// We get connected to the RM.
+		rmstub.init(												// We get connected to the RM.
 				getArgs().getStr("url-rm"),  getArgs().getStr("user"), 
 				getArgs().getStr("pass"));	
 		
-		schedstub.init(										// We get connected to the Scheduler.
+		schedstub.init(												// We get connected to the Scheduler.
 				getArgs().getStr("url-sched"),  getArgs().getStr("user"), 
 				getArgs().getStr("pass"));	
 		
@@ -118,13 +118,17 @@ public class DebugProber extends PANagiosPlugin{
 		int freenodes = rmstate.getFreeNodesNumber();	
 		int alivenodes = rmstate.getTotalAliveNodesNumber();	
 		int busynodes = alivenodes - freenodes;	
-		int jobsnumber = schedstub.getAllRunningJobsList().size();							// Get the list of jobs running.
+		int jobsnumber = schedstub.getAllRunningJobsList().size();	// Get the list of jobs running.
 		
-    	rmstub.disconnect();								// Disconnect from the Resource Manager.
-    	schedstub.disconnect();								// Disconnect from the Scheduler.
+    	rmstub.disconnect();										// Disconnect from the Resource Manager.
+    	schedstub.disconnect();										// Disconnect from the Scheduler.
     				
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
 		
+		tracer.addNewReference("free_nodes", freenodes);
+		tracer.addNewReference("alive_nodes", alivenodes);
+		tracer.addNewReference("busy_nodes", busynodes);
+		tracer.addNewReference("number_of_jobs", jobsnumber);
 		summary.addFact("NODE/S ALIVE=" + alivenodes + " FREE=" + freenodes + " JOB/S RUNNING=" + jobsnumber);
 		
 		if (jobsnumber == 0 && busynodes != 0){
@@ -136,7 +140,6 @@ public class DebugProber extends PANagiosPlugin{
 		}
 		
 		return summary.getSummaryOfAll();
-		
 	}
 
 	/**
