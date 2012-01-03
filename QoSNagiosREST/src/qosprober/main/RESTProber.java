@@ -51,6 +51,7 @@ public class RESTProber extends ElementalNagiosPlugin{
 	 * @throws Exception */
 	public RESTProber(Arguments args) throws Exception{
 		super("REST", args);
+		args.addNewOption("H", "host", true);			// User.
 		args.addNewOption("u", "user", true);			// User.
 		args.addNewOption("p", "pass", true);			// Pass.
 		args.addNewOption("r", "url", true);			// Url of the Scheduler/RM.

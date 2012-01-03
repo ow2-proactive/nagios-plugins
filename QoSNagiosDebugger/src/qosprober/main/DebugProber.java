@@ -83,7 +83,7 @@ public class DebugProber extends PANagiosPlugin{
 		arguments.checkIsGiven("url-rm");
 		arguments.checkIsGiven("user");
 		arguments.checkIsGiven("pass");
-		arguments.checkIsGiven("history");
+		// arguments.checkIsGiven("history");
 	}
 	
 	/**
