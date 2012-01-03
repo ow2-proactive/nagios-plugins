@@ -99,14 +99,11 @@ public class Arguments {
 	
 	/**
 	 * Perform the parsing of the raw arguments.
-	 * @throws ParseException in case of an unexpected format of the command-line. */
-	public void parseAll() throws ParseException{
-        try{
-	        Parser parserrr = new GnuParser();
-	        parser = parserrr.parse(options, arguments);
-        }catch(MissingOptionException ex){
-	        PANagiosPlugin.printMessageUsageAndExit(ex.getMessage());	
-        }
+	 * @throws ParseException in case of an unexpected format of the command-line. 
+	 * @throws MissingOptionException in case there is a missing argument. */
+	public void parseAll() throws ParseException, MissingOptionException{
+        Parser parserrr = new GnuParser();
+        parser = parserrr.parse(options, arguments);
 	}
 	
 	/**

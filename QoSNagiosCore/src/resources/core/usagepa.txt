@@ -1,0 +1,11 @@
+GENERAL PRO ACTIVE NAGIOS PLUGIN FLAGS 
+
+   -f, --paconf PACONF
+      ProActive configuration file (usually ProActiveConfiguration.xml). Used if a PAMR router is present behind a protected server. Ignored if not pertinent.
+      
+   -H, --hostname HOSTNAME
+      PAMR router hostname to use to get connected to the entity tested. Ignored if not pertinent or a ProActive configuration file is provided. 
+      
+   -x, --port PORT
+      PAMR router port to be used to get connected to the entity tested. Ignored if not pertinent or a ProActive configuration file is provided. 
+

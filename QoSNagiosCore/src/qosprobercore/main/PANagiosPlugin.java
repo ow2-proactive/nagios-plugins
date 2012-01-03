@@ -37,7 +37,11 @@
 
 package qosprobercore.main;
 
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
+
+import qosprobercore.misc.Misc;
 
 /**
  * Class to be inherited by any Nagios plugin that is strongly related to ProActive. */
@@ -79,5 +83,28 @@ public abstract class PANagiosPlugin extends ElementalNagiosPlugin {
 		super.validateArguments(getArgs());
 //		args.checkIsGiven("port");									// Might not be given (there is a default value), so we don't check it.
 		args.checkIsValidInt("port", 0, 65535);
+	}
+	
+	
+	
+	/**
+	 * Used when a parameter given by the user is wrong. 
+	 * Print a message, then the usage of the application, and the exits the application. 
+	 * @param errormessage message of error to be shown to the user (through Nagios). */
+	public void printMessageUsageAndExit(String errormessage){
+		if (errormessage!=null){
+			System.out.println(errormessage);
+		}
+		String usage = ""; 
+		try {
+			usage = usage + Misc.readAllTextResource("/resources/usage.txt");
+			usage = usage + Misc.readAllTextResource("/resources/core/usagepa.txt");
+			usage = usage + Misc.readAllTextResource("/resources/core/usage.txt");
+			System.err.println(usage);
+		} catch (IOException e) {
+			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
+		}
+	
+	    System.exit(RESULT_2_CRITICAL);
 	}
 }

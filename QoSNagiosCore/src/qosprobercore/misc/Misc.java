@@ -43,14 +43,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Properties;
-import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import qosprobercore.main.PANagiosPlugin;
 
 /** 
  * This class is supposed to have multiple minor functionalities. */
 public class Misc {
-	private static Logger logger = Logger.getLogger(Misc.class.getName()); // Logger.
 	
     private Misc(){}
     
@@ -73,19 +71,6 @@ public class Misc {
 	    return ret;
 	}
     
-	/**
-	 * Print the usage of the application. */
-	public static void printUsage(){
-		String usage = ""; 
-		try {
-			usage = usage + Misc.readAllTextResource("/resources/usage.txt");
-			usage = usage + Misc.readAllTextResource("/resources/core/usage.txt");
-			System.err.println(usage);
-		} catch (IOException e) {
-			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
-		}
-	}
-	
 	/**
 	 * Creates a default set of properties for the log4j logging module.
 	 * @return properties. */

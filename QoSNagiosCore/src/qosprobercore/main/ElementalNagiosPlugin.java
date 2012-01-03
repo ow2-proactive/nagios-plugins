@@ -39,6 +39,9 @@ package qosprobercore.main;
 
 import java.io.IOException;
 import java.util.concurrent.*;
+
+import org.apache.commons.cli.MissingOptionException;
+import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.log4j.Logger;
 import qosprobercore.misc.Misc;
 
@@ -85,10 +88,17 @@ public abstract class ElementalNagiosPlugin {
 	 * This method can be overwritten, but must be called during initialization.
 	 * @param arg arguments/parameters to initialize the probe. */
 	public void initializeProber() throws Exception{ 
-		getArgs().parseAll();
+		try{
+			getArgs().parseAll();
+		}catch(MissingOptionException e){
+			this.printMessageUsageAndExit(e.getMessage());
+		}catch(UnrecognizedOptionException e){
+			this.printMessageUsageAndExit(e.getMessage());
+		}
+
 		Misc.log4jConfiguration(getArgs().getInt("debug"));	// Loading log4j configuration. 
 		if (getArgs().getBoo("help") == true)	
-			ElementalNagiosPlugin.printMessageUsageAndExit("");
+			this.printMessageUsageAndExit("");
 		if (getArgs().getBoo("version") == true)
 			ElementalNagiosPlugin.printVersionAndExit();
 		this.validateArguments(getArgs());				// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
@@ -250,12 +260,20 @@ public abstract class ElementalNagiosPlugin {
 	/**
 	 * Used when a parameter given by the user is wrong. 
 	 * Print a message, then the usage of the application, and the exits the application. 
-	 * @param mainmessage message to be shown to the user (though Nagios). */
-	public static void printMessageUsageAndExit(String mainmessage){
-		if (mainmessage!=null){
-			System.out.println(mainmessage);
+	 * @param errormessage message of error to be shown to the user (through Nagios). */
+	public void printMessageUsageAndExit(String errormessage){
+		if (errormessage!=null){
+			System.out.println(errormessage);
 		}
-	    Misc.printUsage();
+		String usage = ""; 
+		try {
+			usage = usage + Misc.readAllTextResource("/resources/usage.txt");
+			usage = usage + Misc.readAllTextResource("/resources/core/usage.txt");
+			System.err.println(usage);
+		} catch (IOException e) {
+			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
+		}
+	
 	    System.exit(RESULT_2_CRITICAL);
 	}
 	
