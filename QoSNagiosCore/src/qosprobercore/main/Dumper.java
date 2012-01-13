@@ -33,7 +33,7 @@ public class Dumper {
 			stacktrace = getStackTraceAsString(obj.getException());
 			logger.info("Exception obtained converted to '" + stacktrace + "'...");
 		}
-    	String command = scriptpath + " SOURCE:[" + source + "]\nCODE:[" + obj.getErrorCode() + "]\nTIME:[" + (new Date()) + "]\nMESSAGE:[" + filter(obj.getWholeMessage()) + "]\nSTACKTRACE:[" + filter(stacktrace) + "]";
+    	String command = scriptpath + " SOURCE:[" + source + "]\nCODE:[" + obj.getErrorCode() + "]\nTIME:[" + (new Date()) + "]\nMESSAGE:[" + filter(obj.getWholeFirstLineMessage()) + "]\nSTACKTRACE:[" + filter(stacktrace) + "]";
     	command = filter(command);
 		try {
 			Process p = Runtime.getRuntime().exec(command);

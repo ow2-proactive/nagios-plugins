@@ -103,8 +103,12 @@ public class DebugProber extends PANagiosPlugin{
 //		historyManager.set(new HistoryElement(history.getData() + 1));
 //		historyManager.release();
 		
+		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
+		
 		RMStubProber rmstub = new RMStubProber();					// We get connected to the RM through this stub. 
 		SchedulerStubProber schedstub = new SchedulerStubProber();	// We get connected to the Scheduler through this stub.
+		
+		tracer.finishLastMeasurementAndStartNewOne("time_connection_both", "connecting...");
 		
 		rmstub.init(												// We get connected to the RM.
 				getArgs().getStr("url-rm"),  getArgs().getStr("user"), 
@@ -114,15 +118,24 @@ public class DebugProber extends PANagiosPlugin{
 				getArgs().getStr("url-sched"),  getArgs().getStr("user"), 
 				getArgs().getStr("pass"));	
 		
+		tracer.finishLastMeasurementAndStartNewOne("time_getting_rm_state", "getting RM state...");
+		
 		RMState rmstate = rmstub.getRMState();
 		int freenodes = rmstate.getFreeNodesNumber();	
 		int alivenodes = rmstate.getTotalAliveNodesNumber();	
 		int busynodes = alivenodes - freenodes;	
+		
+		tracer.finishLastMeasurementAndStartNewOne("time_getting_sched_state", "getting scheduler state...");
+		
 		int jobsnumber = schedstub.getAllRunningJobsList().size();	// Get the list of jobs running.
+		
+		tracer.finishLastMeasurementAndStartNewOne("time_disconnection", "disconnecting...");
 		
     	rmstub.disconnect();										// Disconnect from the Resource Manager.
     	schedstub.disconnect();										// Disconnect from the Scheduler.
     				
+		tracer.finishLastMeasurement();
+		
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
 		
 		tracer.addNewReference("free_nodes", freenodes);

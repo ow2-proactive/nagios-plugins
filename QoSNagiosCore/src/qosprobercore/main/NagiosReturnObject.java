@@ -84,7 +84,7 @@ public class NagiosReturnObject {
 	 * Get the whole message with the format 'errorMessage | curves_section_string'.
 	 * If there is not curves section, then the format is 'errorMessage'.
 	 * @return the whole message. */
-	public String getWholeMessage(){
+	public String getWholeFirstLineMessage(){
 		if (curvesSection.isEmpty() == true){
 			return errorMessage;
 		}else{

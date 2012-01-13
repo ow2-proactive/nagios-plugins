@@ -42,6 +42,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Properties;
 import org.apache.log4j.PropertyConfigurator;
 import qosprobercore.main.PANagiosPlugin;
@@ -140,4 +143,30 @@ public class Misc {
 		}
 		return ret;
 	}
+	
+	/**
+	 * Remove characters that are difficult to handle by the user when using them in bash or any other shell.
+	 * @param argument string that needs to be checked out.
+	 * @return the string given without any conflict character. */
+	public static String removeConflictCharacters(String argument){
+		String aux;
+		if (argument == null){
+			return null;
+		}
+		aux = argument;
+		aux = aux.replace("'", "");
+		aux = aux.replace("\"","");
+		return aux;
+	}
+	
+	/**
+	 * Convert the given throwable's stack trace in a String. 
+	 * @param aThrowable throwable to convert.
+	 * @return the string. */
+    public static String getStackTrace(Throwable aThrowable) {
+	    final Writer result = new StringWriter();
+	    final PrintWriter printWriter = new PrintWriter(result);
+	    aThrowable.printStackTrace(printWriter);
+	    return result.toString();
+    }
 }

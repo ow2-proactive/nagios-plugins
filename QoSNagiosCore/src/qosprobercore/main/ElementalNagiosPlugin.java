@@ -223,8 +223,9 @@ public abstract class ElementalNagiosPlugin {
      * @param debuglevel level of verbosity. 
      * @param source id of the specific caller probe (RM, Scheduler, etc.). */
     private synchronized void printDumpAndExit(NagiosReturnObject obj, int debuglevel, String source){
+    	String ret = "";
     	Throwable exc = obj.getException();
-        System.out.println(NAG_OUTPUT_PREFIX + obj.getWholeMessage());
+        ret = ret + NAG_OUTPUT_PREFIX + obj.getWholeFirstLineMessage() + "\n";
         
         if (obj.getErrorCode()!= RESULT_0_OK && arguments.isGiven("dump-script")){
 	        Dumper du = new Dumper(arguments.getStr("dump-script"), source);
@@ -236,11 +237,15 @@ public abstract class ElementalNagiosPlugin {
                 break;
             default:
                 if (exc!=null){
-	                exc.printStackTrace(System.out);
+	                String st = Misc.getStackTrace(exc);
+	                ret = ret + st;
                 }
                 break;
         }
         
+        ret = Misc.removeConflictCharacters(ret);
+        
+        System.out.print(ret);
         System.exit(obj.getErrorCode());
     }
     
