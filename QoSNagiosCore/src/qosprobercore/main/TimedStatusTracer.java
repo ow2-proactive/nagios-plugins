@@ -62,7 +62,7 @@ public class TimedStatusTracer {
 	/** 
 	 * Testing purposes. */
 	public static void main(String args[]) throws Exception{
-		Misc.log4jConfiguration(3);
+		Misc.log4jConfiguration(3, "log4j.properties");
 		TimedStatusTracer st = new TimedStatusTracer();
 		st.finishLastMeasurementAndStartNewOne("first", "status1 here");
 		Thread.sleep(1000); // Initializing part.

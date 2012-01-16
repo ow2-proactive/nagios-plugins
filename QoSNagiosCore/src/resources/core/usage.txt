@@ -7,7 +7,7 @@ GENERAL NAGIOS PLUGIN FLAGS
       Print the version of the plugin. 
 
    -v, --debug LEVELOFVERBOSITY
-      Verbose debugging mode level. The default value is 1. Value 3: the plugin will try to load 'log4j.properties' to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
+      Verbose debugging mode level. The default value is 1. Value 3: the plugin will try to load the log4j configuration file to know what and where to put the log messages. Value 0: silent mode. Values 1 and 2: verbose mode (shows stacktrace).
        
    -w, --warning WARNING
       In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status. It is important to note that the probe is not killed with this timeout.  
@@ -17,6 +17,9 @@ GENERAL NAGIOS PLUGIN FLAGS
      
    -S, --dump-script SCRIPT-PATH
       Path of a script that is executed whenever an abnormal (not 0 return code) is thrown by the probe. It helps to dump the situation of the entity tested.  
+      
+   -O --logconf LOG-CONFIG 
+      Path of the log4j configuration file (if not specified or does not exist, the default log4j.properties file will be used if it exists).  
       
 NAGIOS OUTPUT INTERPRETATION
 

@@ -38,6 +38,7 @@
 package qosprobercore.main;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.concurrent.*;
 
 import org.apache.commons.cli.MissingOptionException;
@@ -81,6 +82,7 @@ public abstract class ElementalNagiosPlugin {
 		args.addNewOption("w", "warning", true);												// Timeout in seconds for the warning message to be thrown.
 		args.addNewOption("c", "critical", true);												// Timeout in seconds for the job to be executed.
 		args.addNewOption("S", "dump-script" , true);											// Script to be executed in case of any problem. 
+		args.addNewOption("O", "logconf", true);												// Configuration file for log4j. 
 	}
 	
 	/**
@@ -96,13 +98,14 @@ public abstract class ElementalNagiosPlugin {
 			this.printMessageUsageAndExit(e.getMessage());
 		}
 
-		Misc.log4jConfiguration(getArgs().getInt("debug"));	// Loading log4j configuration. 
+		Misc.log4jConfiguration(getArgs().getInt("debug"), getArgs().getStr("logconf"));	// Loading log4j configuration. 
 		if (getArgs().getBoo("help") == true)	
 			this.printMessageUsageAndExit("");
 		if (getArgs().getBoo("version") == true)
 			ElementalNagiosPlugin.printVersionAndExit();
 		this.validateArguments(getArgs());				// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
 		getArgs().printArgumentsGiven();				// Print a list with the arguments given by the user. 
+		logger.info("Date: " + new Date());
 	}
 	
 	/** 

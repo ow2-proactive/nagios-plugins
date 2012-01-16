@@ -122,10 +122,10 @@ public class PAMRProber extends PANagiosPlugin{
         if (PAEnvironmentInitializer.usingPAConfigurationFile() == true){		
         								// Depending on whether there is a ProActive configuration file, these are
         								// the parameters that we send to the client to get connected to the same router.
-	        qosprober.misc.PAMRMisc.runNewJVM("-Xmx40m", Client.class.getName(), 
+	        qosprober.misc.PAMRMisc.runNewJVM("-Xmx80m", Client.class.getName(), 
 	        		serverurl + " " + getArgs().getStr("paconf") + " " + getArgs().getInt("critical"));
         }else{
-        	qosprober.misc.PAMRMisc.runNewJVM("-Xmx40m", Client.class.getName(), 
+        	qosprober.misc.PAMRMisc.runNewJVM("-Xmx80m", Client.class.getName(), 
         			serverurl + " " + getArgs().getStr("hostname") + " " + getArgs().getStr("port") + " " + getArgs().getInt("critical"));
         }
         logger.info("Done.");

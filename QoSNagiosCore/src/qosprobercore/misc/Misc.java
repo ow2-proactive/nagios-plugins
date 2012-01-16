@@ -109,14 +109,17 @@ public class Misc {
 	
 	/**
 	 * Configures de log4j module for logging.
-	 * @param debuglevel debug level (or verbosity level) to be used when loading log4j properties. */
-	public static void log4jConfiguration(int debuglevel){
+	 * @param debuglevel debug level (or verbosity level) to be used when loading log4j properties. 
+	 * @param givenlogfile path of the file where to put the logs, if null then log4j.properties will be used as default. */
+	public static void log4jConfiguration(int debuglevel, String givenlogfile){
 		System.setProperty("log4j.configuration", "");
+		String defaultlogfile = "log4j.properties";
 		if (debuglevel == PANagiosPlugin.DEBUG_LEVEL_3_USER){
 			// We load the log4j.properties file. 
-			File file = new File("log4j.properties");
-			if (file.exists() == true){
-				PropertyConfigurator.configure("log4j.properties");
+			if (givenlogfile != null && new File(givenlogfile).exists() == true){
+				PropertyConfigurator.configure(givenlogfile);
+			}else if (new File(defaultlogfile).exists() == true){
+				PropertyConfigurator.configure(defaultlogfile);
 			}else{
 				Properties properties = Misc.getVerboseLoggingProperties();
 				PropertyConfigurator.configure(properties);
