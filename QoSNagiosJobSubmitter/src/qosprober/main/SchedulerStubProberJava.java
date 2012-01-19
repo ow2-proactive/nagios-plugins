@@ -69,7 +69,7 @@ import qosprobercore.exceptions.InvalidProtocolException;
  * This class is specific for JAVAPA protocol. */
 public class SchedulerStubProberJava {
 	private boolean usePolling = false;									// Waiting through polling mechanism? (otherwise event based).
-	private static int POLLING_PERIOD_MS = 200;							// Polling period time (if polling is activated).
+	private static int POLLING_PERIOD_MS = 1500;						// Polling period time (if polling is activated).
 	private static Logger logger =
 			Logger.getLogger(SchedulerStubProberJava.class.getName()); 	// Logger.
 	private Scheduler schedulerStub; 									// Stub to the scheduler.

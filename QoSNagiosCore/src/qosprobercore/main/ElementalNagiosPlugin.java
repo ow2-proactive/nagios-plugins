@@ -104,8 +104,9 @@ public abstract class ElementalNagiosPlugin {
 		if (getArgs().getBoo("version") == true)
 			ElementalNagiosPlugin.printVersionAndExit();
 		this.validateArguments(getArgs());				// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
+		
+		logger.info(">>>> Date: " + new Date());		// Print the date in the logs.
 		getArgs().printArgumentsGiven();				// Print a list with the arguments given by the user. 
-		logger.info("Date: " + new Date());
 	}
 	
 	/** 
@@ -161,10 +162,13 @@ public abstract class ElementalNagiosPlugin {
 		try{ 								// We execute the future using a timeout. 
 			res = proberFuture.get(arguments.getInt("critical"), TimeUnit.SECONDS);
 		}catch(TimeoutException e){
+			logger.warn("Timeout Exception...");
 			res = getNagiosReturnObjectForTimeoutException(arguments.getInt("critical"), tracer, e);
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
+			logger.warn("Execution Exception: " + Misc.getStackTrace(e));
 			res = getNagiosReturnObjectForExecutionException(tracer, e);
 		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
+			logger.warn("Unknown Exception:" + Misc.getStackTrace(e));
 			res = new NagiosReturnObject(RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
 		}
@@ -186,10 +190,13 @@ public abstract class ElementalNagiosPlugin {
 		try{ 								// We execute the future using a timeout. 
 			res = this.probe(tracer);
 		}catch(TimeoutException e){
+			logger.warn("Timeout Exception...");
 			res = getNagiosReturnObjectForTimeoutException(arguments.getInt("critical"), tracer, e);
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
+			logger.warn("Execution Exception: " + Misc.getStackTrace(e));
 			res = getNagiosReturnObjectForExecutionException(tracer, e);
 		}catch(Exception e){ 				// There was an unexpected critical exception not captured. 
+			logger.warn("Unknown Exception:" + Misc.getStackTrace(e));
 			res = new NagiosReturnObject(RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
 		}
@@ -231,6 +238,7 @@ public abstract class ElementalNagiosPlugin {
         ret = ret + NAG_OUTPUT_PREFIX + obj.getWholeFirstLineMessage() + "\n";
         
         if (obj.getErrorCode()!= RESULT_0_OK && arguments.isGiven("dump-script")){
+        	logger.info("Dumping...");
 	        Dumper du = new Dumper(arguments.getStr("dump-script"), source);
 	        du.dump(obj);
         }
@@ -248,6 +256,8 @@ public abstract class ElementalNagiosPlugin {
         
         ret = Misc.removeConflictCharacters(ret);
         
+        logger.info(ret);
+        logger.info(">>>> Return code: " + obj.getErrorCode());
         System.out.print(ret);
         System.exit(obj.getErrorCode());
     }

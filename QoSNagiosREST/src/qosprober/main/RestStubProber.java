@@ -39,12 +39,14 @@ package qosprober.main;
 
 import java.net.URI;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.log4j.Logger;
 import java.io.IOException;
+import java.io.InputStream;
 
 /** 
  * Class that connects the test with the real scheduler, works as a stub. 
@@ -81,7 +83,7 @@ public class RestStubProber{
 	    methodLogin.addParameter("password", pass);
 	    HttpClient client = new HttpClient();
 	    client.executeMethod(methodLogin);
-	    sessionId = methodLogin.getResponseBodyAsString();
+	    sessionId = getResponseBodyAsString(methodLogin, 1024);
 	    logger.info("Logged in with sessionId: " + sessionId);
 	    logger.info("Done.");
 	}
@@ -97,7 +99,7 @@ public class RestStubProber{
 	    method.addRequestHeader("sessionid", sessionId);
 	    HttpClient client = new HttpClient();
 	    client.executeMethod(method);
-	    String response = method.getResponseBodyAsString();
+	    String response = getResponseBodyAsString(method, 1024);
 	    logger.info("IsConnected result: " + response);
 	    logger.info("Done.");
 		return Boolean.parseBoolean(response);
@@ -114,7 +116,7 @@ public class RestStubProber{
 	    method.addRequestHeader("sessionid", sessionId);
 	    HttpClient client = new HttpClient();
 	    client.executeMethod(method);
-	    String response = method.getResponseBodyAsString();
+	    String response = getResponseBodyAsString(method, 1024);
 	    logger.info("Version result: " + response);
 	    logger.info("Done.");
 		return response;
@@ -133,4 +135,14 @@ public class RestStubProber{
 	    logger.info("Done.");
 	}
 
+	private String getResponseBodyAsString(HttpMethodBase method, int maximumlength) throws IOException{
+		InputStream response = method.getResponseBodyAsStream();
+	    byte[] buffer = new byte[maximumlength];
+	    int total = response.read(buffer);
+	    if (total > 0){
+	    	return new String(buffer,0,total);
+	    }else{
+	    	return "<Nothing returned>";
+	    }
+	}
 }
