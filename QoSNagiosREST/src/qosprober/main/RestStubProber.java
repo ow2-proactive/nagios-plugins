@@ -135,6 +135,13 @@ public class RestStubProber{
 	    logger.info("Done.");
 	}
 
+	/** 
+	 * Get the Response Body of the method, as a String.
+	 * @param method method from where to extract the ResponseBody. 
+	 * @param maximumlength maximum number of characters to accept retrieve. 
+	 * @return the Response Body as a String. 
+	 * @throws IOException 
+	 * @throws HttpException */
 	private String getResponseBodyAsString(HttpMethodBase method, int maximumlength) throws IOException{
 		InputStream response = method.getResponseBodyAsStream();
 	    byte[] buffer = new byte[maximumlength];
