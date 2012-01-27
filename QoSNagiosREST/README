@@ -6,10 +6,13 @@ REST API Nagios probe.
 IMPORTANT: 
 To make it work remember to add to your JRE/JDK the certificate of the REST https server if needed.
 
-# To check the current set of certificates installed in this JRE/JDK
-(password by default: changeit)
-keytool -list -keystore ../../Projects/jdk1.6.0_16_x64/jre/lib/security/cacerts
-# Now we need to add our own certificate, so we do as following (where certificate-node0.cer is a file that we obtained from Firefox after accepting this certificate exception while trying to access to the https webpage given by the url):
-chmod +w Projects/jdk1.6.0_16_x64/jre/lib/security/cacerts
-keytool -import -alias myprivaterootnode0 -keystore ../../Projects/jdk1.6.0_16_x64/jre/lib/security/cacerts -file certificate-node0.cer
+PASSWORD used by the JRE/JDK to manage certificates (by default): changeit
+
+# Check the current set of certificates installed in this JRE/JDK:
+$ keytool -list -keystore ../jdk_path/jre/lib/security/cacerts
+
+# Add our own certificate:
+$ openssl s_client -connect HOST:PORT 2>&1 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > certificate.cer
+$ chmod +w ../jdk_path/jre/lib/security/cacerts
+$ keytool -import -alias myprivaterootnode -keystore ../jdk_path/jre/lib/security/cacerts -file certificate.cer
 

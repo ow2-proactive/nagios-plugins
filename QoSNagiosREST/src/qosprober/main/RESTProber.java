@@ -55,6 +55,7 @@ public class RESTProber extends ElementalNagiosPlugin{
 		args.addNewOption("u", "user", true);			// User.
 		args.addNewOption("p", "pass", true);			// Pass.
 		args.addNewOption("r", "url", true);			// Url of the Scheduler/RM.
+		args.addNewOption("A", "avoidlogin", false);	// Avoid login (result of the probe based only on the response of the REST API).  
 	}
 	
 	/**
@@ -72,8 +73,10 @@ public class RESTProber extends ElementalNagiosPlugin{
 		if (arguments.getStr("url").contains("scheduler") == false){
 			logger.warn("The URL seems to be incorrect since it does not contain the string 'scheduler'.");
 		}
-		arguments.checkIsGiven("user");
-		arguments.checkIsGiven("pass");
+		if (getArgs().getBoo("avoidlogin") == false){
+			arguments.checkIsGiven("user");
+			arguments.checkIsGiven("pass");
+		}
 	}
 	
 	/**
@@ -93,13 +96,21 @@ public class RESTProber extends ElementalNagiosPlugin{
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to the scheduler...");
 		
-		reststub.init(											// We get connected to the Scheduler.
-				getArgs().getStr("url"),  getArgs().getStr("user"), 
-				getArgs().getStr("pass"));	
+		reststub.connect(										// We get connected to the Scheduler.
+				getArgs().getStr("url"));	
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_transactions", "connected, asking isconnected and version...");
+		if (getArgs().getBoo("avoidlogin") == false){
+			reststub.login(											// We login in the Scheduler.
+					getArgs().getStr("user"), 
+					getArgs().getStr("pass"));	
+		}
 		
-		Boolean connected = reststub.isConnected();				// Check whether we are connected or not to the scheduler.
+		tracer.finishLastMeasurementAndStartNewOne("time_transactions", "connected, asking (isconnected and) version...");
+		
+		Boolean connected = false; 
+		if (getArgs().getBoo("avoidlogin") == false){
+			connected = reststub.isConnected();				// Check whether we are connected or not to the scheduler.
+		}
 		
 		String version = reststub.getVersion();					// Get the version of the REST API.
 		
@@ -111,11 +122,11 @@ public class RESTProber extends ElementalNagiosPlugin{
 	
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
 		
-		summary.addFact("Connected:" + connected);
-		logger.info("Version: " + version);
-		
-		if (connected == false)
-			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "COULD NOT CONNECT TO SCHEDULER"));
+		if (getArgs().getBoo("avoidlogin") == false){
+			summary.addFact("Connected:" + connected);
+			if (connected == false)
+				summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "COULD NOT CONNECT TO SCHEDULER"));
+		}
 		
 		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning"))
 			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING, "TOO SLOW"));

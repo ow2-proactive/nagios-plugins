@@ -25,3 +25,6 @@ Mandatory arguments to long options are mandatory for short options too.
       URL to be used to get connected to the Scheduler. 
       It should have a format like ' http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' 
       
+   -A, --avoidlogin
+      Avoid the login procedure (useful to isolate the test of the REST API from the Scheduler).  
+      If this flag is used, a failure in the login step of the Scheduler would not generate a critical status in this probe. 

@@ -68,16 +68,26 @@ public class RestStubProber{
 	/** 
 	 * Initialize the connection/session with the scheduler.
 	 * @param url, url of the scheduler for REST API. 
-	 * @param user, username to access the scheduler.
-	 * @param pass, password to access the scheduler. 
 	 * @throws IOException 
 	 * @throws HttpException */
-	public void init(String url, String user, String pass) throws HttpException, IOException {
+	public void connect(String url) throws HttpException, IOException {
 		if (url.endsWith("/")){
 			url = url.substring(0, url.length()-1);
 		}
 	    logger.info("Connecting at '" + url + "'...");
 	    uri = URI.create(url);
+	    logger.info("Done.");
+	}
+	
+	/** 
+	 * Initialize the connection/session with the scheduler.
+	 * @param url, url of the scheduler for REST API. 
+	 * @param user, username to access the scheduler.
+	 * @param pass, password to access the scheduler. 
+	 * @throws IOException 
+	 * @throws HttpException */
+	public void login(String user, String pass) throws HttpException, IOException {
+	    logger.info("Login...");
 	    PostMethod methodLogin = new PostMethod(uri.toString() + "/login");
 	    methodLogin.addParameter("username", user);
 	    methodLogin.addParameter("password", pass);
@@ -113,7 +123,9 @@ public class RestStubProber{
 	public String getVersion() throws HttpException, IOException{
 	    logger.info("Asking version...");
 	    GetMethod method = new GetMethod(uri.toString()+  "/version");
-	    method.addRequestHeader("sessionid", sessionId);
+	    if (sessionId != null){
+		    method.addRequestHeader("sessionid", sessionId);
+	    }
 	    HttpClient client = new HttpClient();
 	    client.executeMethod(method);
 	    String response = getResponseBodyAsString(method, 1024);
@@ -129,7 +141,9 @@ public class RestStubProber{
 	public void disconnect() throws HttpException, IOException{	
 	    logger.info("Disconnecting...");
 	    PutMethod method = new PutMethod(uri.toString() + "/disconnect");
-	    method.addRequestHeader("sessionid", sessionId);
+	    if (sessionId != null){
+		    method.addRequestHeader("sessionid", sessionId);
+	    }
 	    HttpClient client = new HttpClient();
 	    client.executeMethod(method);
 	    logger.info("Done.");
