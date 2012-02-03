@@ -1,4 +1,7 @@
 README
 ******
 
-Scheduler Nagios probe.
+PAMR Router Nagios probe.
+This probe tests whether the PAMR Router is up and running.   
+To ease its utilization, the script check_pamr_router is provided.
+For usage information, execute the probe with the flag --help

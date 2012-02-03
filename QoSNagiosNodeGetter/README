@@ -1,4 +1,7 @@
 README
 ******
 
-Scheduler Nagios probe.
+Resource Manager Nagios probe.
+This probe gets some resources from the Resource Manager to see if it is working properly or not.  
+To ease its utilization, the script check_node_obtaining is provided.
+For usage information, execute the probe with the flag --help

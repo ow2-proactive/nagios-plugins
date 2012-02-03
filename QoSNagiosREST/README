@@ -2,6 +2,9 @@ README
 ******
 
 REST API Nagios probe.
+This probe gets connected to the REST API of the scheduler.  
+To ease its utilization, the script check_rest_api is provided.
+For usage information, execute the probe with the flag --help
 
 IMPORTANT: 
 To make it work remember to add to your JRE/JDK the certificate of the REST https server if needed.

@@ -191,14 +191,14 @@ public class JobProber extends PANagiosPlugin{
 		if (getArgs().getBoo("rm-checking") == true){ 	// Checking of the RM activated.
 			RMState state = rmStateGetter.getQueryResult();
 			if (state == null){									// We still do not have any result.
-				ret = new NagiosReturnObject(RESULT_2_CRITICAL, "FREE NODES: UNKNOWN, TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+				ret = new NagiosReturnObject(RESULT_2_CRITICAL, "FREE RM NODES: UNKNOWN, TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 			}else{												// We already have a result.
 				Integer freenodes = state.getFreeNodesNumber();
-				logger.info("Free nodes: " + freenodes);
+				logger.info("RM Free nodes: " + freenodes);
 				if (freenodes == 0){							
-					ret = new NagiosReturnObject(RESULT_3_UNKNOWN, "NO FREE NODES, TIMEOUT OF " + getArgs().getInt("critical") + " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+					ret = new NagiosReturnObject(RESULT_3_UNKNOWN, "NO FREE RM NODES, TIMEOUT OF " + getArgs().getInt("critical") + " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 				}else{
-					ret = new NagiosReturnObject(RESULT_2_CRITICAL, "FREE NODES: " + freenodes + ", TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+					ret = new NagiosReturnObject(RESULT_2_CRITICAL, "RM FREE RM NODES: " + freenodes + ", TIMEOUT OF " + getArgs().getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
 				}
 			}
 		}else{											// Checking of the RM deactivated.

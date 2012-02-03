@@ -2,22 +2,20 @@ README
 ******
 
 Nagios plugins to monitor ProActive based grids.
-These plugins were developed in Java using as IDE Eclipse.
 
-LOCAL TEST
-***** ****
+The expected directories hierarchy of the monitoring platform (where Nagios is) should be as follows: 
 
-To start the whole project for local testing you need to do:
+- /local/home/nagios/ProActiveSymbolic -> ..somewhere/ProActiveScheduling-3.1.2_server/
 
-1. Start the Scheduler/RM.
-   cd ProActiveSchedulingResourcing-3.x.x_src
-          (but make sure it is compiled everything doing:
-              cd compile
-              ./build deploy.all
-          )
-   ./bin/unix/scheduler-start
+- /local/home/nagios/jdk -> ..somewhere/jdk1.6.0/
 
-2. Start the Apache server (REST API).
-   cd Projects/apache-tomcat-6.0.33
-   ./bin/startup.sh -security
+- /local/home/nagios/misc
+  `-- ProActiveConfiguration.xml -> ..somewhere/ProActiveConfiguration.xml
+
+- /local/home/nagios/paplugins
+  |-- plugin-pamr
+  |-- plugin-rest
+  |-- plugin-rm
+  `-- plugin-sched
+
 

@@ -140,9 +140,12 @@ public abstract class ElementalNagiosPlugin {
 	
 	/**
 	 * Start with the probing session.
-	 * This method kills automatically the probe process when a conclusion/result about the entity
+	 * This method kills automatically the probe Java process when a conclusion/result about the entity
 	 * tested has been obtained. 
-	 * The timeout mechanism is automatically handled by this method. */
+	 * The timeout mechanism is automatically handled by this method. It means that the probe(...) method
+	 * should not consider the case in which the test is taking longer than allowed by the timeout threshold. This
+	 * method will execute the probe(...) in such a way that an execution longer than the threshold will be automatically 
+	 * stopped and a TimeoutException will be thrown. */
 	final public void startProbeAndExit(){
 		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
 		
@@ -177,9 +180,11 @@ public abstract class ElementalNagiosPlugin {
 	
 	/**
 	 * Start with the probing session.
-	 * This method kills automatically the probe process when a conclusion/result about the entity
+	 * This method kills automatically the probe Java process when a conclusion/result about the entity
 	 * tested has been obtained. 
-	 * The timeout mechanism is NOT handled by this method. */
+	 * The timeout mechanism is NOT handled by this method. It means that a probe(...) method
+	 * taking longer than the timeout threshold should be stopped inside the probe(...) method itself and 
+	 * a TimeoutException should be thrown. */
 	final public void startProbeAndExitManualTimeout(){
 		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
 		

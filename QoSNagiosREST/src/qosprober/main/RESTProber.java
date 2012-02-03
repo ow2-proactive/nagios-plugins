@@ -113,6 +113,7 @@ public class RESTProber extends ElementalNagiosPlugin{
 		}
 		
 		String version = reststub.getVersion();					// Get the version of the REST API.
+	    logger.info("Version: " + version);
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_disconnection", "disconnecting...");
 		

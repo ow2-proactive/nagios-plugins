@@ -1,4 +1,7 @@
 README
 ******
 
-Scheduler Nagios probe.
+Scheduler Nagios probe.  
+This probe submits a job to the scheduler. 
+To ease its utilization, the script check_job_submission is provided.
+For usage information, execute the probe with the flag --help
