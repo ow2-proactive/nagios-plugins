@@ -38,8 +38,10 @@
 package qosprober.main;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -60,7 +62,7 @@ public class RMProber extends PANagiosPlugin{
 
 	private final ExecutorService THREAD_POOL = Executors.newSingleThreadExecutor(); 	// The rights to manage the RM nodes will be given to this thread.
 	private Runnable disconnectRunnable;												// Special mechanism to disconnect from RM (and unlock locked nodes)
-																						// even though a timeout is reached (best effort approach).
+	private RMStubProber rmStubProber;		
 	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
@@ -105,7 +107,6 @@ public class RMProber extends PANagiosPlugin{
 	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. 
 	 * @throws Exception */	 
 	public NagiosReturnObject probe(final TimedStatusTracer tracer) throws Exception{
-		Boolean timeout = false;
 		// We add some reference values to be printed later in the summary for Nagios.
 		tracer.addNewReference("timeout_threshold", new Double(getArgs().getInt("critical")));
 		if (getArgs().isGiven("warning")==true){ // If the warning flag was given, then show it.
@@ -114,44 +115,14 @@ public class RMProber extends PANagiosPlugin{
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
-		final RMStubProber rmstub = new RMStubProber();							// We get connected to the RM through this stub. 
+		RMStubProber rmstub = new RMStubProber();							// We get connected to the RM through this stub. 
+		this.rmStubProber = rmstub;
 		
 		this.setQuickDesconnectMechanism(rmstub);
 		
-		FutureTask<Object[]> task = new FutureTask<Object[]>(
-			new Callable<Object[]>(){
-				public Object[] call() throws Exception {
-					tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to RM...");
-					
-					rmstub.init(												// We get connected to the RM.
-						getArgs().getStr("url"),  getArgs().getStr("user"), 
-						getArgs().getStr("pass"));	
-	
-					tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "connected to RM, getting status...");
 		
-					int freenodes = rmstub.getRMState().getFreeNodesNumber();	// Get the amount of free nodes.
+		FutureTask<Object[]> task = getFutureTask(tracer);
 		
-					tracer.finishLastMeasurementAndStartNewOne("time_getting_nodes", "connected to RM, getting nodes...");
-		
-					NodeSet nodes = rmstub.getNodes(							// Request some nodes.
-						getArgs().getInt("nodesrequired")); 	
-					int obtainednodes = nodes.size();							// Get the amount of obtained nodes.
-					
-					tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "releasing nodes...");
-					
-			    	rmstub.releaseNodes(nodes);									// Release the nodes obtained.
-			
-					tracer.finishLastMeasurementAndStartNewOne("time_disconn", "disconnecting...");
-					
-			    	rmstub.disconnect();										// Disconnect from the Resource Manager.
-			    	
-					tracer.finishLastMeasurement();
-					
-					Object[] ret = {new Integer(freenodes), new Integer(obtainednodes)};
-			    	return ret; 
-				}
-			}
-		);
 		THREAD_POOL.execute(task);
 		
 		Integer obtainednodes = null;
@@ -159,15 +130,15 @@ public class RMProber extends PANagiosPlugin{
 		Object[] ret = null;
 		try{
 			ret = task.get(getArgs().getInt("critical"), TimeUnit.SECONDS);
+			
+//			ret = task.get(1700, TimeUnit.MILLISECONDS);
+			
 			freenodes     = (Integer)ret[0];
 			obtainednodes = (Integer)ret[1];
 		}catch(TimeoutException e){
-			task.cancel(true);
-			timeout = true;
-		}
-		
-		
-		if (timeout==true){
+			logger.info("A Timeout occurred...");
+			this.rmStubProber = null;
+			//task.cancel(true);
 			executeDisconnectMechanism();
 			throw new TimeoutException("TIMEOUT OF " + getArgs().getInt("critical") + " SEC.");
 		}
@@ -214,11 +185,60 @@ public class RMProber extends PANagiosPlugin{
 		return summary.getSummaryOfAllWithTimeAll(tracer);
 		
 	}
+	
+	public RMStubProber getRMStub(){
+		return rmStubProber;
+	}
+	
+	public FutureTask<Object[]> getFutureTask(final TimedStatusTracer tracer){
+		return new FutureTask<Object[]>(
+				
+			new Callable<Object[]>(){
+				public Object[] call() throws Exception {
+					tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to RM...");
+					
+					getRMStub().init(												// We get connected to the RM.
+						getArgs().getStr("url"),  getArgs().getStr("user"), 
+						getArgs().getStr("pass"));	
+	
+					tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "connected to RM, getting status...");
+		
+					int freenodes = getRMStub().getRMState().getFreeNodesNumber();	// Get the amount of free nodes.
+		
+					tracer.finishLastMeasurementAndStartNewOne("time_getting_nodes", "connected to RM, getting nodes...");
+		
+					NodeSet nodes = getRMStub().getNodes(							// Request some nodes.
+						getArgs().getInt("nodesrequired")); 	
+					int obtainednodes = nodes.size();							// Get the amount of obtained nodes.
+					
+					tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "releasing nodes...");
+					
+			    	getRMStub().releaseNodes(nodes);									// Release the nodes obtained.
+			
+					tracer.finishLastMeasurementAndStartNewOne("time_disconn", "disconnecting...");
+					
+			    	getRMStub().disconnect();										// Disconnect from the Resource Manager.
+			    	
+					tracer.finishLastMeasurement();
+					
+					Object[] ret = {new Integer(freenodes), new Integer(obtainednodes)};
+			    	return ret; 
+				}
+			}
+		);
+	}
 
 	/**
 	 * Execute a quick disconnection mechanism to release quickly all the nodes that were possibly obtained during the probe. */
 	public void executeDisconnectMechanism(){
-			THREAD_POOL.execute(disconnectRunnable);
+		logger.info("Executing DisconnectionMechanism...");
+		Future<?> future = THREAD_POOL.submit(disconnectRunnable);
+		try {
+			future.get();
+			logger.info("Done DisconnectionMechanism.");
+		} catch (Exception e) {
+			logger.info("DisconnectionMechanism failed...");
+		}
 	}
 	
 	/**
@@ -226,13 +246,19 @@ public class RMProber extends PANagiosPlugin{
 	 * possibly obtained during the probe.
 	 * @param stub stub of the RM that should be disconnected quickly. */
 	public void setQuickDesconnectMechanism(final RMStubProber stub){
-		Runnable disc = new Runnable(){
+		Runnable disc = new Runnable(){								// Runnable to perform the quick connection (no matter which thread with).
 			public void run(){
 		    	stub.quickDisconnect();								// Disconnect from the Resource Manager.
 			}
 		};
 		this.disconnectRunnable = disc;
-		Runtime.getRuntime().addShutdownHook(new Thread(disc));
+		
+		Runnable execdisc = new Runnable(){							// Runnable to ask the THREAD_POOL to execute the previous task.
+			public void run(){
+		    	executeDisconnectMechanism();						
+			}
+		};
+		Runtime.getRuntime().addShutdownHook(new Thread(execdisc)); // Connect the disconnection (THREAD_POOL executed) to the ShutdownHook. 
 	}
 	
 	/**

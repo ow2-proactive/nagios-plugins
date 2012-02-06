@@ -124,6 +124,6 @@ public class RMStubProber {
     	}catch(Exception e){
     		logger.info("Problem with quick disconnection: " + e.getMessage());
     	}
-    	logger.info("Done.");	
+    	logger.info("Done quick disconnection.");	
 	}
 }
