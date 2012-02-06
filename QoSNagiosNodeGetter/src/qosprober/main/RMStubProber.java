@@ -58,6 +58,7 @@ public class RMStubProber {
 	public static Logger logger = Logger.getLogger(RMProber.class.getName()); 	// Logger.
 	private ResourceManager rmStub; 											// ResourceManager locally.
 	
+	
 	public RMStubProber(){}
 	
 	/**
