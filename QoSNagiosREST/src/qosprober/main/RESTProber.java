@@ -92,14 +92,15 @@ public class RESTProber extends ElementalNagiosPlugin{
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
-		RestStubProber reststub = new RestStubProber();			// We create directly the stub prober.
+		RestStubProber reststub = new RestStubProber();				// We create directly the stub prober.
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to the scheduler...");
+		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to the server...");
 		
-		reststub.connect(										// We get connected to the Scheduler.
+		reststub.connect(											// We get connected to the server...
 				getArgs().getStr("url"));	
 		
 		if (getArgs().getBoo("avoidlogin") == false){
+			tracer.finishLastMeasurementAndStartNewOne("time_login", "performing login to the scheduler...");
 			reststub.login(											// We login in the Scheduler.
 					getArgs().getStr("user"), 
 					getArgs().getStr("pass"));	
@@ -109,15 +110,16 @@ public class RESTProber extends ElementalNagiosPlugin{
 		
 		Boolean connected = false; 
 		if (getArgs().getBoo("avoidlogin") == false){
-			connected = reststub.isConnected();				// Check whether we are connected or not to the scheduler.
+			connected = reststub.isConnected();						// Check whether we are connected or not to the scheduler.
 		}
 		
-		String version = reststub.getVersion();					// Get the version of the REST API.
+		String version = reststub.getVersion();						// Get the version of the REST API.
 	    logger.info("Version: " + version);
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_disconnection", "disconnecting...");
-		
-		reststub.disconnect();									// Getting disconnected from the Scheduler.
+		if (getArgs().getBoo("avoidlogin") == false){
+			tracer.finishLastMeasurementAndStartNewOne("time_disconnection", "disconnecting...");
+			reststub.disconnect();									// Getting disconnected from the Scheduler.
+		}
 		
 		tracer.finishLastMeasurement();
 	
