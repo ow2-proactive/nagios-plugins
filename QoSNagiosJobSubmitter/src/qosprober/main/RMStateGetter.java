@@ -58,6 +58,7 @@ public class RMStateGetter {
 	private ResourceManager rmStub; 												// ResourceManager locally.
 	private Future<RMState> future;													// Future output of the RMStateGetter.
 	
+	ExecutorService THREAD_POOL = Executors.newFixedThreadPool(1);
 	/**
 	 * Constructor of the RM State Getter class.
 	 * @param url url of the RM.
@@ -80,8 +81,7 @@ public class RMStateGetter {
 				return ret;
 			}
 		};
-		ExecutorService executor = Executors.newFixedThreadPool(1);
-		future = executor.submit(task);
+		future = THREAD_POOL.submit(task);
 	}
 	
 	/**

@@ -46,6 +46,7 @@ import qosprobercore.main.NagiosMiniStatus;
 import qosprobercore.main.PANagiosPlugin;
 import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.NagiosReturnObject;
+import qosprobercore.main.RemainingTime;
 import qosprobercore.main.TimedStatusTracer;
 
 /** 
@@ -64,6 +65,7 @@ public class JobProber extends PANagiosPlugin{
 	
 	private RMStateGetter rmStateGetter; 			// Used to find out the number of free nodes, and prevent telling critical
 													// errors because of timeout when actually there are no free nodes but everything is okay.
+	private boolean quickDisconnectionEnabled = true;
 	
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
@@ -119,48 +121,51 @@ public class JobProber extends PANagiosPlugin{
 		if (getArgs().isGiven("warning")==true) // If the warning flag was given, then show it.
 			tracer.addNewReference("time_all_warning_threshold", new Double(getArgs().getInt("warning")));
 		
-	
 		String jobname = getArgs().getStr("jobname");							// Name of the job to be submitted to the scheduler.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
-		SchedulerStubProberJava schedulerstub = new SchedulerStubProberJava();	// We create directly the stub prober.
+		RemainingTime rt = new RemainingTime(getArgs().getInt("critical") * 1000);
+		
+		SchedulerThroughSingleThread schedulerstub = new SchedulerThroughSingleThread();	// We create directly the stub prober.
+		
+		this.setQuickDesconnectMechanism(schedulerstub);
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to the scheduler...");
 		
 		schedulerstub.init(														// We get connected to the Scheduler.
 				getArgs().getStr("url"),  getArgs().getStr("user"), 
-				getArgs().getStr("pass"), getArgs().getBoo("polling"));	
+				getArgs().getStr("pass"), getArgs().getBoo("polling"), rt.getRemainingTimeWE());	
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_removing_old_jobs", "connected, removing old jobs...");	
 		
 		schedulerstub.removeOldProbeJobs(										// Removal of old probe jobs.
-				jobname,getArgs().getBoo("deleteallold"));
+				jobname,getArgs().getBoo("deleteallold"), rt.getRemainingTimeWE());
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_submission", "connected, submitting job...");
 	
 		String jobId = schedulerstub.submitJob(									// Submission of the job.
-				jobname, JobProber.TASK_CLASS_NAME, getArgs().getBoo("highpriority"));	
+				jobname, JobProber.TASK_CLASS_NAME, getArgs().getBoo("highpriority"), 
+				rt.getRemainingTimeWE());	
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_execution", "job " + jobId + " submitted, waiting for its execution...");
 		
-		schedulerstub.waitUntilJobFinishes(jobId); 								// Wait for the job to finish.
+		schedulerstub.waitUntilJobFinishes(jobId, rt.getRemainingTimeWE());		// Wait for the job to finish.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_retrieval", "job " + jobId + " executed, getting its output...");
 		
-		String jresult = schedulerstub.getJobResult(jobId); 					// Getting the result of the submitted job.
+		String jresult = schedulerstub.getJobResult(jobId, rt.getRemainingTimeWE()); // Getting the result of the submitted job.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_removal", "output obtained, removing job...");
 	
-		schedulerstub.removeJob(jobId);											// Job removed from the list of jobs in the Scheduler.
+		schedulerstub.removeJob(jobId, rt.getRemainingTimeWE());					// Job removed from the list of jobs in the Scheduler.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_disconn", "job removed, disconnecting...");
 		
-		schedulerstub.disconnect();												// Getting disconnected from the Scheduler.
+		schedulerstub.disconnect(rt.getRemainingTimeWE());							// Getting disconnected from the Scheduler.
 		
 		tracer.finishLastMeasurement();
 	
-		
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
 		summary.addFact("JOBID " + jobId + ":" + jobname);
 		
@@ -176,12 +181,44 @@ public class JobProber extends PANagiosPlugin{
 		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning"))
 			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING, "TOO SLOW"));
 		
-		if (summary.isAllOkay())
+		if (summary.isAllOkay()){
 			summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, "OK"));
+			this.disableQuickDisconnectionHook();
+		}	
 		
 		return summary.getSummaryOfAllWithTimeAll(tracer);
 	}
 	
+	
+	public void disableQuickDisconnectionHook(){
+		quickDisconnectionEnabled = false;
+	}
+
+	public boolean isQuickDisconnectionHookEnabled(){
+		return quickDisconnectionEnabled;
+	}
+	
+	/**
+	 * Configure all what is needed to be able to execute the quick disconnection mechanism to release quickly all the nodes that were
+	 * possibly obtained during the probe.
+	 * @param stub stub of the RM that should be disconnected quickly. */
+	public void setQuickDesconnectMechanism(final SchedulerThroughSingleThread stub){
+		Runnable disc = new Runnable(){								// Runnable to perform the quick connection (no matter which thread with).
+			public void run(){
+				try{
+					if (isQuickDisconnectionHookEnabled()){
+				    	stub.disconnect(5*1000);				// Disconnect from the Scheduler.
+					}else{
+						logger.info("Quick Disconnection is not needed.");
+					}
+				}catch(Exception e){
+					logger.warn("Faled while performing quickDisconnect..." + e);
+				}
+			}
+		};
+		
+		Runtime.getRuntime().addShutdownHook(new Thread(disc)); // Connect the disconnection (THREAD_POOL executed) to the ShutdownHook. 
+	}
 	
 	/**
 	 * We rewrite the method since the output depends on whether we haver or not some RM results. */
@@ -216,6 +253,6 @@ public class JobProber extends PANagiosPlugin{
         Arguments options = new Arguments(args);
 		JobProber prob = new JobProber(options);													// Create the prober.
 		prob.initializeProber();
-		prob.startProbeAndExit();																	// Start the probe.
+		prob.startProbeAndExitManualTimeout();														// Start the probe.
 	}
 }
