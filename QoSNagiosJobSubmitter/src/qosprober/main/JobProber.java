@@ -163,6 +163,7 @@ public class JobProber extends PANagiosPlugin{
 		tracer.finishLastMeasurementAndStartNewOne("time_disconn", "job removed, disconnecting...");
 		
 		schedulerstub.disconnect(rt.getRemainingTimeWE());							// Getting disconnected from the Scheduler.
+		this.disableQuickDisconnectionHook();										// Having reached this point, no need to disconnect anymore.
 		
 		tracer.finishLastMeasurement();
 	
@@ -183,7 +184,6 @@ public class JobProber extends PANagiosPlugin{
 		
 		if (summary.isAllOkay()){
 			summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, "OK"));
-			this.disableQuickDisconnectionHook();
 		}	
 		
 		return summary.getSummaryOfAllWithTimeAll(tracer);
@@ -191,6 +191,7 @@ public class JobProber extends PANagiosPlugin{
 	
 	
 	public void disableQuickDisconnectionHook(){
+		logger.info("Disabled disconnection hook.");
 		quickDisconnectionEnabled = false;
 	}
 

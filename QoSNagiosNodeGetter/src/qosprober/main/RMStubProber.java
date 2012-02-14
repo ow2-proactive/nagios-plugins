@@ -110,10 +110,12 @@ public class RMStubProber {
 
 	/**
 	 * Disconnect from the Resource Manager. */
-	public void disconnect(){
+	public boolean disconnect(){
     	logger.info("Disconnecting...");					// Disconnecting from RM.
 		BooleanWrapper ret = rmStub.disconnect();
-    	logger.info("Done (returned '" + ret + "').");	
+		boolean retu = ret.getBooleanValue();
+    	logger.info("Done (returned '" + ret + "' '"+retu+"').");	
+    	return retu;
 	}
 	
 	/**

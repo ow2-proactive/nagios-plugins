@@ -107,22 +107,22 @@ public class RMThroughSingleThread {
 			}                                                                    
 		};                                                                       
 		FutureTask<RMState> task = new FutureTask<RMState>(callab);                                                                                   
-//		RMState ret = (RMState) THREAD_POOL.submit(task).get(timeoutms, TimeUnit.MILLISECONDS);
 		THREAD_POOL.execute(task);
 		RMState ret = task.get(timeoutms, TimeUnit.MILLISECONDS);
 		return ret; 
 	}
 	
-	public void disconnect(long timeoutms) throws InterruptedException, ExecutionException, TimeoutException{
-		Callable<Object> callab = new Callable<Object>(){                                                    
-			public Object call() throws Exception{                            
-				rmstub.disconnect();                           
-				return null;
+	public Boolean disconnect(long timeoutms) throws InterruptedException, ExecutionException, TimeoutException{
+		Callable<Boolean> callab = new Callable<Boolean>(){                                                    
+			public Boolean call() throws Exception{                            
+				Boolean ret = rmstub.disconnect();                           
+				return ret;
 			}                                                                    
 		};                                                                       
-		FutureTask<Object> task = new FutureTask<Object>(callab);                                                                                   
+		FutureTask<Boolean> task = new FutureTask<Boolean>(callab);                                                                                   
 		THREAD_POOL.execute(task);
-		task.get(timeoutms, TimeUnit.MILLISECONDS);
+		Boolean ret = task.get(timeoutms, TimeUnit.MILLISECONDS);
+		return ret;
 	}
 	
 	public void quickDisconnect(long timeoutms) throws InterruptedException, ExecutionException, TimeoutException{

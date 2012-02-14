@@ -134,7 +134,10 @@ public class RMProber extends PANagiosPlugin{
 			
 		tracer.finishLastMeasurementAndStartNewOne("time_disconn", "disconnecting...");
 					
-    	rmstub.disconnect(rt.getRemainingTimeWE());											// Disconnect from the Resource Manager.
+    	Boolean disc = rmstub.disconnect(rt.getRemainingTimeWE());											// Disconnect from the Resource Manager.
+    	if (disc == true){
+			disableQuickDisconnectionHook();																// No need to try to disconnect again if it already went okay.
+    	}
 			    	
 		tracer.finishLastMeasurement();
 					
@@ -175,7 +178,6 @@ public class RMProber extends PANagiosPlugin{
 		
 		if (summary.isAllOkay() == true){
 			summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, "OK"));
-			disableQuickDisconnectionHook();
 		}
 		
 		return summary.getSummaryOfAllWithTimeAll(tracer);
@@ -183,6 +185,7 @@ public class RMProber extends PANagiosPlugin{
 	}
 	
 	public void disableQuickDisconnectionHook(){
+		logger.info("Disabled disconnection hook.");
 		quickDisconnectionEnabled = false;
 	}
 

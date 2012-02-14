@@ -93,13 +93,13 @@ public class SchedulerStubProberJava {
         Credentials cred = Credentials.createCredentials(new CredData(user, pass), auth.getPublicKey());
         schedulerStub = auth.login(cred);
         logger.info("Done.");
-        logger.info("Completing connection...");
-        SchedulerEventsListener aa = PAActiveObject.newActive(SchedulerEventsListener.class, new Object[]{}); 
         usePolling = polling;
         if (usePolling == false){
+	        logger.info("Completing connection regarding listeners...");
+	        SchedulerEventsListener aa = PAActiveObject.newActive(SchedulerEventsListener.class, new Object[]{}); 
 	        schedulerStub.addEventListener((SchedulerEventsListener) aa, true);
+	        logger.info("Done.");
         }
-        logger.info("Done.");
 	}
 	
 	
@@ -133,7 +133,6 @@ public class SchedulerStubProberJava {
 			return null;
 		}
 	}
-	
 	
 	/**
 	 * Get the result of the job. 
@@ -218,15 +217,23 @@ public class SchedulerStubProberJava {
 	 * @return the status of the job. */
 	public JobStatus getJobStatus(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{
 		return schedulerStub.getJobState(jobId).getStatus();
-	} /** 
+	} 
+	
+	/** 
 	 * Kill and remove the job from the Scheduler. No leftovers of the job in the server.
 	 * This is specially useful to delete the probe job, so we do not contaminate what the administrator sees.
 	 * @param jobId, the ID of the job. */
 	public void forceJobKillingAndRemoval(String jobId) throws Exception, NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
-		schedulerStub.killJob(jobId);
-		schedulerStub.removeJob(jobId);
+		boolean killed = schedulerStub.killJob(jobId);
+		if (killed == false){
+			throw new Exception("Can't kill job " + jobId + ".");
+		}
+		
+		boolean removed = schedulerStub.removeJob(jobId);
+		if (removed == false){
+			throw new Exception("Can't remove job " + jobId + ".");
+		}
 	}
-	
 	
 	/** 
 	 * Remove the job from the Scheduler (only in case it is finished).
@@ -234,10 +241,11 @@ public class SchedulerStubProberJava {
 	 * @param jobId, the ID of the job. */
 	public void removeJob(String jobId) throws Exception, NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
 		logger.info("Removing job "+ jobId + "...");
-		schedulerStub.removeJob(jobId);
-		logger.info("Done.");
+		boolean removed = schedulerStub.removeJob(jobId);
+		logger.info("Done (returned '"+removed+"').");
+		if (removed == false) 
+			throw new Exception("Can't remove job " + jobId + ".");
 	}
-	
 	
 	/** 
 	 * Disconnect from the Scheduler. */
@@ -252,7 +260,7 @@ public class SchedulerStubProberJava {
 	 * of the scheduler (my jobs only). */
 	public Vector<String> getAllCurrentJobsList(String jobname) throws NotConnectedException, PermissionException{
 		
-		logger.debug("\tGetting list of jobs...");
+		logger.info("\t\tGetting list of jobs...");
 		
 		if (jobname == null){
 			throw new IllegalArgumentException("'jobname' argument cannot be null");
@@ -263,14 +271,16 @@ public class SchedulerStubProberJava {
 		Vector<JobState> vector = new Vector<JobState>();
 		
 		vector.addAll(st.getPendingJobs());
+		printJobs(st.getPendingJobs(), "\t\t- Pending jobs");
 		vector.addAll(st.getRunningJobs());
+		printJobs(st.getRunningJobs(), "\t\t- Running jobs");
 		vector.addAll(st.getFinishedJobs());
+		printJobs(st.getFinishedJobs(), "\t\t- Finished jobs");
 		
 		Vector<String> jobs = new Vector<String>(); 
 		
 		for(JobState j: vector){
 			logger.debug("\tcomparing " + jobname + " with " + j.getName() + "...");
-			
 			if (j.getName().equals(jobname) || jobname.equals("*")){
 				jobs.add(j.getId().value());
 				logger.debug("\t\tyes!");
@@ -281,6 +291,13 @@ public class SchedulerStubProberJava {
 		return jobs;
 	}
 
+	public void printJobs(Vector<JobState> jobs, String label){
+		logger.info(label);
+		for (JobState j: jobs){
+			logger.info("\t\t\t   - " + j.getName() + ":" + j.getId());
+		}
+	}
+	
 	// Removal of old probe jobs. 
 	public void removeOldProbeJobs(String jobname, boolean deleteallold) throws UnknownJobException, InvalidProtocolException, Exception{
 		Vector<String> schedulerjobs;
@@ -292,6 +309,7 @@ public class SchedulerStubProberJava {
 			schedulerjobs = getAllCurrentJobsList(jobname);	// Get all jobs with the same name as this probe job.
 		}
 		
+		// We check the jobs in the Scheduler to make sure all old jobs were removed. 
 		if (schedulerjobs.size()>0){
 			logger.info("\tThere are old jobs...");
 			for(String jobb:schedulerjobs){
@@ -301,12 +319,15 @@ public class SchedulerStubProberJava {
 				waitUntilJobIsCleaned(jobb); // Wait until either job's end or removal.
 				logger.info("\tDone.");
 			}
+			
+			logger.info("\tAll old jobs are supposed to be removed now... Rechecking...");
+			
+			schedulerjobs = getAllCurrentJobsList(jobname);
+			if (schedulerjobs.size()!=0){
+				throw new Exception("ERROR (not possible to remove all previous '"+jobname+"' probe jobs in the scheduler)");
+			}
 		}else{
 			logger.info("\tThere are no old jobs...");
-		}
-		schedulerjobs = getAllCurrentJobsList(jobname);
-		if (schedulerjobs.size()!=0){
-			throw new Exception("ERROR (not possible to remove all previous '"+jobname+"' probe jobs in the scheduler)");
 		}
 		logger.info("Done.");
 	}	
