@@ -49,7 +49,7 @@ import qosprobercore.misc.Misc;
 /**
  * Class to be inherited by any Elemental Nagios plugin. */
 public abstract class ElementalNagiosPlugin {
-	public static final String NAG_OUTPUT_PREFIX = "SERVICE STATUS: ";
+	public static final String NAG_OUTPUT_PREFIX = "";
 	
 	// Nagios exit codes.
 	public static final Integer RESULT_0_OK = 0; 		// Nagios code. Execution successfully. 
@@ -215,7 +215,7 @@ public abstract class ElementalNagiosPlugin {
 	 * @param e as useful data to generate the message.
 	 * @return the NagiosReturnObject generated. */
 	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer timeout, TimedStatusTracer tracer, Exception e){
-		NagiosReturnObject ret = new NagiosReturnObject(RESULT_2_CRITICAL, "TIMEOUT OF " + arguments.getInt("critical")+ " SEC. (last status: " + tracer.getLastStatusDescription() + ")", e);
+		NagiosReturnObject ret = new NagiosReturnObject(RESULT_2_CRITICAL, "timeout of " + arguments.getInt("critical")+ " sec. (" + tracer.getLastStatusDescription() + ")", e);
 		ret.addCurvesSection(tracer, null);
 		return ret;
 	}

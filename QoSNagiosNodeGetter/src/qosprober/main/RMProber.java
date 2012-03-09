@@ -106,33 +106,33 @@ public class RMProber extends PANagiosPlugin{
 		
 		RemainingTime rt = new RemainingTime(getArgs().getInt("critical") * 1000);
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
+		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "timeout reached while initializing the probe...");
 		
 		RMThroughSingleThread rmstub = new RMThroughSingleThread();							// We get connected to the RM through this stub. 
 		
 		this.setQuickDesconnectMechanism(rmstub);
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to RM...");
+		tracer.finishLastMeasurementAndStartNewOne("time_connection", "timeout reached while trying to connect to the RM...");
 					
 		rmstub.init(																		// We get connected to the RM.
 			getArgs().getStr("url"),  getArgs().getStr("user"), 
 			getArgs().getStr("pass"), rt.getRemainingTimeWE());	
 	
-		tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "connected to RM, getting status...");
+		tracer.finishLastMeasurementAndStartNewOne("time_getting_status", "timeout reached while trying to get the amount of free nodes in the RM...");
 
 		int freenodes = rmstub.getRMState(rt.getRemainingTimeWE()).getFreeNodesNumber();	// Get the amount of free nodes.
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_getting_nodes", "connected to RM, getting nodes...");
+		tracer.finishLastMeasurementAndStartNewOne("time_getting_nodes", "timeout reached while trying to lock nodes from the RM...");
 		
 		NodeSet nodes = rmstub.getNodes(													// Request some nodes.
 			getArgs().getInt("nodesrequired"), rt.getRemainingTimeWE()); 	
 		int obtainednodes = nodes.size();													// Get the amount of obtained nodes.
 					
-		tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "releasing nodes...");
+		tracer.finishLastMeasurementAndStartNewOne("time_releasing_nodes", "timeout reached while trying to release the nodes locked from the RM...");
 					
     	rmstub.releaseNodes(nodes, rt.getRemainingTimeWE());								// Release the nodes obtained.
 			
-		tracer.finishLastMeasurementAndStartNewOne("time_disconn", "disconnecting...");
+		tracer.finishLastMeasurementAndStartNewOne("time_disconn", "timeout reached while trying to disconnect from the RM...");
 					
     	Boolean disc = rmstub.disconnect(rt.getRemainingTimeWE());											// Disconnect from the Resource Manager.
     	if (disc == true){
@@ -155,9 +155,9 @@ public class RMProber extends PANagiosPlugin{
 		
 		
 		if (obtainednodes < getArgs().getInt("nodescritical")){								// Fewer nodes than criticalnodes.	
-			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "TOO FEW NODES OBTAINED"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "the amount of nodes obtained was less than the amount of nodes required"));
 		}else if (obtainednodes < getArgs().getInt("nodeswarning")){						// Fewer nodes than warningnodes.	
-			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING,  "TOO FEW NODES OBTAINED"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING,  "the amount of nodes obtained was less than the amount of nodes required"));
 		}
 		
 		// Having F free nodes, if W is the number of wanted nodes, I should get the min(F, W). 
@@ -165,15 +165,15 @@ public class RMProber extends PANagiosPlugin{
 		if (obtainednodes < Math.min(freenodes, nodesrequired)){
 			summary.addMiniStatus(
 					new NagiosMiniStatus(
-							RESULT_2_CRITICAL, "PROBLEM: NODES (OBTAINED/REQUIRED/FREE)=("+obtainednodes+"/"+nodesrequired+"/"+freenodes+")"));
+							RESULT_2_CRITICAL, "problem: nodes (obtained/required/free)=("+obtainednodes+"/"+nodesrequired+"/"+freenodes+")"));
 		}
 		
 		if (getArgs().isGiven("warning") && time_all > getArgs().getInt("warning")){		// It took longer than timeoutwarnsec.
-			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING, "NODE/S OBTAINED TOO SLOWLY"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING, "node/s obtained but too slowly"));
 		}																					// Everything was okay.
 		
 		if (freenodes == 0){
-			summary.addMiniStatus(new NagiosMiniStatus(RESULT_3_UNKNOWN, "NO FREE NODES"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_3_UNKNOWN, "there are no free nodes"));
 		}	
 		
 		if (summary.isAllOkay() == true){

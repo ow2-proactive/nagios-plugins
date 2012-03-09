@@ -95,12 +95,12 @@ public class PAMRProber extends PANagiosPlugin{
     	String serverurl = null;
     	Server server = null;
     
-		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
+		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "timeout reached while initializing the probe...");
     	
         // Creates an active object for the server
         server = org.objectweb.proactive.api.PAActiveObject.newActive(Server.class, null);
         
-		tracer.finishLastMeasurementAndStartNewOne("time_registering_server", "probe initialized, registering the server...");
+		tracer.finishLastMeasurementAndStartNewOne("time_registering_server", "timeout reached while registering the server...");
         
         logger.info("Registering server...");
         org.objectweb.proactive.api.PAActiveObject.registerByName(server, SERVER_NAME);
@@ -110,7 +110,7 @@ public class PAMRProber extends PANagiosPlugin{
         serverurl = PREFIX_URL + PAMRMisc.getResourceNumberFromURL(url) + "/" + SERVER_NAME;
         logger.info(">>> Server standard URL: "+ serverurl);
         
-		tracer.finishLastMeasurementAndStartNewOne("time_executing_client", "server registered, running client...");
+		tracer.finishLastMeasurementAndStartNewOne("time_executing_client", "timeout reached while executing the client active object...");
        
         // Now we are ready to run the client. It needs to get connected to the same PAMR router, and afterwards contact
         // this just initialized server. About the initialization of the client, there are 2 possible argument-format 
@@ -130,7 +130,7 @@ public class PAMRProber extends PANagiosPlugin{
         }
         logger.info("Done.");
         
-		tracer.finishLastMeasurementAndStartNewOne("time_waiting_message", "waiting interaction between Active objects...");
+		tracer.finishLastMeasurementAndStartNewOne("time_waiting_message", "timeout reached while waiting for the communication between both active object launched...");
         
         logger.info("Waiting for the client's message...");
         

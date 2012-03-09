@@ -123,7 +123,7 @@ public class JobProber extends PANagiosPlugin{
 		
 		String jobname = getArgs().getStr("jobname");							// Name of the job to be submitted to the scheduler.
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
+		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "timeout reached while trying to initialize the probe...");
 		
 		RemainingTime rt = new RemainingTime(getArgs().getInt("critical") * 1000);
 		
@@ -131,36 +131,36 @@ public class JobProber extends PANagiosPlugin{
 		
 		this.setQuickDesconnectMechanism(schedulerstub);
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_connection", "connecting to the scheduler...");
+		tracer.finishLastMeasurementAndStartNewOne("time_connection", "timeout reached while trying to login to the scheduler...");
 		
 		schedulerstub.init(														// We get connected to the Scheduler.
 				getArgs().getStr("url"),  getArgs().getStr("user"), 
 				getArgs().getStr("pass"), getArgs().getBoo("polling"), rt.getRemainingTimeWE());	
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_removing_old_jobs", "connected, removing old jobs...");	
+		tracer.finishLastMeasurementAndStartNewOne("time_removing_old_jobs", "connected to the scheduler, but timeout reached while trying to remove jobs of older executions of this same probe...");	
 		
 		schedulerstub.removeOldProbeJobs(										// Removal of old probe jobs.
 				jobname,getArgs().getBoo("deleteallold"), rt.getRemainingTimeWE());
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_submission", "connected, submitting job...");
+		tracer.finishLastMeasurementAndStartNewOne("time_submission", "connected to the scheduler, but timeout reached while performing the submission of the job...");
 	
 		String jobId = schedulerstub.submitJob(									// Submission of the job.
 				jobname, JobProber.TASK_CLASS_NAME, getArgs().getBoo("highpriority"), 
 				rt.getRemainingTimeWE());	
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_execution", "job " + jobId + " submitted, waiting for its execution...");
+		tracer.finishLastMeasurementAndStartNewOne("time_execution", "timeout reached while waiting for the execution of the job " + jobId + " submitted...");
 		
 		schedulerstub.waitUntilJobFinishes(jobId, rt.getRemainingTimeWE());		// Wait for the job to finish.
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_retrieval", "job " + jobId + " executed, getting its output...");
+		tracer.finishLastMeasurementAndStartNewOne("time_retrieval", "timeout reached while trying to get the output of the finished probe job " + jobId + "...");
 		
 		String jresult = schedulerstub.getJobResult(jobId, rt.getRemainingTimeWE()); // Getting the result of the submitted job.
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_removal", "output obtained, removing job...");
+		tracer.finishLastMeasurementAndStartNewOne("time_removal", "timeout reached while trying to remove the probe job executed...");
 	
 		schedulerstub.removeJob(jobId, rt.getRemainingTimeWE());					// Job removed from the list of jobs in the Scheduler.
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_disconn", "job removed, disconnecting...");
+		tracer.finishLastMeasurementAndStartNewOne("time_disconn", "timeout reached while trying to disconnect from the scheduler...");
 		
 		schedulerstub.disconnect(rt.getRemainingTimeWE());							// Getting disconnected from the Scheduler.
 		this.disableQuickDisconnectionHook();										// Having reached this point, no need to disconnect anymore.
