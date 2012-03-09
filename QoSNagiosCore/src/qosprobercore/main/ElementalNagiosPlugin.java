@@ -47,7 +47,20 @@ import org.apache.log4j.Logger;
 import qosprobercore.misc.Misc;
 
 /**
- * Class to be inherited by any Elemental Nagios plugin. */
+ * Class to be inherited by any Elemental Nagios plugin. 
+ * It provides: 
+ * - definitions for Nagios exit codes, levels of verbosity, etc.  
+ * - a default logging mechanism using log4j. 
+ * - command line parameters parsing and validation for the common Nagios parameters, like help, version, etc. 
+ * 
+ * Any probe must implement:
+ * - construction (specifying format of the command-line arguments expected)
+ * - validateArguments (  
+ * - initializeProbe (validation of the command-line arguments and initialization of whatever is needed for the probe before real probing)
+ * - execution (probing situation, under timeout constraints)
+ * 
+ * 
+ * */
 public abstract class ElementalNagiosPlugin {
 	public static final String NAG_OUTPUT_PREFIX = "";
 	
@@ -87,8 +100,7 @@ public abstract class ElementalNagiosPlugin {
 	
 	/**
 	 * Specific initialization for the probe. 
-	 * This method can be overwritten, but must be called during initialization.
-	 * @param arg arguments/parameters to initialize the probe. */
+	 * This method can be overwritten, but must be called during initialization. */
 	public void initializeProber() throws Exception{ 
 		try{
 			getArgs().parseAll();
@@ -98,15 +110,16 @@ public abstract class ElementalNagiosPlugin {
 			this.printMessageUsageAndExit(e.getMessage());
 		}
 
+		logger.info(">>>> Date: " + new Date());		// Print the date in the logs.
+		getArgs().printArgumentsGiven();				// Print a list with the arguments given by the user. 
+		
+		this.validateArguments(getArgs());				// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
+		
 		Misc.log4jConfiguration(getArgs().getInt("debug"), getArgs().getStr("logconf"));	// Loading log4j configuration. 
 		if (getArgs().getBoo("help") == true)	
 			this.printMessageUsageAndExit("");
 		if (getArgs().getBoo("version") == true)
 			ElementalNagiosPlugin.printVersionAndExit();
-		this.validateArguments(getArgs());				// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
-		
-		logger.info(">>>> Date: " + new Date());		// Print the date in the logs.
-		getArgs().printArgumentsGiven();				// Print a list with the arguments given by the user. 
 	}
 	
 	/** 
@@ -114,7 +127,7 @@ public abstract class ElementalNagiosPlugin {
 	 * This method can be overwritten, but must be called during validation.
 	 * @param args arguments to be validated.
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments(Arguments args) throws IllegalArgumentException{
+	private void validateArguments(Arguments args) throws IllegalArgumentException{
 //		args.checkIsGiven("debug");
 		args.checkIsValidInt("debug", 0, 3);
 //		args.checkIsGiven("warning");								// Might not be given (there is a default value), so we don't check it.

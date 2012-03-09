@@ -2,7 +2,6 @@
 *.class
 *.log
 /*/bin/resources/*.txt
-/*/doc
 /*/bin/
 *.jar
 scheduler

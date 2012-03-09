@@ -54,7 +54,16 @@ import qosprobercore.main.TimedStatusTracer;
  *    -Job submission
  *    -Job result retrieval
  *    -Job result comparison 
- *  After that, a short summary regarding the result of the test is shown using Nagios format. */
+ *  After that, a short summary regarding the result of the test is shown using Nagios format. 
+ *  The steps for the probe are: 
+ *  - Perform login on the Scheduler.
+ *  - Removal of old probe jobs (from previous executions of the same probe).
+ *  - Submission of a probe job.
+ *  - Wait for the recently submitted probe job to finish.
+ *  - Get the result of the recently submitted probe job.
+ *  - Get job removed from the list of jobs in the Scheduler.
+ *  - Disconnect from the Scheduler.
+ */
 public class JobProber extends PANagiosPlugin{
 
 	public static final String JOB_NAME_DEFAULT = 
@@ -88,6 +97,7 @@ public class JobProber extends PANagiosPlugin{
 	 * Initialize the ProActive environment for this probe. */
 	public void initializeProber() throws Exception{
 		super.initializeProber();
+		this.validateArguments(this.getArgs());
 		/* Loading job's expected output. */
 		expectedJobOutput = Misc.readAllTextResource("/resources/expectedoutput.txt");
 		if (getArgs().getBoo("rm-checking") == true){
@@ -100,8 +110,7 @@ public class JobProber extends PANagiosPlugin{
 	/** 
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments(Arguments arguments) throws IllegalArgumentException{
-		super.validateArguments(arguments);
+	private void validateArguments(Arguments arguments) throws IllegalArgumentException{
 		arguments.checkIsGiven("url");
 		arguments.checkIsGiven("user");
 		arguments.checkIsGiven("pass");
@@ -248,8 +257,7 @@ public class JobProber extends PANagiosPlugin{
 	
 	/**
 	 * Starting point.
-	 * The arguments/parameters are specified in the file /resources/usage.txt
-	 * @return Nagios error code. */
+	 * The arguments/parameters are specified in the file /resources/usage.txt */
 	public static void main(String[] args) throws Exception{
         Arguments options = new Arguments(args);
 		JobProber prob = new JobProber(options);													// Create the prober.

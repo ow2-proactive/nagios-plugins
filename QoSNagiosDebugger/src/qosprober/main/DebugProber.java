@@ -65,20 +65,19 @@ public class DebugProber extends PANagiosPlugin{
 		args.addNewOption("r", "url-sched", true);						// Url of the Scheduler.
 		args.addNewOption("R", "url-rm", true);							// Url of the RM.
 		args.addNewOption("W", "history", true);						// History file.
-		
 	}
 	
 	/**
 	 * Initialize the ProActive environment for this probe. */
 	public void initializeProber() throws Exception{
 		super.initializeProber();
+		this.validateArguments(this.getArgs());
 	}
 	
 	/** 
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments(Arguments arguments) throws IllegalArgumentException{
-		super.validateArguments(arguments);
+	private void validateArguments(Arguments arguments) throws IllegalArgumentException{
 		arguments.checkIsGiven("url-sched");
 		arguments.checkIsGiven("url-rm");
 		arguments.checkIsGiven("user");
@@ -157,8 +156,7 @@ public class DebugProber extends PANagiosPlugin{
 
 	/**
 	 * Starting point.
-	 * The arguments/parameters are specified in the file /resources/usage.txt
-	 * @return Nagios error code. */
+	 * The arguments/parameters are specified in the file /resources/usage.txt */
 	public static void main(String[] args) throws Exception{
         final Arguments options = new Arguments(args);
 		DebugProber prob = new DebugProber(options);		// Create the prober.

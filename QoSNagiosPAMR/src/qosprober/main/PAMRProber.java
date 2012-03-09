@@ -48,7 +48,17 @@ import qosprobercore.main.TimedStatusTracer;
 
 /** 
  * This is a general Nagios plugin class that performs a test on the PAMR Router of ProActive based grids.
- *  After that, a short summary regarding the result of the test is shown using Nagios format. */
+ *  After that, a short summary regarding the result of the test is shown using Nagios format. 
+ *  This probe creates a server Active Object that uses the specified PAMR router. Then it launches another JVM
+ *  that instances another Active Object, this time the client. The client contacts the server, going through 
+ *  the PAMR router, so probing it. If the call that the client is supposed to do on a server's method does not arrive
+ *  then there is a failure. 
+ *  The steps of the probe: 
+ *  - Create a server (Active Object) connected to the PAMR router. 
+ *  - Obtain the URL of the server.
+ *  - Create a client (another Acitve Object connected to the same PAMR router), while the server waits for a call from the client.  
+ *  - If the server gets the call, everything is okay. Both server and client have timeout mechanisms.
+ *  */
 public class PAMRProber extends PANagiosPlugin{
 	
 	public final static String SERVER_NAME = "server";		// Name that the server will use to register itself.
@@ -67,23 +77,20 @@ public class PAMRProber extends PANagiosPlugin{
 	 * Initialize the ProActive environment for this probe. */
 	public void initializeProber() throws Exception{
 		super.initializeProber();
+		this.validateArguments(this.getArgs());
 	}
 	
 	/** 
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments(Arguments arguments) throws IllegalArgumentException{
-		super.validateArguments(arguments);
+	private void validateArguments(Arguments arguments) throws IllegalArgumentException{
+		/* Nothing to validate */
 	}
 	
 	/**
-	 * Probe the scheduler
-	 * A few calls are done against the Resource Manager (RM):
-	 *   - join
-	 *   - get node/s
-	 *   - release node/s
-	 *   - disconnect
-	 * @return Object[Integer, String] with Nagios code error and a descriptive message of the test. 
+	 * Probe the PAMR router creating two active objects (in different JVM) that should 
+	 * get communicated. 
+	 * @return NagiosReturnObject with Nagios code error and a descriptive message of the test. 
 	 * @throws Exception */	 
 	public NagiosReturnObject probe(TimedStatusTracer tracer) throws Exception{
 		// We add some reference values to be printed later in the summary for Nagios.
@@ -157,8 +164,7 @@ public class PAMRProber extends PANagiosPlugin{
 	
 	/**
 	 * Starting point.
-	 * The arguments/parameters are specified in the file /resources/usage.txt
-	 * @return Nagios error code. */
+	 * The arguments/parameters are specified in the file /resources/usage.txt */
 	public static void main(String[] args) throws Exception{
         final Arguments options = new Arguments(args);
         

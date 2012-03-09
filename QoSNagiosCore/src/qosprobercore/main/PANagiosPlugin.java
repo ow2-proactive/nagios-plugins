@@ -64,10 +64,10 @@ public abstract class PANagiosPlugin extends ElementalNagiosPlugin {
 	
 	/**
 	 * Basic initialization for any NagiosProbe related to ProActive.
-	 * @param ars arguments given by the user for this basic initialization.
 	 * @throws Exception in case of any error. */
 	public void initializeProber() throws Exception{
 		super.initializeProber();
+		this.validateArguments(this.getArgs());
 		PAEnvironmentInitializer.createPolicyAndLoadIt();										// Security policy procedure.
 		PAEnvironmentInitializer.initPAConfiguration(											// PAMR router configuration.
 			getArgs().getStr("paconf"),
@@ -79,8 +79,7 @@ public abstract class PANagiosPlugin extends ElementalNagiosPlugin {
 	 * Validate all the arguments given to this probe. 
 	 * @param args arguments to be validated.
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments(Arguments args) throws IllegalArgumentException{
-		super.validateArguments(getArgs());
+	private void validateArguments(Arguments args) throws IllegalArgumentException{
 //		args.checkIsGiven("port");									// Might not be given (there is a default value), so we don't check it.
 		args.checkIsValidInt("port", 0, 65535);
 	}

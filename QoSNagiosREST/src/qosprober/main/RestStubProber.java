@@ -67,7 +67,7 @@ public class RestStubProber{
 	
 	/** 
 	 * Initialize the connection/session with the scheduler.
-	 * @param url, url of the scheduler for REST API. 
+	 * @param url url of the scheduler for REST API. 
 	 * @throws IOException 
 	 * @throws HttpException */
 	public void connect(String url) throws HttpException, IOException {
@@ -81,9 +81,8 @@ public class RestStubProber{
 	
 	/** 
 	 * Initialize the connection/session with the scheduler.
-	 * @param url, url of the scheduler for REST API. 
-	 * @param user, username to access the scheduler.
-	 * @param pass, password to access the scheduler. 
+	 * @param user username to access the scheduler.
+	 * @param pass password to access the scheduler. 
 	 * @throws IOException 
 	 * @throws HttpException */
 	public void login(String user, String pass) throws HttpException, IOException {

@@ -72,11 +72,9 @@ public class SchedulerStubProber {
 	
 	/** 
 	 * Initialize the connection/session with the scheduler.
-	 * @param protocolStr, protocol to be used to get connected to the scheduler. 
-	 * @param url, url of the scheduler. 
-	 * @param user, username to access the scheduler.
-	 * @param pass, password to access the scheduler.
-	 * */
+	 * @param url url of the scheduler. 
+	 * @param user username to access the scheduler.
+	 * @param pass password to access the scheduler. */
 	public void init(String url, String user, String pass) throws IllegalArgumentException, LoginException, SchedulerException, KeyException, ActiveObjectCreationException, NodeException, HttpException, IOException{
 		logger.info("Joining the scheduler at '" + url + "'...");
         SchedulerAuthenticationInterface auth = SchedulerConnection.join(url);
@@ -89,7 +87,7 @@ public class SchedulerStubProber {
 	
 	/** 
 	 * Return the status of the job (running, finished, etc.). 
-	 * @param jobId, the ID of the job. 
+	 * @param jobId the ID of the job. 
 	 * @return the status of the job. */
 	public JobStatus getJobStatus(String jobId) throws NotConnectedException, PermissionException, UnknownJobException, HttpException, IOException{
 		return schedulerStub.getJobState(jobId).getStatus();
@@ -105,7 +103,8 @@ public class SchedulerStubProber {
 	
 	/**
 	 * Get a list of all jobs that are in running queue 
-	 * of the scheduler (all jobs, including my jobs). */
+	 * of the scheduler (all jobs, including my jobs). 
+	 * @return the list with all the running jobs. */
 	public Vector<JobState> getAllRunningJobsList() throws NotConnectedException, PermissionException{
 		logger.info("Getting list of jobs...");
 		SchedulerState st = schedulerStub.getState(false); // Get not only my jobs but all of them.

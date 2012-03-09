@@ -44,6 +44,15 @@ import qosprobercore.main.NagiosReturnObjectSummaryMaker;
 import qosprobercore.main.NagiosReturnObject;
 import qosprobercore.main.TimedStatusTracer;
 
+/**
+ * Prober for the REST API of the ProActive Scheduler. 
+ * Steps for the probe: 
+ * - Login to the scheduler (if no --avoidlogin flag present). 
+ * - Get the version of the REST API.
+ * - Get the isconnected REST resource response (if no --avoidlogin flag present).
+ * - Logout from the scheduler (if no --avoidlogin flag present). 
+ * - If everything was correctly obtained, then no problem is told. 
+ */
 public class RESTProber extends ElementalNagiosPlugin{
 	/** 
 	 * Constructor of the prober. The map contains all the arguments for the probe to be executed. 
@@ -62,13 +71,13 @@ public class RESTProber extends ElementalNagiosPlugin{
 	 * Initialize the ProActive environment for this probe. */
 	public void initializeProber() throws Exception{
 		super.initializeProber();
+		this.validateArguments(this.getArgs());
 	}
 
 	/** 
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments(Arguments arguments) throws IllegalArgumentException{
-		super.validateArguments(arguments);
+	private void validateArguments(Arguments arguments) throws IllegalArgumentException{
 		arguments.checkIsGiven("url");
 		if (arguments.getStr("url").contains("scheduler") == false){
 			logger.warn("The URL seems to be incorrect since it does not contain the string 'scheduler'.");
@@ -142,8 +151,7 @@ public class RESTProber extends ElementalNagiosPlugin{
 	
 	/**
 	 * Starting point.
-	 * The arguments/parameters are specified in the file /resources/usage.txt
-	 * @return Nagios error code. */
+	 * The arguments/parameters are specified in the file /resources/usage.txt */
 	public static void main(String[] args) throws Exception{
         Arguments options = new Arguments(args);
 		RESTProber prob = new RESTProber(options);													// Create the prober.

@@ -50,7 +50,16 @@ import qosprobercore.main.TimedStatusTracer;
  * This is a general Nagios plugin class that performs a test on the RM, by doing:
  *    -Node obtaining
  *    -Node retrieval 
- *  After that, a short summary regarding the result of the test is shown using Nagios format. */
+ *  After that, a short summary regarding the result of the test is shown using Nagios format. 
+ *  The steps for the probe are: 
+ *  - Get connected to the RM. 
+ *  - Login.
+ *  - Get the amount of free nodes.
+ *  - Request some nodes (if there are free nodes).
+ *  - Get the amount of obtained nodes.		
+ *  - Release the nodes obtained.
+ *  - Disconnect from the Resource Manager.
+ *  - If the amount of nodes obtained is coherent with the amount of free nodes and requested nodes, no critical status is told. */
 public class RMProber extends PANagiosPlugin{
 
 	private boolean quickDisconnectionEnabled = true;
@@ -76,13 +85,13 @@ public class RMProber extends PANagiosPlugin{
 	 * Initialize the ProActive environment for this probe. */
 	public void initializeProber() throws Exception{
 		super.initializeProber();
+		this.validateArguments(this.getArgs());
 	}
 	
 	/** 
 	 * Validate all the arguments given to this probe. 
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
-	public void validateArguments(Arguments arguments) throws IllegalArgumentException{
-		super.validateArguments(arguments);
+	private void validateArguments(Arguments arguments) throws IllegalArgumentException{
 		arguments.checkIsGiven("url");
 		arguments.checkIsGiven("user");
 		arguments.checkIsGiven("pass");
@@ -216,8 +225,7 @@ public class RMProber extends PANagiosPlugin{
 	
 	/**
 	 * Starting point.
-	 * The arguments/parameters are specified in the file /resources/usage.txt
-	 * @return Nagios error code. */
+	 * The arguments/parameters are specified in the file /resources/usage.txt */
 	public static void main(String[] args) throws Exception{
         final Arguments options = new Arguments(args);
 		RMProber prob = new RMProber(options);														// Create the prober.
