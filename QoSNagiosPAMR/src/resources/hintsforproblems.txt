@@ -1,4 +1,2 @@
-#CORE
+#PAMR
 #keyword1 keyword2 keyword3 : possible hint if those keywords are found in the Nagios output 
-keyword1 keyword2 : possible cause1
-keyword3 keyword4 : possible cause2

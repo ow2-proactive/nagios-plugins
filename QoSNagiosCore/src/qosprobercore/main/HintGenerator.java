@@ -201,7 +201,7 @@ public class HintGenerator {
     	}else{
     		String ret="";
     		for (String s: list){
-    			ret = (ret.isEmpty()?"":ret + "; ") + s;
+    			ret = (ret.isEmpty()?"":ret + "; ") + s.trim();
     		}
     		return ret;
     	}
