@@ -10,14 +10,18 @@ Deployment of the probes
 
 The probes were design in such a way that you can use them as you want specifying the needed parameters and classpaths by yourself. 
 However, there is an easy way of placing each needed element so that probes can start running with a minimal effort. 
+In env.sh there should be the definition of some environment variables such as PAUSER and PAPASS so that all probes 
+use them. 
 The expected directories hierarchy of the monitoring platform (where Nagios is) should be as follows: 
 
-- /local/home/nagios/ProActiveSymbolic -> ..somewhere/ProActiveScheduling-X.X.X_server/
 
-- /local/home/nagios/jdk -> ..somewhere/jdk1.6.0/
+- /local/home/nagios/env.sh               
+- /local/home/nagios/ProActiveSymbolic       -> ..somewhere/ProActiveScheduling-X.X.X_server/
+
+- /local/home/nagios/jdk                     -> ..somewhere/jdk1.6.0/
 
 - /local/home/nagios/misc
-  `-- ProActiveConfiguration.xml -> ..somewhere/ProActiveConfiguration.xml
+  `-- ProActiveConfiguration.xml             -> ..somewhere/ProActiveConfiguration.xml
 
 - /local/home/nagios/paplugins
   |-- plugin-pamr
