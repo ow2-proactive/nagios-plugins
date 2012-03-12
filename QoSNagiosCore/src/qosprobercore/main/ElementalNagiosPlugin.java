@@ -37,7 +37,6 @@
 
 package qosprobercore.main;
 
-import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.*;
 
@@ -110,12 +109,14 @@ public abstract class ElementalNagiosPlugin {
 			this.printMessageUsageAndExit(e.getMessage());
 		}
 
-		logger.info(">>>> Date: " + new Date());		// Print the date in the logs.
-		getArgs().printArgumentsGiven();				// Print a list with the arguments given by the user. 
 		
 		this.validateArguments(getArgs());				// Validate its arguments. In case of problems, it throws an IllegalArgumentException.
 		
 		Misc.log4jConfiguration(getArgs().getInt("debug"), getArgs().getStr("logconf"));	// Loading log4j configuration. 
+		
+		logger.info(">>>> Date: " + new Date());		// Print the date in the logs.
+		getArgs().printArgumentsGiven();				// Print a list with the arguments given by the user. 
+		
 		if (getArgs().getBoo("help") == true)	
 			this.printMessageUsageAndExit("");
 		if (getArgs().getBoo("version") == true)
@@ -247,10 +248,12 @@ public abstract class ElementalNagiosPlugin {
     /** 
      * Print a message in the stdout (for Nagios to use it) and return with the given error code. 
      * Print a back-trace later only if the debug-level is appropriate. 
-     * @param obj object to take the information from.
+     * This is the method through which the probe will exit under any circumstance. 
+     * @param o object to take the information from.
      * @param debuglevel level of verbosity. 
      * @param source id of the specific caller probe (RM, Scheduler, etc.). */
-    private synchronized void printDumpAndExit(NagiosReturnObject obj, int debuglevel, String source){
+    private synchronized void printDumpAndExit(NagiosReturnObject o, int debuglevel, String source){
+    	NagiosReturnObject obj = HintGenerator.getEnrichedNagiosReturnObject(o);
     	String ret = "";
     	Throwable exc = obj.getException();
         ret = ret + NAG_OUTPUT_PREFIX + obj.getWholeFirstLineMessage() + "\n";
@@ -287,7 +290,7 @@ public abstract class ElementalNagiosPlugin {
 		try {
 			usage = Misc.readAllTextResource("/resources/version.txt");
 			System.err.println(usage);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
 		}
 	    System.exit(RESULT_0_OK);
@@ -306,7 +309,7 @@ public abstract class ElementalNagiosPlugin {
 			usage = usage + Misc.readAllTextResource("/resources/usage.txt");
 			usage = usage + Misc.readAllTextResource("/resources/core/usage.txt");
 			System.err.println(usage);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
 		}
 	

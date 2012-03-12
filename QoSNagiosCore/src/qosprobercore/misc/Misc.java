@@ -39,7 +39,6 @@ package qosprobercore.misc;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -59,7 +58,7 @@ public class Misc {
      * Read all the content of a resource file. 
      * @param resource path of the resource to read.
      * @return string that the resource contains. */
-    public static String readAllTextResource(String resource) throws IOException{
+    public static String readAllTextResource(String resource) throws Exception{
 		InputStream is = Misc.class.getResourceAsStream(resource);
 	    InputStreamReader isr = new InputStreamReader(is);
 	    BufferedReader br = new BufferedReader(isr);

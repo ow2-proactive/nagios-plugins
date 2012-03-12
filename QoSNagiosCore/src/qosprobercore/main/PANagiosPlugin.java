@@ -37,8 +37,6 @@
 
 package qosprobercore.main;
 
-import java.io.IOException;
-
 import org.apache.log4j.Logger;
 
 import qosprobercore.misc.Misc;
@@ -100,7 +98,7 @@ public abstract class PANagiosPlugin extends ElementalNagiosPlugin {
 			usage = usage + Misc.readAllTextResource("/resources/core/usagepa.txt");
 			usage = usage + Misc.readAllTextResource("/resources/core/usage.txt");
 			System.err.println(usage);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			logger.warn("Issue with usage message. Error: '"+e.getMessage()+"'.", e); 
 		}
 	

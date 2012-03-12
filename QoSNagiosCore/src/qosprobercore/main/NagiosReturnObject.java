@@ -51,6 +51,7 @@ public class NagiosReturnObject {
 	private int errorCode;								// Error code to be told to Nagios.
 	private String curvesSection;						// Curves section for Nagios to use to generate curves. 
 	private Throwable exception;						// Exception to be told to Nagios.
+
 	
 	/**
 	 * Basic constructor of the NagiosReturnObject class. No exception is present.
@@ -70,6 +71,13 @@ public class NagiosReturnObject {
 		this.errorMessage = errorMessage;
 		this.exception = exception;
 		this.curvesSection = "";
+	}
+	
+	/**
+	 * Sets the error message.
+	 * @param newerrormessage new error message. */
+	public void setErrorMessage(String newerrormessage){
+		this.errorMessage = newerrormessage;
 	}
 	
 	/**
