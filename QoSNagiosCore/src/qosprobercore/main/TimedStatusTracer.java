@@ -192,8 +192,8 @@ public class TimedStatusTracer {
 	
 	/** 
 	 * Save a message regarding the last status of the probe. 
-	 * This last status will be used in case of timeout to tell Nagios up to which point
-	 * (logging, job submission, job retrieval, etc.) the probe arrived. */
+	 * This last status will be used in case of timeout to tell Nagios which point
+	 * (logging, job submission, job retrieval, etc.) the probe reached. */
 	public synchronized void setLastStatusDescription(String laststatus){
 		lastStatusDescription = laststatus;
 		logger.info("Last status description set to: '"+ laststatus +"'.");
@@ -201,8 +201,8 @@ public class TimedStatusTracer {
 	
 	/** 
 	 * Get a message regarding the last status of the probe. 
-	 * This last status will be used in case of timeout to tell Nagios up to which point
-	 * (logging, job submission, job retrieval, etc.) the probe arrived. 
+	 * This last status will be used in case of timeout to tell Nagios which point
+	 * (logging, job submission, job retrieval, etc.) the probe reached. 
 	 * @return the last status of the test. */
 	public synchronized String getLastStatusDescription(){
 		return lastStatusDescription;

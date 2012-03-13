@@ -51,7 +51,7 @@ import org.ow2.proactive.resourcemanager.frontend.RMConnection;
 import org.ow2.proactive.resourcemanager.frontend.ResourceManager;
 
 /**
- * Class that represents locally the remote Resource Manager. */
+ * Class that gets basic information about the Resource Manager. */
 public class RMStateGetter {
 
 	public static Logger logger = Logger.getLogger(RMStateGetter.class.getName()); 	// Logger.

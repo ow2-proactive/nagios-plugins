@@ -3,17 +3,28 @@ README
 
 Nagios plugins to monitor ProActive based grids.
 
+
+Documentation of the probes
+------------- -- --- ------
+
 For documentation regarding the probes, go to /docs
+
+Development of the probes
+----------- -- --- ------
+
+To start developing using the probes, you can start by creating a new project for the QoSNagiosCore in your IDE. Its compilation should give as a result a file probecore.jar. 
+The jars needed by any probe include:
+- probecore.jar
+- <files specified in the Makefile file of each project>
+
+
 
 Deployment of the probes
 ---------- -- --- ------
 
-The probes were design in such a way that you can use them as you want specifying the needed parameters and classpaths by yourself. 
-However, there is an easy way of placing each needed element so that probes can start running with a minimal effort. 
-In env.sh there should be the definition of some environment variables such as PAUSER and PAPASS so that all probes 
-use them. 
-The expected directories hierarchy of the monitoring platform (where Nagios is) should be as follows: 
-
+The probes were designed in such a way that you can use them flexibly specifying the needed parameters and classpaths by yourself. 
+However, there is an easier way, using the check_* scripts provided. They assume that needed dependences have particular PATHS, you loose some flexibility but you gain a lot of time. If you follow this approach, there are some files you will have to write. For instance, the file env.sh should contain the definition of some environment variables such as PAUSER and PAPASS so that all probes use them. 
+The expected directories hierarchy of the monitoring platform (where Nagios is) should be as follows (the symbol -> represents symbolic link):
 
 - /local/home/nagios/env.sh               
 - /local/home/nagios/ProActiveSymbolic       -> ..somewhere/ProActiveScheduling-X.X.X_server/
@@ -30,3 +41,9 @@ The expected directories hierarchy of the monitoring platform (where Nagios is) 
   `-- plugin-sched
 
 
+Example of env.sh
+------- -- ------
+#!/bin/bash
+export PAUSER=demo
+export PAPASS=demo
+PROACTIVE_HOME=/home/user/Projects/ProActiveSymbolic/
