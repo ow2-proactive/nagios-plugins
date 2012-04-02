@@ -4,8 +4,8 @@
     <property name="src.dir"     value="src"/>
     <property name="build.dir"   value="build"/>
     <property name="classes.dir" value="${build.dir}/classes"/>
-    <property name="jar.dir"     value="${build.dir}/jar"/>
-    <property name="core.dir"     value="../QoSNagiosCore/build/jar"/>
+    <property name="jar.dir"     value="./"/>
+    <property name="core.dir"     value="../QoSNagiosCore/"/>
     <property name="lib.dir"     value="${env.PROACTIVELIB}"/>
     <property name="main-class"  value="Starter"/>
 
