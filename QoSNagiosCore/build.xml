@@ -23,7 +23,10 @@
 
     <target name="compile" depends="checkProperties">
         <mkdir dir="${classes.dir}"/>
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
+        <copy todir="${classes.dir}">
+	    <fileset dir="src" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
+	</copy>
+	<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
     </target>
 
     <target name="jar" depends="compile">
