@@ -41,6 +41,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.ParseException;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
@@ -108,7 +109,7 @@ public class HintGenerator {
 	    	if (hintentry.startsWith("#")){									// Comment line.
 	    		logger.info("Ignoring hint file comment line: '" + hintentry + "'");
 	    	}else{
-		    	if (thisHintApplies(o, hintentry)){							// If the current NagiosReturnObject matches the entry, add this hint.  
+		    	if (thisHintMatches(o, hintentry)){							// If the current NagiosReturnObject matches the entry, add this hint.  
 		    		listOfCauses.add(extractHint(hintentry));				// Add this hint to the list of hints for the given problem (specified by 'o'). 
 		    		logger.info("DOES apply.");
 		    	}else{
@@ -130,19 +131,24 @@ public class HintGenerator {
 	 * @param o NagiosReturnObject describing the current problem. 
 	 * @param hintentry hint entry. 
 	 * @return true if there is a matching between the NagiosReturnObject and the tokens of the hint entry. */
-	private static Boolean thisHintApplies(NagiosReturnObject o, String hintentry){
-		String[] tokens = extractTokens(hintentry);
-		logger.info("Checking if this hint applies to the current situation...");
-		for (String token: tokens){
-			if (thisTokenApplies(o, token)){
-				logger.info(" - " + token + " DOES apply to the current situation");
-				return true;
-			}else{
-				logger.info(" - " + token + " does NOT apply to the current situation");
+	private static Boolean thisHintMatches(NagiosReturnObject o, String hintentry){
+		try{
+			String[] tokens = extractSetOfTokensToMatch(hintentry);
+			logger.info("Checking if this hint-entry applies to the current situation...");
+			
+			for (String token: tokens){
+				if (thisTokenMatches(o, token)){
+					logger.info(" - token " + token + " DOES apply to the current situation: we keep on evaluating...");
+				}else{
+					logger.info(" - token " + token + " does NOT apply to the current situation: avoiding remaining tokens...");
+					return false;
+				}
 			}
+			return true; // All of the tokens matched, otherwise we would have exited before with false. 
+		}catch(ParseException e){
+			logger.warn("Problem evaluating hint-entry '" + hintentry + "'... Message: '" + e.getMessage() + "'. So skipping entry.");
+			return false;
 		}
-		logger.info(" - NO token matches the current situation!");
-		return false;
 	}
 	
 	/**
@@ -150,7 +156,7 @@ public class HintGenerator {
 	 * @param o NagiosReturnObject describing the current problem. 
 	 * @param token hint token. 
 	 * @return true if in the NagiosReturnObject the given token can be found. */
-	private static Boolean thisTokenApplies(NagiosReturnObject o, String token){
+	private static Boolean thisTokenMatches(NagiosReturnObject o, String token){
 		if (o.getErrorMessage().contains(token))
 			return true;
 		
@@ -174,19 +180,20 @@ public class HintGenerator {
 	}
 	
 	/**
-	 * Extract the tokens section of the hint entry. 
+	 * Extract the tokens section of the hint entry (the keywords to match). 
 	 * @param entry hint entry.
 	 * @return a list with all the tokens of the given hint entry. */
-	private static String[] extractTokens(String hintentry){
+	private static String[] extractSetOfTokensToMatch(String hintentry) throws ParseException{
 		String[] both = hintentry.split(":");
 		if (both.length>2){
 			logger.warn("Incorrect amount of colon symbols in the hint entry: '" + hintentry + "'");
+			throw new ParseException("Incorrect amount of colon symbols in the hint entry: '" + hintentry + "'", 0);
 		}
 		String tokensStr = both[0];
-		logger.debug("Detected tokens: '" + tokensStr + "'");
+		logger.info("Detected tokens: '" + tokensStr + "'");
 		String[] ret = tokensStr.split(" ");
 		for (String s: ret){
-			logger.debug("  - tok: '" + s + "'");
+			logger.info("  - tok: '" + s + "'");
 		}
 		return ret;
 	}
