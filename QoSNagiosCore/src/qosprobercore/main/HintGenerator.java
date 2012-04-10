@@ -204,7 +204,7 @@ public class HintGenerator {
 	 * @return pretty String. */
     private static String generateStringListOfHints(ArrayList<String> list){
     	if (list.isEmpty()){
-	    	return "<no hint>";
+	    	return "no hint";
     	}else{
     		String ret="";
     		for (String s: list){

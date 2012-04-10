@@ -54,7 +54,6 @@ import org.ow2.proactive.authentication.crypto.CredData;
 import org.ow2.proactive.scheduler.common.SchedulerAuthenticationInterface;
 import java.io.IOException;
 import java.security.KeyException;
-import java.util.Vector;
 import org.ow2.proactive.authentication.crypto.Credentials;
 
 /** 
@@ -102,17 +101,11 @@ public class SchedulerStubProber {
 	}
 	
 	/**
-	 * Get a list of all jobs that are in running queue 
-	 * of the scheduler (all jobs, including my jobs). 
-	 * @return the list with all the running jobs. */
-	public Vector<JobState> getAllRunningJobsList() throws NotConnectedException, PermissionException{
+	 * Get the state of the scheduler.
+	 * @return the state of the scheduler. */
+	public SchedulerState getSchedulerState() throws NotConnectedException, PermissionException{
 		logger.info("Getting list of jobs...");
 		SchedulerState st = schedulerStub.getState(false); // Get not only my jobs but all of them.
-		Vector<JobState> vector = st.getRunningJobs();
-		for(JobState js: vector){
-			logger.info("\t" + js.getId() + ":" + js.getName() + " tasks_running=" + js.getNumberOfRunningTasks());
-		}
-		logger.info("Done.");
-		return vector;
+		return st;
 	}
 }

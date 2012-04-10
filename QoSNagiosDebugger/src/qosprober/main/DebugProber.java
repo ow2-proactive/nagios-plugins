@@ -38,6 +38,7 @@
 package qosprober.main;
 
 import org.ow2.proactive.resourcemanager.common.RMState;
+import org.ow2.proactive.scheduler.common.SchedulerState;
 
 //import qosprobercore.history.HistoryDataManager;
 import qosprobercore.main.Arguments;
@@ -64,7 +65,7 @@ public class DebugProber extends PANagiosPlugin{
 		args.addNewOption("p", "pass", true);							// Pass.
 		args.addNewOption("r", "url-sched", true);						// Url of the Scheduler.
 		args.addNewOption("R", "url-rm", true);							// Url of the RM.
-		args.addNewOption("W", "history", true);						// History file.
+		args.addNewOption("W", "history", true);						// History file. Ignored for now. 
 	}
 	
 	/**
@@ -125,8 +126,9 @@ public class DebugProber extends PANagiosPlugin{
 		int busynodes = alivenodes - freenodes;	
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_getting_sched_state", "getting scheduler state...");
-		
-		int jobsnumber = schedstub.getAllRunningJobsList().size();	// Get the list of jobs running.
+		SchedulerState schedstate = schedstub.getSchedulerState();
+		int runningjobsnumber = schedstate.getRunningJobs().size();	// Get the list of running jobs.
+		int pendingjobsnumber = schedstate.getPendingJobs().size();	// Get the list of pending jobs.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_disconnection", "disconnecting...");
 		
@@ -140,11 +142,12 @@ public class DebugProber extends PANagiosPlugin{
 		tracer.addNewReference("free_nodes", freenodes);
 		tracer.addNewReference("alive_nodes", alivenodes);
 		tracer.addNewReference("busy_nodes", busynodes);
-		tracer.addNewReference("number_of_jobs", jobsnumber);
-		summary.addFact("NODE/S ALIVE=" + alivenodes + " FREE=" + freenodes + " JOB/S RUNNING=" + jobsnumber);
+		tracer.addNewReference("running_jobs", runningjobsnumber);
+		tracer.addNewReference("running_jobs", pendingjobsnumber);
+		summary.addFact("nodesalive=" + alivenodes + " nodesfree=" + freenodes + "  jobsrunning=" + runningjobsnumber + " jobspending=" + pendingjobsnumber);
 		
-		if (jobsnumber == 0 && busynodes != 0){
-			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "NO JOBS AND " + busynodes + " BUSY NODES"));
+		if (runningjobsnumber == 0 && busynodes != 0){
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "no jobs running but " + busynodes + " busy nodes (busy doing what?)"));
 		}
 		
 		if (summary.isAllOkay() == true){
