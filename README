@@ -3,27 +3,24 @@ README
 
 Nagios plugins to monitor ProActive based grids.
 
-
-Documentation of the probes
-------------- -- --- ------
-
-For documentation regarding the probes, go to /docs
-
 Development of the probes
 ----------- -- --- ------
 
-To start developing using the probes, you can start by creating a new project for the QoSNagiosCore in your IDE. Its compilation should give as a result a file probecore.jar. 
+To start developing using the probes, you can start by creating a new project for the QoSNagiosCore in your IDE, using the build.xml ant files. Its compilation should give as a result a file probecore.jar. 
+
+
+Compilation of the probes
+----------- -- --- ------
+
 The jars needed by any probe include:
 - probecore.jar
-- <files specified in the Makefile file of each project>
-
-
+- <files .jar in $PROACTIVE_SCHEDULING_RESOURCING/dist/lib>
 
 Deployment of the probes
 ---------- -- --- ------
 
-The probes were designed in such a way that you can use them flexibly specifying the needed parameters and classpaths by yourself. 
-However, there is an easier way, using the check_* scripts provided. They assume that needed dependences have particular PATHS, you loose some flexibility but you gain a lot of time. If you follow this approach, there are some files you will have to write. For instance, the file env.sh should contain the definition of some environment variables such as PAUSER and PAPASS so that all probes use them. 
+The probes were designed in such a way that you can use them flexibly, specifying through command-line parameters the path of all configuration files needed. 
+However, there is an easier way, using the check_* scripts provided. These scripts assume that needed file dependences have particular PATHS. If you follow this approach, there are some files you will have to write. For instance, the file env.sh should contain the definition of some environment variables such as PAUSER and PAPASS so that all probes use them. 
 The expected directories hierarchy of the monitoring platform (where Nagios is) should be as follows (the symbol -> represents symbolic link):
 
 - /local/home/nagios/env.sh               
@@ -47,3 +44,4 @@ Example of env.sh
 export PAUSER=demo
 export PAPASS=demo
 PROACTIVE_HOME=/home/user/Projects/ProActiveSymbolic/
+
