@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Nagios plugin to monitor the status of ProActive based grid in terms of its capacity to receive jobs, execute them, and give the results back to the client.
+#
+
+# Set up the environment given by the env.sh file (must set up PAUSER and PAPASS environment variables)
+. /local/home/nagios/env.sh
+export USER=$PAUSER
+export PASS=$PAPASS
+
+# Where java is
+export JAVA_HOME=/local/home/nagios/jdk
+# Where the plugin is (including job to be executed as the test) 
+export PLUGIN_HOME=/local/home/nagios/paplugins/plugin-sched
+# Port to which the server is exposed
+export PORT=8090
+
+# ProActive libraries
+PROACTIVELIB=/local/home/nagios/ProActiveSymbolic/dist/lib
+
+# Preparing classpath
+CPATH=$PROACTIVELIB/ProActive_Scheduler-client.jar
+CPATH=$CPATH:$PROACTIVELIB/ProActive_Scheduler-core.jar
+CPATH=$CPATH:$PROACTIVELIB/ProActive.jar
+CPATH=$CPATH:$PROACTIVELIB/commons-cli-1.1.jar
+CPATH=$CPATH:$PROACTIVELIB/ProActive_SRM-common-client.jar
+CPATH=$CPATH:$PROACTIVELIB/commons-httpclient-3.1.jar
+CPATH=$CPATH:$PROACTIVELIB/log4j.jar
+CPATH=$CPATH:$PROACTIVELIB/ProActive_ResourceManager.jar
+CPATH=$CPATH:$PROACTIVELIB/ejb3-persistence.jar
+
+$JAVA_HOME/bin/java -Xmx1024m -cp $PLUGIN_HOME/jobsubmprobe.jar:$PLUGIN_HOME/probecore.jar:$CPATH qosprober.main.JobProber $@ --user $USER --pass $PASS --url pamr://1 --port $PORT  --rm-checking --polling
+

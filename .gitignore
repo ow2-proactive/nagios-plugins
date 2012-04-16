@@ -3,8 +3,8 @@
 *.log
 /*/bin/resources/*.txt
 /*/bin/
+*/build
 *.jar
-scheduler
 .metadata
-QoSNagiosNodeGetter/nodegetprobe.jar
-QoSNagiosPAMR/pamrrouterprobe.jar
+*/*.jar
+*/Makefile

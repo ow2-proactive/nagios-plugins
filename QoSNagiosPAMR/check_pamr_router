@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Nagios plugin to monitor the status of ProActive Resource Manager by asking and releasing a set of nodes from it.
+#
+
+# Where java is
+export JAVA_HOME=/local/home/nagios/jdk
+# Where the plugin is (including job to be executed as the test) 
+export PLUGIN_HOME=/local/home/nagios/paplugins/plugin-pamr
+
+# ProActive libraries
+PROACTIVELIB=/local/home/nagios/ProActiveSymbolic/dist/lib
+
+CPATH=$PROACTIVELIB/ProActive_Scheduler-client.jar
+CPATH=$CPATH:$PROACTIVELIB/ProActive_Scheduler-core.jar
+CPATH=$CPATH:$PROACTIVELIB/ProActive.jar
+CPATH=$CPATH:$PROACTIVELIB/ProActive_SRM-common-client.jar
+CPATH=$CPATH:$PROACTIVELIB/commons-httpclient-3.1.jar
+CPATH=$CPATH:$PROACTIVELIB/commons-cli-1.1.jar
+CPATH=$CPATH:$PROACTIVELIB/log4j.jar
+CPATH=$CPATH:$PROACTIVELIB/ProActive_ResourceManager.jar
+CPATH=$CPATH:$PROACTIVELIB/ejb3-persistence.jar
+
+$JAVA_HOME/bin/java -Xmx1024m -cp $PLUGIN_HOME/pamrrouterprobe.jar:$PLUGIN_HOME/probecore.jar:$CPATH qosprober.main.PAMRProber $@ --port 8090
+
