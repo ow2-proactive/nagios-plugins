@@ -1,0 +1,2 @@
+#DEBUGGER
+#keyword1 keyword2 keyword3 : possible hint if those keywords are found in the Nagios output 

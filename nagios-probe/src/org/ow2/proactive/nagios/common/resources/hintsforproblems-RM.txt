@@ -1,0 +1,4 @@
+#RM
+#keyword1 keyword2 keyword3 : possible hint if those keywords are found in the Nagios output 
+java.rmi.NotBoundException sun.rmi.registry.RegistryImpl.lookup is not bound to any known object RMAUTHENTICATION: is the RM specified up and running?
+Authentication failed javax.security.auth.login.LoginException org.ow2.proactive.authentication.AuthenticationImpl.authenticate : are you using the right login and password?

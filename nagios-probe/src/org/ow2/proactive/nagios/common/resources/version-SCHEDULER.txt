@@ -1,0 +1,2 @@
+Plugin version: 0.95a
+Updated on Tue Nov 29 13:43:46 CET 2011

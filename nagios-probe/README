@@ -1,0 +1,24 @@
+README
+******
+
+Nagios plugins to monitor ProActive based grids.
+
+
+Compilation of the probes
+----------- -- --- ------
+
+To compile the project the environment variable PROACTIVELIB must be set in the current console. It must point to the $SCHEDULER/dist/lib directory, where $SCHEDULER is the root directory of the ProActive Scheduler of the same version of the one that is being probed. For example: 
+
+$ export PROACTIVELIB=/home/user/ProActiveSchedulingResourcing-x.x.x_src/dist/lib
+
+would be a valid path. Then, to compile the project just run: 
+
+$ ant jar
+
+Now the executable files are in bin/. Befor launching them configure accordingly the files: 
+
+bin/env.sh
+bin/login.sh
+
+and run any of the probes. Remember to use --help as a command-line parameter if needed. 
+

@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Nagios plugin to monitor the status of the PAMR router.
+#
+
+LOCALDIR=`dirname $0`
+
+# Execute the environment scripts.
+. $LOCALDIR/env.sh
+. $LOCALDIR/login.sh
+
+export PLUGIN_HOME=$LOCALDIR/../dist
+
+$JAVA_HOME/bin/java -Xmx1024m -cp $PLUGIN_HOME/proactive-nagios-probes-1.0.jar:$CPATH org.ow2.proactive.nagios.probes.pamr.PAMRProber $@  
+

@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# Nagios plugin to monitor the presence of buggy situations.
+#
+
+LOCALDIR=`dirname $0`
+
+# Execute the environment scripts.
+. $LOCALDIR/env.sh
+. $LOCALDIR/login.sh
+
+export PLUGIN_HOME=$LOCALDIR/../dist
+
+# Port to which the server is exposed
+export PORT=8090
+
+$JAVA_HOME/bin/java -Xmx1024m -cp $PLUGIN_HOME/proactive-nagios-probes-1.0.jar:$CPATH org.ow2.proactive.nagios.probes.debugger.DebugProber $@ --user $PAUSER --pass $PAPASS   
+

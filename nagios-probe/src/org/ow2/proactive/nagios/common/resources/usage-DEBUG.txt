@@ -1,0 +1,30 @@
+NAGIOS PLUGIN MANUAL 
+------ ------ ------
+
+DESCRIPTION OF THE PLUGIN
+
+Debugging purposes Nagios plugin. 
+
+SYNOPSIS
+
+   check_no_bug_present --url-sched URL_SCHEDULER --url-rm URL_RM --user USER --pass PASS [OPTIONS]
+
+SPECIFIC NAGIOS PLUGIN FLAGS 
+
+Mandatory arguments to long options are mandatory for short options too.
+
+   -u, --user USER
+      Username to get connected to the Scheduler.
+      
+   -p, --pass PASS
+      Password to get connected to the Scheduler.
+      
+   -r, --url-sched URL
+      URL to be used to get connected to the Scheduler. 
+           
+   -R, --url-rm URL
+      URL to be used to get connected to the RM. 
+           
+   -W, --history HISTORY_FILE_PATH 
+      Path for the history file. 
+           

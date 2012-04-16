@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<project name="proactive-nagios-probes" basedir="." default="main">
+    <property environment="env"/>
+    <property name="version"     value="1.0"/>
+    <property name="src.dir"     value="src"/>
+    <property name="build.dir"   value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="dist.dir"     value="dist"/>
+    <property name="lib.dir"     value="${env.PROACTIVELIB}"/>
+    <property name="main-class"  value="Starter"/>
+
+    <target name="checkProperties">
+	<echo>Checking properties...</echo>
+	<fail unless="env.PROACTIVELIB">Environment variable PROACTIVELIB must be set...</fail>
+    </target>	  
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+
+    <target name="compile" depends="checkProperties">
+        <mkdir dir="${classes.dir}"/>
+	<copy todir="${classes.dir}">
+	    <fileset dir="src" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
+	</copy>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
+    </target>
+
+    <target name="dist" depends="compile">
+        <mkdir dir="${dist.dir}"/>
+        <jar destfile="${dist.dir}/proactive-nagios-probes-${version}.jar" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="clean-build" depends="clean,dist"/>
+    <target name="jar" depends="dist"/>
+
+</project>
