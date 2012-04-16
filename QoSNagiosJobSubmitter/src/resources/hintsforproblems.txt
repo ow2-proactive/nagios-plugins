@@ -1,4 +1,0 @@
-#SCHEDULER
-#keyword1 keyword2 keyword3 : possible hint if those keywords are found in the Nagios output 
-java.rmi.NotBoundException SCHEDULER org.ow2.proactive.scheduler.common.exception.ConnectionException : is the specified scheduler up and running?
-javax.security.auth.login.LoginException Authentication failed org.ow2.proactive.authentication.AuthenticationImpl.authenticate org.ow2.proactive.scheduler.authentication.SchedulerAuthentication.login: are you using the right login and password?
