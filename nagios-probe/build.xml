@@ -28,7 +28,7 @@
 	<copy todir="${classes.dir}">
 	    <fileset dir="src" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
 	</copy>
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" debug="on" debuglevel="lines,vars,source"/>
     </target>
 
     <target name="dist" depends="compile">

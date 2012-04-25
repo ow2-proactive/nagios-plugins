@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -z "${JAVA_HOME+xxx}" ]; then 
+  export JAVA_HOME=/local/home/nagios/jdk
+fi
+
 # CHANGE HERE ACCORDINGLY. 
 export PROACTIVELIB=~/bin/ProActiveSchedulingResourcing-3.1.2_src/dist/lib/
 
@@ -14,4 +18,4 @@ CPATH=$CPATH:$PROACTIVELIB/log4j.jar
 CPATH=$CPATH:$PROACTIVELIB/ProActive_ResourceManager.jar 
 CPATH=$CPATH:$PROACTIVELIB/ejb3-persistence.jar
 
-
+export CPATH

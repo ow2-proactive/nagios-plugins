@@ -1,3 +1,4 @@
 .metadata
 nagios-probe/build
+nagios-probe/bin/__*
 nagios-probe/dist
