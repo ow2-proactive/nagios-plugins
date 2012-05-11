@@ -5,7 +5,8 @@ if [ -z "${JAVA_HOME+xxx}" ]; then
 fi
 
 # CHANGE HERE ACCORDINGLY. 
-export PROACTIVELIB=~/bin/ProActiveSchedulingResourcing-3.1.2_src/dist/lib/
+export PROACTIVELIB=/var/log/nagios/bin/ProActiveSchedulingResourcing-3.1.2_src/dist/lib/
+# export PROACTIVELIB=~/bin/ProActiveSchedulingResourcing-3.1.2_src/dist/lib/
 
 # Preparing classpath (do not modify this). 
 CPATH=$PROACTIVELIB/ProActive_Scheduler-client.jar

@@ -1,29 +1,36 @@
 <?xml version="1.0"?>
 <project name="proactive-nagios-probes" basedir="." default="main">
-    <property environment="env"/>
-    <property name="version"     value="1.0"/>
-    <property name="src.dir"     value="src"/>
-    <property name="build.dir"   value="build"/>
-    <property name="classes.dir" value="${build.dir}/classes"/>
-    <property name="dist.dir"     value="dist"/>
-    <property name="lib.dir"     value="${env.PROACTIVELIB}"/>
-    <property name="main-class"  value="Starter"/>
+   <property file="${basedir}/build.properties" />
+   <property name="version"      value="1.0"/>
+   <property name="src.dir"      value="src"/>
+   <property name="build.dir"    value="build"/>
+   <property name="classes.dir"  value="${build.dir}/classes"/>
+   <property name="dist.dir"     value="dist"/>
+   <property name="palib.dir"    value="${scheduling.project.dir}/dist/lib"/>
+   <property name="ourlib.dir"   value="lib"/>
+   <property name="ourpalib.dir" value="${ourlib.dir}/scheduling"/>
+   <property name="main-class"   value="Starter"/>
 
-    <target name="checkProperties">
-	<echo>Checking properties...</echo>
-	<fail unless="env.PROACTIVELIB">Environment variable PROACTIVELIB must be set...</fail>
-    </target>	  
+   <target name="copyDependencies">
+        <mkdir dir="${ourlib.dir}"/>
+        <mkdir dir="${ourpalib.dir}"/>
+	<copy todir="${ourpalib.dir}">
+           <fileset dir="${palib.dir}" includes="**/*.jar" />
+	</copy>
+   </target>	  
 
-    <path id="classpath">
-        <fileset dir="${lib.dir}" includes="**/*.jar"/>
-    </path>
+   <path id="classpath">
+      <fileset dir="${ourpalib.dir}"   includes="**/*.jar"/>
+      <fileset dir="${ourlib.dir}"     includes="**/*.jar"/>
+   </path>
+
 
     <target name="clean">
         <delete dir="${build.dir}"/>
         <delete dir="${dist.dir}"/>
     </target>
 
-    <target name="compile" depends="checkProperties">
+    <target name="compile" depends="copyDependencies">
         <mkdir dir="${classes.dir}"/>
 	<copy todir="${classes.dir}">
 	    <fileset dir="src" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />

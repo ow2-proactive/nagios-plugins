@@ -2,3 +2,4 @@
 nagios-probe/build
 nagios-probe/bin/__*
 nagios-probe/dist
+nagios-probe/lib/scheduling
