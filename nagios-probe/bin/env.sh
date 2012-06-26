@@ -1,14 +1,16 @@
 #!/bin/bash
 
+CURRDIR=`dirname $0`
+
 if [ -z "${JAVA_HOME+xxx}" ]; then 
   export JAVA_HOME=/local/home/nagios/jdk
 fi
 
-# CHANGE HERE ACCORDINGLY. 
-export PROACTIVELIB=/var/log/nagios/bin/ProActiveSchedulingResourcing-3.1.2_src/dist/lib/
-# export PROACTIVELIB=~/bin/ProActiveSchedulingResourcing-3.1.2_src/dist/lib/
+# DO NOT MODIFY FROM HERE.
 
-# Preparing classpath (do not modify this). 
+# Preparing classpath. 
+export PROACTIVELIB=$CURRDIR/../lib/scheduling/
+
 CPATH=$PROACTIVELIB/ProActive_Scheduler-client.jar
 CPATH=$CPATH:$PROACTIVELIB/ProActive_Scheduler-core.jar
 CPATH=$CPATH:$PROACTIVELIB/ProActive.jar
@@ -20,3 +22,4 @@ CPATH=$CPATH:$PROACTIVELIB/ProActive_ResourceManager.jar
 CPATH=$CPATH:$PROACTIVELIB/ejb3-persistence.jar
 
 export CPATH
+
