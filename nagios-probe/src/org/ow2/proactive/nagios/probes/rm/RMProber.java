@@ -156,7 +156,7 @@ public class RMProber extends PANagiosPlugin{
 		
 		Double time_all = tracer.getTotal();
 		
-		summary.addFact("NODE/S FREE=" +  freenodes + " REQUIRED=" + nodesrequired + " OBTAINED=" + obtainednodes);
+		summary.addFact("node/s free=" +  freenodes + " required=" + nodesrequired + " obtained=" + obtainednodes);
 	
 		tracer.addNewReference("nodes_required", nodesrequired);
 		tracer.addNewReference("nodes_free", freenodes);

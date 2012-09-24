@@ -177,7 +177,7 @@ public class JobProber extends PANagiosPlugin{
 		tracer.finishLastMeasurement();
 	
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
-		summary.addFact("JOBID " + jobId + ":" + jobname);
+		summary.addFact("jobid " + jobId + ":" + jobname);
 		
 		if (jresult==null){ 		// No job result obtained... It must never happen, but we check just in case.
 			logger.info("Finished job  " + jobname + ":" + jobId + ". Result: NO OUTPUT");
