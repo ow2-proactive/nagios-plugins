@@ -110,7 +110,11 @@ public class Arguments {
 	 * Print a summary with the argument given by the user. */
 	public void printArgumentsGiven(){
 		for (String key: keySet())			// Show all the arguments considered. 
-			logger.info("\t" + key + ": isPresent="+ isPresent(key) + " value='" + get(key) + "' defaultValue='" + defaultValues.get(key) + "'.");
+			if (key.equals("pass")){
+				logger.info("\t" + key + ": isPresent="+ isPresent(key) + " value='" + "XXXX" + "' defaultValue='" + defaultValues.get(key) + "'.");
+			}else{
+				logger.info("\t" + key + ": isPresent="+ isPresent(key) + " value='" + get(key) + "' defaultValue='" + defaultValues.get(key) + "'.");
+			}
 	}
 	
 	/**
