@@ -38,15 +38,33 @@
 package org.ow2.proactive.nagios.probes.rest;
 
 import java.net.URI;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.HttpException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.params.HttpParams;
+import org.apache.commons.codec.binary.StringUtils;
+import org.apache.commons.io.IOUtils;
 
 /** 
  * Class that connects the test with the real scheduler, works as a stub. 
@@ -54,23 +72,27 @@ import java.io.InputStream;
  * The interaction with the Scheduler is done using the specified protocol, either JAVAPA (Java ProActive) or REST. 
  * This class is specific for REST protocol. */
 public class RestStubProber{
-	
+	private static final int OK = 200;
+	private static final int OKNONOTIF = 204;
 	private static Logger logger = Logger.getLogger(RestStubProber.class.getName()); 	// Logger.
 	
 	/** REST attributes. */
 	private String sessionId = null; 					// For the REST protocol, it defines the ID of the session.
 	private URI uri; 									// It defines the URI used as a suffix to get the final URL for the REST server.
+	private boolean skipauthentication;					// If true, no https authentication is checked.
 	
 	/**
 	 * Constructor method. */
-	public RestStubProber(){}
+	public RestStubProber(boolean skipauthentication){
+		this.skipauthentication = skipauthentication;
+	}
 	
 	/** 
 	 * Initialize the connection/session with the scheduler.
 	 * @param url url of the scheduler for REST API. 
 	 * @throws IOException 
 	 * @throws HttpException */
-	public void connect(String url) throws HttpException, IOException {
+	public void connect(String url) throws IOException {
 		if (url.endsWith("/")){
 			url = url.substring(0, url.length()-1);
 		}
@@ -83,86 +105,124 @@ public class RestStubProber{
 	 * Initialize the connection/session with the scheduler.
 	 * @param user username to access the scheduler.
 	 * @param pass password to access the scheduler. 
+	 * @throws IllegalStateException 
+	 * @throws Exception 
 	 * @throws IOException 
 	 * @throws HttpException */
-	public void login(String user, String pass) throws HttpException, IOException {
-	    logger.info("Login...");
-	    PostMethod methodLogin = new PostMethod(uri.toString() + "/login");
-	    methodLogin.addParameter("username", user);
-	    methodLogin.addParameter("password", pass);
-	    HttpClient client = new HttpClient();
-	    client.executeMethod(methodLogin);
-	    sessionId = getResponseBodyAsString(methodLogin, 1024);
-	    logger.info("Logged in with sessionId: " + sessionId);
+    public void login(String user, String pass) throws Exception {
+	    logger.info("Logging...");
+        HttpPost request = new HttpPost(uri.toString() + "/login");
+        StringEntity entity = new StringEntity("username=" + user + "&password=" + pass, ContentType.APPLICATION_FORM_URLENCODED);
+        request.setEntity(entity);
+        HttpResponse response = execute(request);
+        assertResponseOK(response);
+        sessionId = getStringFromResponse(response);
 	    logger.info("Done.");
-	}
-	
+    }
+
 	/**
 	 * Get a boolean telling if the prober is still connected to the scheduler through REST API or not. 
 	 * @return a boolean telling if we are connected to the scheduler. 
-	 * @throws IOException 
-	 * @throws HttpException */
-	public Boolean isConnected() throws HttpException, IOException{
+	 * @throws Exception */
+	public Boolean isConnected() throws Exception{
 	    logger.info("Asking if connected...");
-	    GetMethod method = new GetMethod(uri.toString()+  "/isconnected");
-	    method.addRequestHeader("sessionid", sessionId);
-	    HttpClient client = new HttpClient();
-	    client.executeMethod(method);
-	    String response = getResponseBodyAsString(method, 1024);
-	    logger.info("IsConnected result: " + response);
+        HttpGet request = new HttpGet(uri.toString() + "/isconnected");
+        HttpResponse response = execute(request);
+        String responsestr = getStringFromResponse(response);
+        assertResponseOK(response);
+	    logger.info("IsConnected result: " + responsestr);
 	    logger.info("Done.");
-		return Boolean.parseBoolean(response);
+		return Boolean.parseBoolean(responsestr);
 	}
 	
 	/**
 	 * Get the version of the REST API. 
 	 * @return the version. 
-	 * @throws IOException 
-	 * @throws HttpException */
-	public String getVersion() throws HttpException, IOException{
+	 * @throws Exception */
+	public String getVersion() throws Exception{
 	    logger.info("Asking version...");
-	    GetMethod method = new GetMethod(uri.toString()+  "/version");
-	    if (sessionId != null){
-		    method.addRequestHeader("sessionid", sessionId);
-	    }
-	    HttpClient client = new HttpClient();
-	    client.executeMethod(method);
-	    String response = getResponseBodyAsString(method, 1024);
-	    logger.info("Version result: " + response);
+        HttpGet request = new HttpGet(uri.toString() + "/version");
+        HttpResponse response = execute(request);
+        assertResponseOK(response);
+        String responsestr = getStringFromResponse(response);
+	    logger.info("Version result: " + responsestr);
 	    logger.info("Done.");
-		return response;
+		return responsestr;
 	}
 
 	/** 
 	 * Disconnect from the Scheduler. 
 	 * @throws IOException 
 	 * @throws HttpException */
-	public void disconnect() throws HttpException, IOException{	
+	public void disconnect() throws Exception{	
 	    logger.info("Disconnecting...");
-	    PutMethod method = new PutMethod(uri.toString() + "/disconnect");
-	    if (sessionId != null){
-		    method.addRequestHeader("sessionid", sessionId);
-	    }
-	    HttpClient client = new HttpClient();
-	    client.executeMethod(method);
+        HttpPut request = new HttpPut(uri.toString() + "/disconnect");
+        HttpResponse response = execute(request);
+        assertResponseOK(response);
 	    logger.info("Done.");
 	}
 
-	/** 
-	 * Get the Response Body of the method, as a String.
-	 * @param method method from where to extract the ResponseBody. 
-	 * @param maximumlength maximum number of characters to accept retrieve. 
-	 * @return the Response Body as a String. 
-	 * @throws IOException 
-	 * @throws HttpException */
-	private String getResponseBodyAsString(HttpMethodBase method, int maximumlength) throws IOException{
-		InputStream response = method.getResponseBodyAsStream();
-	    byte[] buffer = new byte[maximumlength];
-	    int total = response.read(buffer);
-	    if (total > 0){
-	    	return new String(buffer,0,total);
-	    }else{
-	    	return "<Nothing returned>";
-	    }
+	private static class RelaxedTrustStrategy implements TrustStrategy {
+        @Override
+        public boolean isTrusted(X509Certificate[] arg0, String arg1)
+                throws CertificateException {
+            return true;
+        }
+    }
+	
+   protected static HttpClient threadSafeClient() {
+        DefaultHttpClient client = new DefaultHttpClient();
+        ClientConnectionManager mgr = client.getConnectionManager();
+        HttpParams params = client.getParams();
+        client = new DefaultHttpClient(new PoolingClientConnectionManager(
+                mgr.getSchemeRegistry()), params);
+        return client;
+    }
+ 
+   public static void setInsecureAccess(HttpClient client)
+            throws KeyManagementException, UnrecoverableKeyException,
+            NoSuchAlgorithmException, KeyStoreException {
+
+        SSLSocketFactory socketFactory = new SSLSocketFactory(
+                new RelaxedTrustStrategy(),
+                SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+        Scheme https = new Scheme("https", 443, socketFactory);
+        client.getConnectionManager().getSchemeRegistry().register(https);
+    }
+    
+    private HttpResponse execute(HttpUriRequest request) throws Exception {
+        if (sessionId != null) {
+            request.setHeader("sessionId", sessionId);
+        }
+        HttpClient client = threadSafeClient();
+        try {
+            if (skipauthentication == true) {
+                setInsecureAccess(client);
+            }
+            HttpResponse response = client.execute(request);
+            return response;
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            ((HttpRequestBase) request).releaseConnection();
+        }
+    }	
+	
+	private String getStringFromResponse(HttpResponse response) throws IllegalStateException, IOException{
+        InputStream inputStream = response.getEntity().getContent();
+        byte[] buffer = IOUtils.toByteArray(inputStream);
+        String responsestr = StringUtils.newStringUtf8(buffer);
+        return responsestr;
+	}
+	
+	private void assertResponseOK(HttpResponse response) throws Exception{
+		if (response != null){
+			int returnedcode = response.getStatusLine().getStatusCode() ;
+			if (returnedcode != OK && returnedcode != OKNONOTIF){
+				throw new Exception("One of the methods did not return correctly (" + returnedcode + ").");
+			}
+		}else{
+			throw new NullPointerException("The response parameter cannot be null.");
+		}
 	}
 }

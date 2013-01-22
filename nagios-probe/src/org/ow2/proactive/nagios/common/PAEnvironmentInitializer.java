@@ -88,7 +88,7 @@ public class PAEnvironmentInitializer {
 				usepaconffilee = true;
 				logger.info("The ProActive configuration file '"+paconf+"' is being used.");
 			}else{
-				logger.warn("The ProActive configuration file '"+paconf+"' was not found. Using default configuration.");
+				throw new Exception("The ProActive configuration file '"+paconf+"' was not found.");
 			}
 		}else{
 			logger.info("No ProActive configuration file provided.");

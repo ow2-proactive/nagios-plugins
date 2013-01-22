@@ -65,6 +65,7 @@ public class RESTProber extends ElementalNagiosPlugin{
 		args.addNewOption("p", "pass", true);			// Pass.
 		args.addNewOption("r", "url", true);			// Url of the Scheduler/RM.
 		args.addNewOption("A", "avoidlogin", false);	// Avoid login (result of the probe based only on the response of the REST API).  
+		args.addNewOption("k", "skipauth", false);		// Skip https authentication checking.
 	}
 	
 	/**
@@ -80,8 +81,11 @@ public class RESTProber extends ElementalNagiosPlugin{
 	private void validateArguments(Arguments arguments) throws IllegalArgumentException{
 		arguments.checkIsGiven("url");
 		if (arguments.getStr("url").contains("scheduler") == false){
-			logger.warn("The URL seems to be incorrect since it does not contain the string 'scheduler'.");
+			throw new IllegalArgumentException("The URL given (" + arguments.getBoo("url") + 
+					") seems to be incorrect since it does not contain the string 'scheduler'. The url" +
+					"to specify is the scheduler's REST API.");
 		}
+		
 		if (getArgs().getBoo("avoidlogin") == false){
 			arguments.checkIsGiven("user");
 			arguments.checkIsGiven("pass");
@@ -101,7 +105,7 @@ public class RESTProber extends ElementalNagiosPlugin{
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "timeout reached while initializing the probe...");
 		
-		RestStubProber reststub = new RestStubProber();				// We create directly the stub prober.
+		RestStubProber reststub = new RestStubProber(getArgs().getBoo("skipauth"));	// We create directly the stub prober.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_connection", "timeout reached while connecting to the server...");
 		

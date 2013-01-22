@@ -5,12 +5,12 @@
     <!--<prop key="proactive.rmi.port" value="1234"/>-->
     <!-- new ones -->
     <prop key="proactive.communication.protocol" value="pamr"/>
-    <prop key="proactive.net.router.address" value="node0.cloud.sophia.inria.fr"/>
-    <prop key="proactive.net.router.port" value="8090"/>
-    <prop key="proactive.communication.pamr.socketfactory" value="ssh"/>
-    <prop key="proactive.communication.pamrssh.key_directory" value="/var/log/nagios/.ssh/"/>
-    <prop key="proactive.communication.pamrssh.username" value="mjost"/>
-    <prop key="proactive.communication.pamrssh.port" value="22"/>
+    <prop key="proactive.pamr.router.address" value="node0.cloud.sophia.inria.fr"/>
+    <prop key="proactive.pamr.router.port" value="8090"/>
+    <prop key="proactive.pamr.socketfactory" value="ssh"/>
+    <prop key="proactive.pamrssh.key_directory" value="/usr/lib/nagios/plugins/paplugins/keys/"/>
+    <prop key="proactive.pamrssh.username" value="mjost"/>
+    <prop key="proactive.pamrssh.port" value="22"/>
   </properties>
   <javaProperties>
   </javaProperties>

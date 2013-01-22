@@ -9,12 +9,15 @@ It gets connected to the Scheduler, gets its version, and disconnects from it (a
 
 SYNOPSIS
 
-   check_rest_api --url URL --user USER --pass PASS --critical TIMEOUT [OPTIONS]
+   check_rest_api -H hostname --url URL --user USER --pass PASS --critical TIMEOUT [OPTIONS]
    
 SPECIFIC NAGIOS PLUGIN FLAGS 
 
 Mandatory arguments to long options are mandatory for short options too.
    
+   -H, --host HOSTNAME
+      Nagios plugins required parameter. Not used by this plugin.
+      
    -u, --user USER
       Username to get connected to the Scheduler.
       
@@ -24,7 +27,12 @@ Mandatory arguments to long options are mandatory for short options too.
    -r, --url URL
       URL to be used to get connected to the Scheduler. 
       It should have a format like ' http://localhost:8080/SchedulingRest-1.0.0/rest/scheduler' 
+      The command 'curl -k -X GET <givenurl>/version' should return a json with the version of the REST API for the scheduler.
       
    -A, --avoidlogin
       Avoid the login procedure (useful to isolate the test of the REST API from the Scheduler).  
       If this flag is used, a failure in the login step of the Scheduler would not generate a critical status in this probe. 
+
+   -k, --skipauth
+      Skip https authentication (insecure mode).
+      
