@@ -43,6 +43,7 @@ import org.ow2.proactive.nagios.common.NagiosReturnObject;
 import org.ow2.proactive.nagios.common.NagiosReturnObjectSummaryMaker;
 import org.ow2.proactive.nagios.common.PANagiosPlugin;
 import org.ow2.proactive.nagios.common.TimedStatusTracer;
+import org.ow2.proactive.nagios.probes.rest.RestStubProber;
 import org.ow2.proactive.resourcemanager.common.RMState;
 import org.ow2.proactive.scheduler.common.SchedulerState;
 
@@ -65,6 +66,7 @@ public class DebugProber extends PANagiosPlugin{
 		args.addNewOption("p", "pass", true);							// Pass.
 		args.addNewOption("r", "url-sched", true);						// Url of the Scheduler.
 		args.addNewOption("R", "url-rm", true);							// Url of the RM.
+		args.addNewOption("Z", "url-rest-rm", true);					// Url of the REST API RM.
 		args.addNewOption("W", "history", true);						// History file. Ignored for now. 
 	}
 	
@@ -80,6 +82,7 @@ public class DebugProber extends PANagiosPlugin{
 	 * @throws IllegalArgumentException in case a non-valid argument is given. */
 	private void validateArguments(Arguments arguments) throws IllegalArgumentException{
 		arguments.checkIsGiven("url-sched");
+		arguments.checkIsGiven("url-rest-rm");
 		arguments.checkIsGiven("url-rm");
 		arguments.checkIsGiven("user");
 		arguments.checkIsGiven("pass");
@@ -118,6 +121,11 @@ public class DebugProber extends PANagiosPlugin{
 				getArgs().getStr("url-sched"),  getArgs().getStr("user"), 
 				getArgs().getStr("pass"));	
 		
+		RestStubProber restrm = new RestStubProber(true);
+		restrm.connect(getArgs().getStr("url-rest-rm"));
+		restrm.login(getArgs().getStr("user"), getArgs().getStr("pass"));
+		String freenodesrest =  restrm.get("/state");
+		
 		tracer.finishLastMeasurementAndStartNewOne("time_getting_rm_state", "getting RM state...");
 		
 		RMState rmstate = rmstub.getRMState();
@@ -146,6 +154,7 @@ public class DebugProber extends PANagiosPlugin{
 		tracer.addNewReference("running_jobs", pendingjobsnumber);
 		summary.addFact("nodesalive=" + alivenodes + " nodesfree=" + freenodes + "  jobsrunning=" + runningjobsnumber + " jobspending=" + pendingjobsnumber);
 		
+		summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, freenodesrest));
 		if (runningjobsnumber == 0 && busynodes != 0){
 			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "no jobs running but " + busynodes + " busy nodes (busy doing what?)"));
 		}

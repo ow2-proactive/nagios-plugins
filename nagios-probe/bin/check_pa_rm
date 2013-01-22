@@ -11,6 +11,6 @@ LOCALDIR=`dirname $0`
 
 export PLUGIN_HOME=$LOCALDIR/../dist
 
-$JAVA_HOME/bin/java -Xmx1024m -cp $PLUGIN_HOME/proactive-nagios-probes-1.0.jar:$CPATH org.ow2.proactive.nagios.probes.rm.RMProber $@ --user $PAUSER --pass $PAPASS 
+$JAVA_HOME/bin/java -Xmx1024m -cp $PLUGIN_HOME/proactive-nagios-probes-1.0.jar:$CPATH org.ow2.proactive.nagios.probes.rm.RMProber $@ --user $PAUSER --pass $PAPASS 2>&1
 
 

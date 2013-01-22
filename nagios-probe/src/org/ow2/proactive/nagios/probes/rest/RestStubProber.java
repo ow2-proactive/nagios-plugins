@@ -96,8 +96,8 @@ public class RestStubProber{
 		if (url.endsWith("/")){
 			url = url.substring(0, url.length()-1);
 		}
-	    logger.info("Connecting at '" + url + "'...");
 	    uri = URI.create(url);
+	    logger.info("Connecting at '" + uri + "'...");
 	    logger.info("Done.");
 	}
 	
@@ -146,6 +146,21 @@ public class RestStubProber{
         assertResponseOK(response);
         String responsestr = getStringFromResponse(response);
 	    logger.info("Version result: " + responsestr);
+	    logger.info("Done.");
+		return responsestr;
+	}
+
+	/**
+	 * Perform a standard GET. 
+	 * @return the value. 
+	 * @throws Exception */
+	public String get(String resource) throws Exception{
+	    logger.info("Asking for " + uri.toString() + resource);
+        HttpGet request = new HttpGet(uri.toString() + resource);
+        HttpResponse response = execute(request);
+        assertResponseOK(response);
+        String responsestr = getStringFromResponse(response);
+	    logger.info("Result: " + responsestr);
 	    logger.info("Done.");
 		return responsestr;
 	}

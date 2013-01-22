@@ -13,5 +13,5 @@ export PLUGIN_HOME=$LOCALDIR/../dist
 
 CLASSPATHLIST=$PLUGIN_HOME/proactive-nagios-probes-1.0.jar:$CPATH
 
-$JAVA_HOME/bin/java -Xmx1024m -cp $CLASSPATHLIST org.ow2.proactive.nagios.probes.scheduler.JobProber $@ --user $PAUSER --pass $PAPASS --rm-checking --polling
+$JAVA_HOME/bin/java -Xmx1024m -cp $CLASSPATHLIST org.ow2.proactive.nagios.probes.scheduler.JobProber $@ --user $PAUSER --pass $PAPASS --polling 2>&1
 

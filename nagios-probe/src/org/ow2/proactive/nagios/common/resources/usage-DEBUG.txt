@@ -25,6 +25,9 @@ Mandatory arguments to long options are mandatory for short options too.
    -R, --url-rm URL
       URL to be used to get connected to the RM. 
            
+   -Z, --url-rest-rm URL
+      URL to be used to get connected to the RM REST API. 
+           
    -W, --history HISTORY_FILE_PATH 
       Path for the history file. 
            

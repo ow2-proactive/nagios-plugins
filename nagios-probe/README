@@ -7,18 +7,30 @@ Nagios plugins to monitor ProActive based grids.
 Compilation of the probes
 ----------- -- --- ------
 
-To compile the project the environment variable PROACTIVELIB must be set in the current console. It must point to the $SCHEDULER/dist/lib directory, where $SCHEDULER is the root directory of the ProActive Scheduler of the same version of the one that is being probed. For example: 
+To compile the project the build.properties must be set up. 
+Then, to compile the project just run: 
 
-$ export PROACTIVELIB=/home/user/ProActiveSchedulingResourcing-x.x.x_src/dist/lib
+   $ ant dist
 
-would be a valid path. Then, to compile the project just run: 
+Executable files are in bin/. Before launching them configure accordingly the files: 
 
-$ ant jar
-
-Now the executable files are in bin/. Befor launching them configure accordingly the files: 
-
-bin/env.sh
-bin/login.sh
+   bin/env.sh
+   bin/login.sh
 
 and run any of the probes. Remember to use --help as a command-line parameter if needed. 
+
+NAGIOS COMMAND EXAMPLES
+
+REST
+     $USER1$/paplugins/dist/bin/check_pa_rest -H $HOSTADDRESS$ -v $ARG1$ -c $ARG2$ -w $ARG3$ --logconf $ARG4$ --url $ARG5$ -k
+     3 20 10 /usr/lib/nagios/plugins/paplugins/dist/conf/log4j-nagios-rest.properties https://portal.cloud.sophia.inria.fr/SchedulingRest/rest/scheduler
+SCHEDULER
+     $USER1$/paplugins/dist/bin/check_pa_scheduler -H $HOSTADDRESS$ -v $ARG1$ -c $ARG2$ -w $ARG3$ --paconf $ARG4$ --jobname $ARG5$ --logconf $ARG6$ --url $ARG7$ 
+     3 60 30 /usr/lib/nagios/plugins/paplugins/dist/conf/ProActiveConfiguration.xml job_test_nagios /usr/lib/nagios/plugins/paplugins/dist/conf/log4j-nagios-scheduler.properties pamr://1
+RM
+     $USER1$/paplugins/dist/bin/check_pa_rm -H $HOSTADDRESS$ -v $ARG1$ -c $ARG2$ -w $ARG3$ --paconf $ARG4$ --logconf $ARG5$ --url $ARG7$
+     3 60 30 /usr/lib/nagios/plugins/paplugins/dist/conf/ProActiveConfiguration.xml /usr/lib/nagios/plugins/paplugins/dist/conf/log4j-nagios-rm.properties pamr://0
+DEBUGGER
+     $USER1$/paplugins/dist/bin/check_pa_debugger -H $HOSTADDRESS$ -v $ARG1$ -c $ARG2$ -w $ARG3$ --paconf $ARG4$ --url-sched $ARG5$ --logconf $ARG6$ --url-rm $ARG7$ --url-rest-rm $ARG8$
+     3 60 30 /usr/lib/nagios/plugins/paplugins/dist/conf/ProActiveConfiguration.xml pamr://1 /usr/lib/nagios/plugins/paplugins/dist/conf/log4j-nagios-debugger.properties pamr://0 https://portal.cloud.sophia.inria.fr/SchedulingRest/rest/rm
 

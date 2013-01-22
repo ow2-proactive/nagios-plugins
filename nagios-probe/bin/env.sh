@@ -3,7 +3,7 @@
 CURRDIR=`dirname $0`
 
 if [ -z "${JAVA_HOME+xxx}" ]; then 
-  export JAVA_HOME=/local/home/nagios/jdk
+  export JAVA_HOME=/usr/lib/nagios/plugins/paplugins/jdk
 fi
 
 # DO NOT MODIFY FROM HERE.
