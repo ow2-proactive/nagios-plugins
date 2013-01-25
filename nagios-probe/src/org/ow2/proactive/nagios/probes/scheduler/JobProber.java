@@ -47,7 +47,7 @@ import org.ow2.proactive.nagios.common.RemainingTime;
 import org.ow2.proactive.nagios.common.TimedStatusTracer;
 import org.ow2.proactive.nagios.misc.Misc;
 import org.ow2.proactive.resourcemanager.common.RMState;
-import org.ow2.proactive.scheduler.examples.WaitAndPrint;
+//import org.ow2.proactive.scheduler.examples.WaitAndPrint;
 
 /** 
  * This is a general Nagios plugin class that performs a test on the scheduler, by doing:
@@ -69,7 +69,7 @@ public class JobProber extends PANagiosPlugin{
 	public static final String JOB_NAME_DEFAULT = 
 		"nagios_plugin_probe_job";					// Name of the probe job in the Scheduler, as the administrator will see it.
 	public static final String TASK_CLASS_NAME = 
-		WaitAndPrint.class.getName();				// Class to be instantiated and executed as a task in the Scheduler.
+		"org.ow2.proactive.scheduler.examples.WaitAndPrint"; // WaitAndPrint.class.getName();				// Class to be instantiated and executed as a task in the Scheduler.
 	public static String expectedJobOutput;			// The job output that is expected. It is used to check the right execution of the job. 
 	
 	private RMStateGetter rmStateGetter; 			// Used to find out the number of free nodes, and prevent telling critical

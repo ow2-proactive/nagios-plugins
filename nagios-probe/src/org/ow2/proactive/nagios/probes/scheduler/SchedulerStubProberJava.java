@@ -223,6 +223,7 @@ public class SchedulerStubProberJava {
 	 * This is specially useful to delete the probe job, so we do not contaminate what the administrator sees.
 	 * @param jobId the ID of the job. */
 	public void forceJobKillingAndRemoval(String jobId) throws Exception, NotConnectedException, UnknownJobException, PermissionException, InvalidProtocolException{
+		logger.info("Forced killing and removal of job "+ jobId + "...");
 		if (schedulerStub.getJobState(jobId).getStatus() == JobStatus.KILLED){
 			logger.info("Job "+ jobId + " is already killed, so skipping the kill stage...");
 		}else{
@@ -313,6 +314,7 @@ public class SchedulerStubProberJava {
 		}
 		
 		// We check the jobs in the Scheduler to make sure all old jobs were removed. 
+		
 		if (schedulerjobs.size()>0){
 			logger.info("\tThere are old jobs...");
 			for(String jobb:schedulerjobs){
