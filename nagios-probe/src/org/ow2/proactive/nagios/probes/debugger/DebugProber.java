@@ -43,10 +43,9 @@ import org.ow2.proactive.nagios.common.NagiosReturnObject;
 import org.ow2.proactive.nagios.common.NagiosReturnObjectSummaryMaker;
 import org.ow2.proactive.nagios.common.PANagiosPlugin;
 import org.ow2.proactive.nagios.common.TimedStatusTracer;
+import org.ow2.proactive.nagios.probes.debugger.misc.JsonRestRMStatus;
 import org.ow2.proactive.nagios.probes.rest.RestStubProber;
 import org.ow2.proactive.resourcemanager.common.RMState;
-import org.ow2.proactive.scheduler.common.SchedulerState;
-
 //import qosprobercore.history.HistoryDataManager;
 
 /** 
@@ -109,22 +108,21 @@ public class DebugProber extends PANagiosPlugin{
 		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "initializing the probe...");
 		
 		RMStubProber rmstub = new RMStubProber();					// We get connected to the RM through this stub. 
-		SchedulerStubProber schedstub = new SchedulerStubProber();	// We get connected to the Scheduler through this stub.
+		//SchedulerStubProber schedstub = new SchedulerStubProber();	// We get connected to the Scheduler through this stub.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_connection_both", "connecting...");
-		
 		rmstub.init(												// We get connected to the RM.
 				getArgs().getStr("url-rm"),  getArgs().getStr("user"), 
 				getArgs().getStr("pass"));	
 		
-		schedstub.init(												// We get connected to the Scheduler.
-				getArgs().getStr("url-sched"),  getArgs().getStr("user"), 
-				getArgs().getStr("pass"));	
-		
+		//schedstub.init(												// We get connected to the Scheduler.
+		//		getArgs().getStr("url-sched"),  getArgs().getStr("user"), 
+		//		getArgs().getStr("pass"));	
 		RestStubProber restrm = new RestStubProber(true);
 		restrm.connect(getArgs().getStr("url-rest-rm"));
 		restrm.login(getArgs().getStr("user"), getArgs().getStr("pass"));
-		String freenodesrest =  restrm.get("/state");
+		String rmstatus =  restrm.get("/state");
+		JsonRestRMStatus rmstatus2 = new JsonRestRMStatus(rmstatus);
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_getting_rm_state", "getting RM state...");
 		
@@ -134,14 +132,14 @@ public class DebugProber extends PANagiosPlugin{
 		int busynodes = alivenodes - freenodes;	
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_getting_sched_state", "getting scheduler state...");
-		SchedulerState schedstate = schedstub.getSchedulerState();
-		int runningjobsnumber = schedstate.getRunningJobs().size();	// Get the list of running jobs.
-		int pendingjobsnumber = schedstate.getPendingJobs().size();	// Get the list of pending jobs.
+		//SchedulerState schedstate = schedstub.getSchedulerState();
+		//int runningjobsnumber = schedstate.getRunningJobs().size();	// Get the list of running jobs.
+		//int pendingjobsnumber = schedstate.getPendingJobs().size();	// Get the list of pending jobs.
 		
 		tracer.finishLastMeasurementAndStartNewOne("time_disconnection", "disconnecting...");
 		
     	rmstub.disconnect();										// Disconnect from the Resource Manager.
-    	schedstub.disconnect();										// Disconnect from the Scheduler.
+    	//schedstub.disconnect();										// Disconnect from the Scheduler.
     				
 		tracer.finishLastMeasurement();
 		
@@ -150,13 +148,17 @@ public class DebugProber extends PANagiosPlugin{
 		tracer.addNewReference("free_nodes", freenodes);
 		tracer.addNewReference("alive_nodes", alivenodes);
 		tracer.addNewReference("busy_nodes", busynodes);
-		tracer.addNewReference("running_jobs", runningjobsnumber);
-		tracer.addNewReference("running_jobs", pendingjobsnumber);
-		summary.addFact("nodesalive=" + alivenodes + " nodesfree=" + freenodes + "  jobsrunning=" + runningjobsnumber + " jobspending=" + pendingjobsnumber);
+		//tracer.addNewReference("running_jobs", runningjobsnumber);
+		//tracer.addNewReference("running_jobs", pendingjobsnumber);
+		summary.addFact("nodesalive=" + alivenodes + " nodesfreejava=" + freenodes +  " nodesfreerest=" + rmstatus2.getFreeNodes());
 		
-		summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, freenodesrest));
-		if (runningjobsnumber == 0 && busynodes != 0){
-			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "no jobs running but " + busynodes + " busy nodes (busy doing what?)"));
+		summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, rmstatus));
+		//if (runningjobsnumber == 0 && busynodes != 0){
+		//	summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "no jobs running but " + busynodes + " busy nodes (busy doing what?)"));
+		//}
+		
+		if (freenodes != rmstatus2.getFreeNodes()){
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "inconsistent freeNodes number between RM and RM REST API, RMRestFree="+ rmstatus2.getFreeNodes()));
 		}
 		
 		if (summary.isAllOkay() == true){
