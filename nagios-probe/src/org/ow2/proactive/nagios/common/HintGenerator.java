@@ -67,7 +67,7 @@ import org.ow2.proactive.nagios.misc.Misc;
 public class HintGenerator {
 	private static final String HINTS_PREFIX = "HINTS: "; 						// What to add as a prefix to the expression of the possible causes of problem. 
 	protected static Logger logger =											// Logger. 
-			Logger.getLogger(ElementalNagiosPlugin.class.getName()); 
+			Logger.getLogger(HintGenerator.class.getName()); 
 	
 	/**
 	 * This method adds hints information to the NagiosReturnObject using the 

@@ -117,7 +117,10 @@ public abstract class ElementalNagiosPlugin {
 		
 		Misc.log4jConfiguration(getArgs().getInt("debug"), getArgs().getStr("logconf"));	// Loading log4j configuration. 
 		
-		logger.info(">>>> Date: " + new Date());		// Print the date in the logs.
+		logger.info(".");								// Print the date in the logs.
+		logger.info(".");								// Print the date in the logs.
+		logger.info("EXECUTING PROBE...");				// Print the date in the logs.
+		logger.info(">>>> DATE: " + new Date());		// Print the date in the logs.
 		getArgs().printArgumentsGiven();				// Print a list with the arguments given by the user. 
 		
 		if (getArgs().getBoo("help") == true)	
@@ -235,7 +238,7 @@ public abstract class ElementalNagiosPlugin {
 	 * @param e as useful data to generate the message.
 	 * @return the NagiosReturnObject generated. */
 	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer timeout, TimedStatusTracer tracer, Exception e){
-		NagiosReturnObject ret = new NagiosReturnObject(RESULT_2_CRITICAL, "timeout of " + arguments.getInt("critical")+ " sec. (" + tracer.getLastStatusDescription() + ")", e);
+		NagiosReturnObject ret = new NagiosReturnObject(RESULT_3_UNKNOWN, "timeout of " + arguments.getInt("critical")+ " sec. (" + tracer.getLastStatusDescription() + ")", e);
 		ret.addCurvesSection(tracer, null);
 		return ret;
 	}
@@ -285,7 +288,7 @@ public abstract class ElementalNagiosPlugin {
         ret = Misc.removeConflictCharacters(ret);
         
         logger.info(ret);
-        logger.info(">>>> Return code: " + obj.getErrorCode());
+        logger.info(">>>> EXIT CODE: " + obj.getErrorCode());
         System.out.print(ret);
         System.exit(obj.getErrorCode());
     }

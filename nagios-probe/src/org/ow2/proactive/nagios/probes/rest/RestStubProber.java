@@ -110,8 +110,9 @@ public class RestStubProber{
 	 * @throws IOException 
 	 * @throws HttpException */
     public void login(String user, String pass) throws Exception {
-	    logger.info("Logging...");
-        HttpPost request = new HttpPost(uri.toString() + "/login");
+    	String loginurl = uri.toString() + "/login";
+	    logger.info("Logging to '" + loginurl + "' with user '" + user + "'...");
+        HttpPost request = new HttpPost(loginurl);
         StringEntity entity = new StringEntity("username=" + user + "&password=" + pass, ContentType.APPLICATION_FORM_URLENCODED);
         request.setEntity(entity);
         HttpResponse response = execute(request);
@@ -125,7 +126,7 @@ public class RestStubProber{
 	 * @return a boolean telling if we are connected to the scheduler. 
 	 * @throws Exception */
 	public Boolean isConnected() throws Exception{
-	    logger.info("Asking if connected...");
+	    logger.info("Checking if connected...");
         HttpGet request = new HttpGet(uri.toString() + "/isconnected");
         HttpResponse response = execute(request);
         String responsestr = getStringFromResponse(response);
@@ -140,7 +141,7 @@ public class RestStubProber{
 	 * @return the version. 
 	 * @throws Exception */
 	public String getVersion() throws Exception{
-	    logger.info("Asking version...");
+	    logger.info("Getting version...");
         HttpGet request = new HttpGet(uri.toString() + "/version");
         HttpResponse response = execute(request);
         assertResponseOK(response);
