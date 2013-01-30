@@ -13,13 +13,16 @@ GENERAL NAGIOS PLUGIN FLAGS
       In seconds. If the overall test exceeded this value, then the plugin will tell to Nagios a warning status. It is important to note that the probe is not killed with this timeout.  
       
    -c, --critical CRITICAL
-      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios.
+      Timeout (in seconds) to wait for the test until killing it and telling a critical status to Nagios (unless -W).
      
    -S, --dump-script SCRIPT-PATH
       Path of a script that is executed whenever an abnormal (not 0 return code) is thrown by the probe. It helps to dump the situation of the entity tested.  
       
-   -O --logconf LOG-CONFIG 
+   -O, --logconf LOG-CONFIG 
       Path of the log4j configuration file (if not specified or does not exist, the default log4j.properties file will be used if it exists).  
+      
+   -W, timeout-is-warning
+      If a timeout is reached (-c TIMEOUT), instead of raising a critical status, the probe will raise a warning status. 
       
 NAGIOS OUTPUT INTERPRETATION
 

@@ -98,6 +98,7 @@ public abstract class ElementalNagiosPlugin {
 		args.addNewOption("c", "critical", true);												// Timeout in seconds for the job to be executed.
 		args.addNewOption("S", "dump-script" , true);											// Script to be executed in case of any problem. 
 		args.addNewOption("O", "logconf", true);												// Configuration file for log4j. 
+		args.addNewOption("W", "timeout-is-warning", false);									// If true, a timeout will raise a warning (not a critical status).
 	}
 	
 	/**
@@ -189,7 +190,9 @@ public abstract class ElementalNagiosPlugin {
 			res = proberFuture.get(arguments.getInt("critical"), TimeUnit.SECONDS);
 		}catch(TimeoutException e){
 			logger.warn("Timeout Exception...");
-			res = getNagiosReturnObjectForTimeoutException(arguments.getInt("critical"), tracer, e);
+			res = getNagiosReturnObjectForTimeoutException(
+					arguments.getBoo("timeout-is-warning")?RESULT_1_WARNING:RESULT_2_CRITICAL,
+					arguments.getInt("critical"), tracer, e);
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
 			logger.warn("Execution Exception: " + Misc.getStackTrace(e));
 			res = getNagiosReturnObjectForExecutionException(tracer, e);
@@ -219,7 +222,9 @@ public abstract class ElementalNagiosPlugin {
 			res = this.probe(tracer);
 		}catch(TimeoutException e){
 			logger.warn("Timeout Exception...");
-			res = getNagiosReturnObjectForTimeoutException(arguments.getInt("critical"), tracer, e);
+			res = getNagiosReturnObjectForTimeoutException(
+					arguments.getBoo("timeout-is-warning")?RESULT_1_WARNING:RESULT_2_CRITICAL,
+					arguments.getInt("critical"), tracer, e);
 		}catch(ExecutionException e){ 		// There was a problem with the execution of the prober.
 			logger.warn("Execution Exception: " + Misc.getStackTrace(e));
 			res = getNagiosReturnObjectForExecutionException(tracer, e);
@@ -233,12 +238,13 @@ public abstract class ElementalNagiosPlugin {
 	
 	/**
 	 * Get the NagiosReturnObject with the format to be shown according to a Timeout problem arisen when probing. 
+	 * @param errorCode what error code to use to represent this problem.
 	 * @param timeout given by the user as useful data to generate the message.
 	 * @param tracer as useful data to generate the message.
 	 * @param e as useful data to generate the message.
 	 * @return the NagiosReturnObject generated. */
-	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer timeout, TimedStatusTracer tracer, Exception e){
-		NagiosReturnObject ret = new NagiosReturnObject(RESULT_3_UNKNOWN, "timeout of " + arguments.getInt("critical")+ " sec. (" + tracer.getLastStatusDescription() + ")", e);
+	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer errorCode, Integer timeout, TimedStatusTracer tracer, Exception e){
+		NagiosReturnObject ret = new NagiosReturnObject(errorCode, "timeout of " + timeout + " sec. (" + tracer.getLastStatusDescription() + ")", e);
 		ret.addCurvesSection(tracer, null);
 		return ret;
 	}

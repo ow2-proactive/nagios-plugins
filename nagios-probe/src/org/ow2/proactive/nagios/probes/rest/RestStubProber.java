@@ -38,6 +38,7 @@
 package org.ow2.proactive.nagios.probes.rest;
 
 import java.net.URI;
+import java.security.InvalidParameterException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -49,6 +50,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -116,7 +118,7 @@ public class RestStubProber{
         StringEntity entity = new StringEntity("username=" + user + "&password=" + pass, ContentType.APPLICATION_FORM_URLENCODED);
         request.setEntity(entity);
         HttpResponse response = execute(request);
-        assertResponseOK(response);
+        chechResponseIsOK(response, "Bad response for method POST on '" + request.getURI().toString() + "'.");
         sessionId = getStringFromResponse(response);
 	    logger.info("Done.");
     }
@@ -130,7 +132,7 @@ public class RestStubProber{
         HttpGet request = new HttpGet(uri.toString() + "/isconnected");
         HttpResponse response = execute(request);
         String responsestr = getStringFromResponse(response);
-        assertResponseOK(response);
+        chechResponseIsOK(response, "Bad response for method GET on '" + request.getURI().toString() + "'.");
 	    logger.info("IsConnected result: " + responsestr);
 	    logger.info("Done.");
 		return Boolean.parseBoolean(responsestr);
@@ -144,7 +146,7 @@ public class RestStubProber{
 	    logger.info("Getting version...");
         HttpGet request = new HttpGet(uri.toString() + "/version");
         HttpResponse response = execute(request);
-        assertResponseOK(response);
+        chechResponseIsOK(response, "Bad response for method GET on '" + request.getURI().toString() + "'.");
         String responsestr = getStringFromResponse(response);
 	    logger.info("Version result: " + responsestr);
 	    logger.info("Done.");
@@ -159,7 +161,7 @@ public class RestStubProber{
 	    logger.info("Asking for " + uri.toString() + resource);
         HttpGet request = new HttpGet(uri.toString() + resource);
         HttpResponse response = execute(request);
-        assertResponseOK(response);
+        chechResponseIsOK(response, "Bad response for method GET on '" + request.getURI().toString() + "'.");
         String responsestr = getStringFromResponse(response);
 	    logger.info("Result: " + responsestr);
 	    logger.info("Done.");
@@ -174,7 +176,7 @@ public class RestStubProber{
 	    logger.info("Disconnecting...");
         HttpPut request = new HttpPut(uri.toString() + "/disconnect");
         HttpResponse response = execute(request);
-        assertResponseOK(response);
+        chechResponseIsOK(response, "Bad response for method PUT on '" + request.getURI().toString() + "'.");
 	    logger.info("Done.");
 	}
 
@@ -231,14 +233,15 @@ public class RestStubProber{
         return responsestr;
 	}
 	
-	private void assertResponseOK(HttpResponse response) throws Exception{
+	private void chechResponseIsOK(HttpResponse response, String errormsg) throws HttpResponseException{
 		if (response != null){
 			int returnedcode = response.getStatusLine().getStatusCode() ;
 			if (returnedcode != OK && returnedcode != OKNONOTIF){
-				throw new Exception("One of the methods did not return correctly (" + returnedcode + ").");
+				throw new HttpResponseException(returnedcode, 
+						errormsg + " Reason: '" + response.getStatusLine().getReasonPhrase() + "' ("+returnedcode+").");
 			}
 		}else{
-			throw new NullPointerException("The response parameter cannot be null.");
+			throw new InvalidParameterException("The response parameter cannot be null.");
 		}
 	}
 }

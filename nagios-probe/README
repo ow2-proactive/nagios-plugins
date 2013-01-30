@@ -22,8 +22,8 @@ and run any of the probes. Remember to use --help as a command-line parameter if
 NAGIOS COMMAND EXAMPLES
 
 REST
-     $USER1$/paplugins/dist/bin/check_pa_rest -H $HOSTADDRESS$ -v $ARG1$ -c $ARG2$ -w $ARG3$ --logconf $ARG4$ --url $ARG5$ -k
-     3 20 10 /usr/lib/nagios/plugins/paplugins/dist/conf/log4j-nagios-rest.properties https://portal.cloud.sophia.inria.fr/SchedulingRest/rest/scheduler
+     $USER1$/paplugins/dist/bin/check_pa_rest -H $HOSTADDRESS$ -v $ARG1$ -c $ARG2$ --logconf $ARG3$ --url $ARG4$ -k -W
+     3 40 /usr/lib/nagios/plugins/paplugins/dist/conf/log4j-nagios-rest.properties https://portal.cloud.sophia.inria.fr/SchedulingRest/rest/scheduler
 SCHEDULER
      $USER1$/paplugins/dist/bin/check_pa_scheduler -H $HOSTADDRESS$ -v $ARG1$ -c $ARG2$ -w $ARG3$ --paconf $ARG4$ --jobname $ARG5$ --logconf $ARG6$ --url $ARG7$ 
      3 60 30 /usr/lib/nagios/plugins/paplugins/dist/conf/ProActiveConfiguration.xml job_test_nagios /usr/lib/nagios/plugins/paplugins/dist/conf/log4j-nagios-scheduler.properties pamr://1
