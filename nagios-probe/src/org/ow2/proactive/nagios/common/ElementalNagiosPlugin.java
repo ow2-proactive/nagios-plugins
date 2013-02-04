@@ -244,7 +244,7 @@ public abstract class ElementalNagiosPlugin {
 	 * @param e as useful data to generate the message.
 	 * @return the NagiosReturnObject generated. */
 	protected NagiosReturnObject getNagiosReturnObjectForTimeoutException(Integer errorCode, Integer timeout, TimedStatusTracer tracer, Exception e){
-		NagiosReturnObject ret = new NagiosReturnObject(errorCode, "timeout of " + timeout + " sec. (" + tracer.getLastStatusDescription() + ")", e);
+		NagiosReturnObject ret = new NagiosReturnObject(errorCode, "TIMEOUT of " + timeout + " sec. (" + tracer.getLastStatusDescription() + ")", e);
 		ret.addCurvesSection(tracer, null);
 		return ret;
 	}
@@ -255,7 +255,7 @@ public abstract class ElementalNagiosPlugin {
 	 * @param e as data useful to generate the message.
 	 * @return the NagiosReturnObject generated. */
 	protected NagiosReturnObject getNagiosReturnObjectForExecutionException(TimedStatusTracer tracer, Exception e){
-		NagiosReturnObject ret = new NagiosReturnObject(RESULT_2_CRITICAL, "FAILURE: " + e.getMessage(), e);
+		NagiosReturnObject ret = new NagiosReturnObject(RESULT_2_CRITICAL, "TARGET PROBLEM: " + e.getMessage(), e);
 		ret.addCurvesSection(tracer, null);
 		return ret;
 	}

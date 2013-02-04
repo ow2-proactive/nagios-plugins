@@ -119,7 +119,7 @@ public class DebugProber extends PANagiosPlugin{
 		//		getArgs().getStr("url-sched"),  getArgs().getStr("user"), 
 		//		getArgs().getStr("pass"));	
 		RestStubProber restrm = new RestStubProber(true);
-		restrm.connect(getArgs().getStr("url-rest-rm"));
+		restrm.generateURI(getArgs().getStr("url-rest-rm"));
 		restrm.login(getArgs().getStr("user"), getArgs().getStr("pass"));
 		String rmstatus =  restrm.get("/state");
 		JsonRestRMStatus rmstatus2 = new JsonRestRMStatus(rmstatus);

@@ -103,23 +103,21 @@ public class RESTProber extends ElementalNagiosPlugin{
 		if (getArgs().isGiven("warning")==true) // If the warning flag was given, then show it.
 			tracer.addNewReference("time_all_warning_threshold", new Double(getArgs().getInt("warning")));
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "timeout reached while initializing the probe...");
+		tracer.finishLastMeasurementAndStartNewOne("time_initializing", "TIMEOUT reached while initializing the probe, no connection with REST API was attempted...");
 		
 		RestStubProber reststub = new RestStubProber(getArgs().getBoo("skipauth"));	// We create directly the stub prober.
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_connection", "timeout reached while connecting to the server...");
-		
-		reststub.connect(											// We get connected to the server...
+		reststub.generateURI(											// We get connected to the server...
 				getArgs().getStr("url"));	
 		
 		if (getArgs().getBoo("avoidlogin") == false){
-			tracer.finishLastMeasurementAndStartNewOne("time_login", "timeout reached while performing login to the scheduler through REST API...");
+			tracer.finishLastMeasurementAndStartNewOne("time_login", "TIMEOUT reached while performing LOGIN to the scheduler through REST API...");
 			reststub.login(											// We login in the Scheduler.
 					getArgs().getStr("user"), 
 					getArgs().getStr("pass"));	
 		}
 		
-		tracer.finishLastMeasurementAndStartNewOne("time_transactions", "timeout reached while asking [isconnected and] version to the REST API...");
+		tracer.finishLastMeasurementAndStartNewOne("time_transactions", "already logged in to the REST API, but TIMEOUT reached while asking [ISCONNECTED and] VERSION to the REST API...");
 		
 		Boolean connected = false; 
 		if (getArgs().getBoo("avoidlogin") == false){
@@ -130,7 +128,7 @@ public class RESTProber extends ElementalNagiosPlugin{
 	    logger.info("Version: " + version);
 		
 		if (getArgs().getBoo("avoidlogin") == false){
-			tracer.finishLastMeasurementAndStartNewOne("time_disconnection", "timeout reached while disconnecting from the REST API...");
+			tracer.finishLastMeasurementAndStartNewOne("time_disconnection", "already logged in to the REST API, but TIMEOUT reached while DISCONNECTING from it...");
 			reststub.disconnect();									// Getting disconnected from the Scheduler.
 		}
 		
@@ -139,13 +137,13 @@ public class RESTProber extends ElementalNagiosPlugin{
 		NagiosReturnObjectSummaryMaker summary = new NagiosReturnObjectSummaryMaker();  
 		
 		if (getArgs().getBoo("avoidlogin") == false){
-			summary.addFact("Connected:" + connected);
+			//summary.addFact("Connected:" + connected);
 			if (connected == false)
 				summary.addMiniStatus(new NagiosMiniStatus(RESULT_2_CRITICAL, "couldn't connect to scheduler through REST API"));
 		}
 		
 		if (getArgs().isGiven("warning") && tracer.getTotal() > getArgs().getInt("warning"))
-			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING, "the probe took too long"));
+			summary.addMiniStatus(new NagiosMiniStatus(RESULT_1_WARNING, "the REST API probe executed correctly, but it took longer than the warning time configured"));
 		
 		if (summary.isAllOkay())
 			summary.addMiniStatus(new NagiosMiniStatus(RESULT_0_OK, "OK"));

@@ -80,7 +80,9 @@ public class HintGenerator {
 			logger.info("Performing processing of hints...");
 			try {
 				String possiblecauses = parseCauses(o, hintfile);
-				o.setErrorMessage(o.getErrorMessage() + " (" + HINTS_PREFIX + possiblecauses + ")");
+				if (!possiblecauses.isEmpty()){
+					o.setErrorMessage(o.getErrorMessage() + " (" + HINTS_PREFIX + possiblecauses + ")");
+				}
 			} catch (Exception e) {
 				logger.warn("Problem reading/interpreting " + hintfile, e);
 				o.setErrorMessage(o.getErrorMessage() + " (" + HINTS_PREFIX + "can't read " + hintfile + ")");
@@ -203,7 +205,7 @@ public class HintGenerator {
 	 * @return pretty String. */
     private static String generateStringListOfHints(ArrayList<String> list){
     	if (list.isEmpty()){
-	    	return "no hint";
+	    	return "";
     	}else{
     		String ret="";
     		for (String s: list){

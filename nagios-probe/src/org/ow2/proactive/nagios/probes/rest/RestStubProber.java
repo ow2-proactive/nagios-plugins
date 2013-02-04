@@ -90,17 +90,16 @@ public class RestStubProber{
 	}
 	
 	/** 
-	 * Initialize the connection/session with the scheduler.
+	 * Generates the URI to get connected to the REST API.
 	 * @param url url of the scheduler for REST API. 
 	 * @throws IOException 
 	 * @throws HttpException */
-	public void connect(String url) throws IOException {
+	public void generateURI(String url) throws IOException {
 		if (url.endsWith("/")){
 			url = url.substring(0, url.length()-1);
 		}
 	    uri = URI.create(url);
-	    logger.info("Connecting at '" + uri + "'...");
-	    logger.info("Done.");
+	    logger.info("Using URI '" + uri + "'.");
 	}
 	
 	/** 

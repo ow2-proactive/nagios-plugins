@@ -35,4 +35,6 @@ DEBUGGER
      3 60 30 /usr/lib/nagios/plugins/paplugins/dist/conf/ProActiveConfiguration.xml pamr://1 /usr/lib/nagios/plugins/paplugins/dist/conf/log4j-nagios-debugger.properties pamr://0 https://portal.cloud.sophia.inria.fr/SchedulingRest/rest/rm
 
 RECOMMENED NOTIFY
-     /usr/bin/printf "%b" "Probe $SERVICEDESC$ status: $SERVICESTATE$\n\nOutput of the probe: $SERVICEOUTPUT$\nExtended output of the probe: $LONGSERVICEOUTPUT$\n\nHost: $HOSTALIAS$\nAddress: $HOSTADDRESS$\nDate/Time: $DATE$/$TIME$\nLogs of XXX probe: http://XXX/logs-pa-XXX.txt" | /bin/mail -s "Probe $SERVICEDESC$: $SERVICESTATE$" $CONTACTEMAIL$
+     /usr/bin/printf "%b" "Probe $SERVICEDESC$ status: ($SERVICESTATE$) $SERVICEOUTPUT$ \nExtended output of the probe: $LONGSERVICEOUTPUT$\n\nHost: $HOSTALIAS$\nAddress: $HOSTADDRESS$\nDate/Time: $DATE$/$TIME$\nService attempt number: $SERVICEATTEMPT$\nMaximum service attempts number: $MAXSERVICEATTEMPTS$\nService Actions URL: $SERVICEACTIONURL$\nNotes URL about the service: $SERVICENOTESURL$\nNotes about the service: $SERVICENOTES$" | /bin/mail -s "Probe $SERVICEDESC$: ($SERVICESTATE$) $SERVICEOUTPUT$" $CONTACTEMAIL$
+
+(and remember to complete the SERVICE description, URL and URL action)
