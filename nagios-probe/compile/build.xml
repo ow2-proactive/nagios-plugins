@@ -38,12 +38,36 @@
         <delete dir="${dist.dir}"/>
     </target>
 
+
+	<path id="src.classpath">
+		<fileset dir="${ourlib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<pathelement location="${classes.dir}" />
+		<fileset dir="${ant.library.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+
+
+
     <target name="compile" depends="copyDependencies">
         <mkdir dir="${classes.dir}"/>
 	<copy todir="${classes.dir}">
 	    <fileset dir="${src.dir}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
 	</copy>
         <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" debug="on" debuglevel="lines,vars,source"/>
+
+
+	<taskdef name="stubGenerator" classname="ant.AntStubGenerator" classpathref="src.classpath" />
+	<typedef name="class" classname="ant.AntStubGeneratorClass" classpathref="src.classpath" />
+		
+	<stubGenerator srcDir="${classes.dir}" refclasspath="src.classpath">
+	    <class name="org.ow2.proactive.nagios.tests.testutils.RMEventListener" />
+	</stubGenerator>
+
+
     </target>
 
     <target name="dist" depends="compile">
@@ -58,7 +82,7 @@
     <target name="clean-build" depends="clean,dist"/>
     <target name="jar" depends="dist"/>
 
-	<target name="test" depends="compile" description="Run unit tests">
+    <target name="test" depends="compile" description="Run unit tests">
 		<mkdir dir="${classes.test.dir}"/>
 		<javac srcdir="${test.dir}" destdir="${classes.test.dir}" classpathref="classpath.test"
 			   includeantruntime="false"/>
@@ -81,6 +105,6 @@
 				</fileset>
 			</batchtest>
 		</junit>
-	</target>
+    </target>
 
 </project>
