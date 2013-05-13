@@ -44,8 +44,6 @@ import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URL;
 import java.security.PublicKey;
-
-import org.hibernate.mapping.Map;
 import org.objectweb.proactive.core.config.CentralPAPropertyRepository;
 import org.objectweb.proactive.core.remoteobject.AbstractRemoteObjectFactory;
 import org.objectweb.proactive.core.remoteobject.RemoteObjectFactory;
