@@ -44,6 +44,7 @@
 			<include name="**/*.jar" />
 		</fileset>
 		<pathelement location="${classes.dir}" />
+		<pathelement location="${classes.test.dir}" />
 		<fileset dir="${ant.library.dir}">
 			<include name="**/*.jar" />
 		</fileset>
@@ -60,15 +61,30 @@
         <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" debug="on" debuglevel="lines,vars,source"/>
 
 
-	<taskdef name="stubGenerator" classname="ant.AntStubGenerator" classpathref="src.classpath" />
-	<typedef name="class" classname="ant.AntStubGeneratorClass" classpathref="src.classpath" />
-		
-	<stubGenerator srcDir="${classes.dir}" refclasspath="src.classpath">
-	    <class name="org.ow2.proactive.nagios.tests.testutils.RMEventListener" />
-	</stubGenerator>
-
 
     </target>
+
+
+    <target name="compile-test" depends="copyDependencies">
+		<mkdir dir="${classes.test.dir}"/>
+		<javac srcdir="${test.dir}" destdir="${classes.test.dir}" classpathref="classpath.test"
+			   includeantruntime="false"/>
+
+		<copy todir="${classes.test.dir}">
+			<fileset dir="${test.dir}" includes="**/*.policy,**/*.xml,**/*.properties,**/*.txt"/>
+		</copy>
+
+		<taskdef name="stubGenerator" classname="ant.AntStubGenerator" classpathref="src.classpath" />
+		<typedef name="class" classname="ant.AntStubGeneratorClass" classpathref="src.classpath" />
+		
+		<stubGenerator srcDir="${classes.dir}" refclasspath="src.classpath">
+		    <class name="org.ow2.proactive.nagios.tests.testutils.RMEventListener" />
+		</stubGenerator>
+
+    </target>
+
+
+
 
     <target name="dist" depends="compile">
         <mkdir dir="${dist.dir}"/>
@@ -82,14 +98,7 @@
     <target name="clean-build" depends="clean,dist"/>
     <target name="jar" depends="dist"/>
 
-    <target name="test" depends="compile" description="Run unit tests">
-		<mkdir dir="${classes.test.dir}"/>
-		<javac srcdir="${test.dir}" destdir="${classes.test.dir}" classpathref="classpath.test"
-			   includeantruntime="false"/>
-
-		<copy todir="${classes.test.dir}">
-			<fileset dir="${test.dir}" includes="**/*.policy,**/*.xml,**/*.properties,**/*.txt"/>
-		</copy>
+    <target name="test" depends="compile,compile-test" description="Run unit tests">
 
 		<junit haltonfailure="true" outputtoformatters="false" showoutput="true">
 			<jvmarg value="-Djava.security.policy=${junit.grant.all.policy}"/>					
