@@ -36,9 +36,10 @@
 package org.ow2.proactive.nagios.tests;
 
 import java.util.Map;
+
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Before;
 import java.util.HashMap;
 import org.junit.FixMethodOrder;
@@ -70,7 +71,7 @@ public class NagiosPluginsTest {
      */
     private static boolean lastTestExecuted = false;
 
-    //@Before
+    @Before
     public void startRMandScheduler() throws Exception {
 
         if (rmurl == null) {
@@ -99,7 +100,7 @@ public class NagiosPluginsTest {
         prob.initializeProber();
         NagiosReturnObject ret = prob.startProbeAndExitManualTimeout(true); // Start the probe.
         if (ret.getErrorCode() != ElementalNagiosPlugin.RESULT_2_CRITICAL) {
-            throw new Exception("Fail.");
+            Assert.fail("Code returned incorrect: " + ret.getErrorCode());
         }
     }
 
@@ -112,21 +113,33 @@ public class NagiosPluginsTest {
         prob.initializeProber();
         NagiosReturnObject ret = prob.startProbeAndExitManualTimeout(true); // Start the probe.
         if (ret.getErrorCode() != ElementalNagiosPlugin.RESULT_1_WARNING) {
-            throw new Exception("Fail.");
+            Assert.fail("Code returned incorrect: " + ret.getErrorCode());
         }
     }
 
     @Test
-    public void Test_JobProber() throws Exception {
-        startRMandScheduler();
-        String[] args = new String[] { "--url", schedurl, "--critical", "10", "--user", "admin", "--pass",
+    public void Test_Probe_WrongUrl() throws Exception {
+        String[] args = new String[] { "--url", rmurl+"wrong-url", "--critical", "10", "--user", "admin", "--pass",
+                "admin", "--warning", "0" };
+        final Arguments options = new Arguments(args);
+        RMProber prob = new RMProber(options); // Create the prober.
+        prob.initializeProber();
+        NagiosReturnObject ret = prob.startProbeAndExitManualTimeout(true); // Start the probe.
+        if (ret.getErrorCode() != ElementalNagiosPlugin.RESULT_2_CRITICAL) {
+            Assert.fail("Code returned incorrect: " + ret.getErrorCode());
+        }
+    }
+
+    @Test
+    public void Test_JobProber_Basic() throws Exception {
+        String[] args = new String[] { "--url", schedurl, "--critical", "20", "--user", "admin", "--pass",
                 "admin" };
         final Arguments options = new Arguments(args);
         JobProber prob = new JobProber(options); // Create the prober.
         prob.initializeProber();
         NagiosReturnObject ret = prob.startProbeAndExitManualTimeout(true); // Start the probe.
         if (ret.getErrorCode() != ElementalNagiosPlugin.RESULT_0_OK) {
-            throw new Exception("Fail.");
+            Assert.fail("Code returned incorrect: " + ret.getErrorCode());
         }
     }
 
@@ -149,7 +162,9 @@ public class NagiosPluginsTest {
         jobs = sched.getState().getFinishedJobs().size() + sched.getState().getPendingJobs().size() +
             sched.getState().getRunningJobs().size();
 
-        System.out.println(jobs);
+        if (jobs == 0) {
+            Assert.fail("Amount of jobs is incorrect (expected >0): " + jobs);
+        }
 
         // Execution with time enough to clean rubish in the scheduler.
         String[] args = new String[] { "--url", schedurl, "--critical", "10", "--user", "admin", "--pass",
@@ -159,14 +174,14 @@ public class NagiosPluginsTest {
         prob.initializeProber();
         NagiosReturnObject ret = prob.startProbeAndExitManualTimeout(true); // Start the probe.
         if (ret.getErrorCode() != ElementalNagiosPlugin.RESULT_0_OK) {
-            throw new Exception("Fail.");
+            Assert.fail("Code returned incorrect: " + ret.getErrorCode());
         }
 
         jobs = sched.getState().getFinishedJobs().size() + sched.getState().getPendingJobs().size() +
             sched.getState().getRunningJobs().size();
 
         if (jobs != 0) {
-            throw new Exception("Fail.");
+            Assert.fail("Expected amount of jobs is incorrect (expected 0): " + jobs);
         }
     }
 
@@ -179,7 +194,7 @@ public class NagiosPluginsTest {
         prob.initializeProber();
         NagiosReturnObject ret = prob.startProbeAndExitManualTimeout(true); // Start the probe.
         if (ret.getErrorCode() != ElementalNagiosPlugin.RESULT_0_OK) {
-            throw new Exception("Fail.");
+            Assert.fail("Code returned incorrect: " + ret.getErrorCode());
         }
     }
 
@@ -192,7 +207,7 @@ public class NagiosPluginsTest {
         prob.initializeProber();
         NagiosReturnObject ret = prob.startProbeAndExitManualTimeout(true); // Start the probe.
         if (ret.getErrorCode() != ElementalNagiosPlugin.RESULT_2_CRITICAL) {
-            throw new Exception("Fail.");
+            Assert.fail("Code returned incorrect: " + ret.getErrorCode());
         }
     }
 
@@ -205,7 +220,7 @@ public class NagiosPluginsTest {
         prob.initializeProber();
         NagiosReturnObject ret = prob.startProbeAndExitManualTimeout(true); // Start the probe.
         if (ret.getErrorCode() != ElementalNagiosPlugin.RESULT_1_WARNING) {
-            throw new Exception("Fail.");
+            Assert.fail("Code returned incorrect: " + ret.getErrorCode());
         }
     }
 
