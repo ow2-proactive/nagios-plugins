@@ -262,6 +262,6 @@ public class JobProber extends PANagiosPlugin{
         Arguments options = new Arguments(args);
 		JobProber prob = new JobProber(options);													// Create the prober.
 		prob.initializeProber();
-		prob.startProbeAndExitManualTimeout();														// Start the probe.
+		prob.startProbeAndExitManualTimeout(false);													// Start the probe.
 	}
 }

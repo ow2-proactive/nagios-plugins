@@ -229,7 +229,7 @@ public class RMProber extends PANagiosPlugin{
         final Arguments options = new Arguments(args);
 		RMProber prob = new RMProber(options);														// Create the prober.
 		prob.initializeProber();
-		prob.startProbeAndExitManualTimeout();														// Start the probe.
+		prob.startProbeAndExitManualTimeout(false);													// Start the probe.
 		// We control the timeout in this particular case (...ManualTimeout) because in case of timeout, this probed RM is susceptible 
 		// of leaving one resource as 'locked', which is something we strongly avoid. We always keep calling the RM from the same Thread
 		// through the RMThoughSingleThread object, but once a particular call exceeds this time limit, we ask the same executor to finish 

@@ -201,7 +201,7 @@ public abstract class ElementalNagiosPlugin {
 			res = new NagiosReturnObject(RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
 		}
-		printDumpAndExit(res, arguments.getInt("debug"), probeID);
+		printDumpAndExit(res, arguments.getInt("debug"), probeID, false);
 	}
 	
 	/**
@@ -211,7 +211,7 @@ public abstract class ElementalNagiosPlugin {
 	 * The timeout mechanism is NOT handled by this method. It means that a probe(...) method
 	 * taking longer than the timeout threshold should be stopped inside the probe(...) method itself and 
 	 * a TimeoutException should be thrown. */
-	final public void startProbeAndExitManualTimeout(){
+	final public NagiosReturnObject startProbeAndExitManualTimeout(boolean test){
 		/* We prepare now our probe to run it in a different thread. The probe consists in a job submission done to the Scheduler. */
 		
 		final TimedStatusTracer tracer = TimedStatusTracer.getInstance();	// We want to get last status memory, and timing measurements.
@@ -233,7 +233,7 @@ public abstract class ElementalNagiosPlugin {
 			res = new NagiosReturnObject(RESULT_2_CRITICAL, "CRITICAL ERROR: " + e.getMessage(), e);
 			res.addCurvesSection(tracer, null);
 		}
-		printDumpAndExit(res, arguments.getInt("debug"), probeID);
+		return printDumpAndExit(res, arguments.getInt("debug"), probeID, test);
 	}
 	
 	/**
@@ -267,7 +267,7 @@ public abstract class ElementalNagiosPlugin {
      * @param o object to take the information from.
      * @param debuglevel level of verbosity. 
      * @param source id of the specific caller probe (RM, Scheduler, etc.). */
-    private synchronized void printDumpAndExit(NagiosReturnObject o, int debuglevel, String source){
+    private synchronized NagiosReturnObject printDumpAndExit(NagiosReturnObject o, int debuglevel, String source, boolean test){
     	String hintfile = RESOURCES_PATH + "hintsforproblems-" + probeID + ".txt";
     	NagiosReturnObject obj = HintGenerator.getEnrichedNagiosReturnObject(o, hintfile);
     	String ret = "";
@@ -296,7 +296,12 @@ public abstract class ElementalNagiosPlugin {
         logger.info(ret);
         logger.info(">>>> EXIT CODE: " + obj.getErrorCode());
         System.out.print(ret);
-        System.exit(obj.getErrorCode());
+        
+        if (test == false) {
+            System.exit(obj.getErrorCode());
+        }
+        
+        return obj;
     }
     
 	/**
