@@ -1,31 +1,31 @@
 <?xml version="1.0"?>
-<project name="proactive-nagios-probes" basedir="." default="main">
-   <property file="${basedir}/build.properties" />
-   <property name="version"      value="1.0"/>
-   <property name="src.dir"      value="${basedir}/../src"/>
-   <property name="build.dir"    value="${basedir}/../build"/>
-   <property name="test.dir"     value="${basedir}/../tests"/>
-   <property name="classes.dir"  value="${build.dir}/classes"/>
-   <property name="classes.test.dir" value="${build.dir}/test-classes"/>
-   <property name="dist.dir"     value="${basedir}/../dist"/>
-   <property name="palib.dir"    value="${scheduling.project.dir}/dist/lib"/>
-   <property name="ourlib.dir"   value="${basedir}/../lib"/>
-   <property name="ourpalib.dir" value="${ourlib.dir}/scheduling"/>
-   <property name="junit.grant.all.policy" value="${test.dir}/grant-all-java.security.policy" />
-   <property name="main-class"   value="Starter"/>
+	<project name="proactive-nagios-probes" basedir="." default="main">
+	<property file="${basedir}/build.properties" />
+	<property name="version"      value="1.0"/>
+	<property name="src.dir"      value="${basedir}/../src"/>
+	<property name="build.dir"    value="${basedir}/../build"/>
+	<property name="test.dir"     value="${basedir}/../tests"/>
+	<property name="classes.dir"  value="${build.dir}/classes"/>
+	<property name="classes.test.dir" value="${build.dir}/test-classes"/>
+	<property name="dist.dir"     value="${basedir}/../dist"/>
+	<property name="palib.dir"    value="${scheduling.project.dir}/dist/lib"/>
+	<property name="ourlib.dir"   value="${basedir}/../lib"/>
+	<property name="ourpalib.dir" value="${ourlib.dir}/scheduling"/>
+	<property name="junit.grant.all.policy" value="${test.dir}/grant-all-java.security.policy" />
+	<property name="main-class"   value="Starter"/>
 
-   <target name="copyDependencies">
-        <mkdir dir="${ourlib.dir}"/>
-        <mkdir dir="${ourpalib.dir}"/>
-	<copy todir="${ourpalib.dir}">
-           <fileset dir="${palib.dir}" includes="**/*.jar" />
-	</copy>
-   </target>	  
+	<target name="copyDependencies">
+		<mkdir dir="${ourlib.dir}"/>
+		<mkdir dir="${ourpalib.dir}"/>
+		<copy todir="${ourpalib.dir}">
+			<fileset dir="${palib.dir}" includes="**/*.jar" />
+		</copy>
+	</target>	  
 
-   <path id="classpath">
-      <fileset dir="${ourpalib.dir}"   includes="**/*.jar"/>
-      <fileset dir="${ourlib.dir}"     includes="**/*.jar"/>
-   </path>
+	<path id="classpath">
+		<fileset dir="${ourpalib.dir}"   includes="**/*.jar"/>
+		<fileset dir="${ourlib.dir}"     includes="**/*.jar"/>
+	</path>
 
 	<path id="classpath.test">
 		<path refid="classpath"/>
@@ -33,87 +33,56 @@
 		<pathelement location="${classes.dir}"/>
 	</path>
 
-    <target name="clean">
-        <delete dir="${build.dir}"/>
-        <delete dir="${dist.dir}"/>
-    </target>
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete dir="${dist.dir}"/>
+	</target>
+
+	<target name="compile" depends="copyDependencies">
+		<mkdir dir="${classes.dir}"/>
+		<copy todir="${classes.dir}">
+			<fileset dir="${src.dir}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
+		</copy>
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" debug="on" debuglevel="lines,vars,source"/>
+	</target>
 
 
-	<path id="src.classpath">
-		<fileset dir="${ourlib.dir}">
-			<include name="**/*.jar" />
-		</fileset>
-		<pathelement location="${classes.dir}" />
-		<pathelement location="${classes.test.dir}" />
-		<fileset dir="${ant.library.dir}">
-			<include name="**/*.jar" />
-		</fileset>
-	</path>
-
-
-
-
-    <target name="compile" depends="copyDependencies">
-        <mkdir dir="${classes.dir}"/>
-	<copy todir="${classes.dir}">
-	    <fileset dir="${src.dir}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
-	</copy>
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" debug="on" debuglevel="lines,vars,source"/>
-
-
-
-    </target>
-
-
-    <target name="compile-test" depends="copyDependencies">
+	<target name="compile-test" depends="copyDependencies">
 		<mkdir dir="${classes.test.dir}"/>
-		<javac srcdir="${test.dir}" destdir="${classes.test.dir}" classpathref="classpath.test"
-			   includeantruntime="false"/>
-
+		<javac srcdir="${test.dir}" destdir="${classes.test.dir}" classpathref="classpath.test" includeantruntime="false"/>
 		<copy todir="${classes.test.dir}">
 			<fileset dir="${test.dir}" includes="**/*.policy,**/*.xml,**/*.properties,**/*.txt"/>
 		</copy>
+	</target>
 
-		<taskdef name="stubGenerator" classname="ant.AntStubGenerator" classpathref="src.classpath" />
-		<typedef name="class" classname="ant.AntStubGeneratorClass" classpathref="src.classpath" />
-		
-		<stubGenerator srcDir="${classes.dir}" refclasspath="src.classpath">
-		    <class name="org.ow2.proactive.nagios.tests.testutils.RMEventListener" />
-		</stubGenerator>
+	<target name="dist" depends="compile">
+		<mkdir dir="${dist.dir}"/>
+		<jar destfile="${dist.dir}/proactive-nagios-probes-${version}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}"/>
+			</manifest>
+		</jar>
+	</target>
 
-    </target>
+	<target name="clean-build" depends="clean,dist"/>
 
+	<target name="jar" depends="dist"/>
 
-
-
-    <target name="dist" depends="compile">
-        <mkdir dir="${dist.dir}"/>
-        <jar destfile="${dist.dir}/proactive-nagios-probes-${version}.jar" basedir="${classes.dir}">
-            <manifest>
-                <attribute name="Main-Class" value="${main-class}"/>
-            </manifest>
-        </jar>
-    </target>
-
-    <target name="clean-build" depends="clean,dist"/>
-    <target name="jar" depends="dist"/>
-
-    <target name="test" depends="compile,compile-test" description="Run unit tests">
-
+	<target name="test" depends="compile,compile-test" description="Run unit tests">
 		<junit haltonfailure="true" outputtoformatters="false" showoutput="true">
 			<jvmarg value="-Djava.security.policy=${junit.grant.all.policy}"/>					
 			<jvmarg value="-Dscheduling.project.dir=${scheduling.project.dir}"/>					
 			<classpath refid="classpath.test"/>
 			<!-- 
-			     <formatter type="brief" usefile="false"/>
+			<formatter type="brief" usefile="false"/>
 			-->
-		        <formatter type="plain" usefile="false"/>
+			<formatter type="plain" usefile="false"/>
 			<batchtest fork="yes">
-				<fileset dir="${test.dir}">
-					<include name="**/*Test*" />
-				</fileset>
+			<fileset dir="${test.dir}">
+				<include name="**/*Test*" />
+			</fileset>
 			</batchtest>
 		</junit>
-    </target>
+	</target>
 
 </project>
