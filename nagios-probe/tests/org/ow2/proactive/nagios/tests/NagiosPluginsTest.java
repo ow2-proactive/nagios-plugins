@@ -167,7 +167,7 @@ public class NagiosPluginsTest {
         }
 
         // Execution with time enough to clean rubish in the scheduler.
-        String[] args = new String[] { "--url", schedurl, "--critical", "10", "--user", "admin", "--pass",
+        String[] args = new String[] { "--url", schedurl, "--critical", "30", "--user", "admin", "--pass",
                 "admin" };
         final Arguments options = new Arguments(args);
         JobProber prob = new JobProber(options); // Create the prober.
