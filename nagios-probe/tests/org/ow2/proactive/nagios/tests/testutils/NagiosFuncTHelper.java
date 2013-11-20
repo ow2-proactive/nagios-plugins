@@ -354,7 +354,7 @@ public class NagiosFuncTHelper {
         for (String jar : requiredJARs) {
             classpath.append(libPath).append(File.separator).append(jar).append(File.pathSeparatorChar);
         }
-
+        classpath.append(System.getProperty("java.class.path"));
         return classpath.toString();
     }
 
